@@ -2,8 +2,8 @@ Package: bartVis
 Type: Package
 Title: Create Visualisations for BART models
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: alan.inglis@mu.ie
+Author: Alan Inglis
+Maintainer: <alan.inglis@mu.ie>
 Description: Visualisations for looking at trees and variable importance in BART models. 
 License: What license is it under?
 Encoding: UTF-8
