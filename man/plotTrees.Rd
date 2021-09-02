@@ -5,27 +5,20 @@
 \title{plotTrees}
 \usage{
 plotTrees(
-  model,
-  data,
-  response,
+  treeData,
   treeNum = 1,
   iteration = 1,
   plotType = c("dendrogram", "icicle")
 )
 }
 \arguments{
-\item{model}{A bart model created from he R-packages BART, dbarts, or
-bartMachine.}
-
-\item{data}{Data frame used for fit.}
-
-\item{response}{The name of the response for the fit.}
+\item{treeData}{A data frame created by XXX function}
 
 \item{treeNum}{The tree number to plot.}
 
-\item{plotType}{What type of plot to display. either dendrogram or icicle.}
+\item{iteration}{The MCMC iteration or chain to plot.}
 
-\item{iter}{The MCMC iteration or chain to plot.}
+\item{plotType}{What type of plot to display. either dendrogram or icicle.}
 }
 \value{
 A plot of an individual tree
