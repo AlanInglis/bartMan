@@ -41,7 +41,7 @@ dbartsTreeData <- function(model) {
 
 
   # fix node number for each tree
-  noObservations <- length(model$y)
+  noObservations <- length(model$yhat.train)
   trees <- trees %>%
     group_by(newSplit = cumsum(n == noObservations), .keep = FALSE) %>%
     mutate(node = 1:length(tree)) %>%
