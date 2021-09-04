@@ -1,0 +1,140 @@
+---
+title: "bartVis"
+author: "Alan Inglis"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+# Introduction
+This vignette shows a quick example of how to use the current functions. to begin we create some data from the Friedman benchmark problem No 1.
+
+```{r}
+## Create some data
+f <- function(x) {
+  10 * sin(pi * x[, 1] * x[, 2]) + 20 * (x[, 3] - 0.5)^2 +
+    10 * x[, 4] + 5 * x[, 5]
+}
+
+set.seed(1701)
+sigma <- 1.0
+n <- 200
+x <- matrix(runif(n * 10), n, 10)
+colnames(x) <- paste0("x", 1:10)
+Ey <- f(x)
+y <- rnorm(n, Ey, sigma)
+fData <- as.data.frame(cbind(x, y))
+
+x <- fData[, 1:10]
+y <- fData$y
+
+```
+
+Now we will create some basic BART models. To begin we load the libraries and then create our models.
+
+```{r, results =  'hide'}
+# load libraries
+library(BART)
+library(dbarts)
+library(bartVis)
+
+# create BART model:
+set.seed(99)
+bartModel <- wbart(x.train = x,
+                   y.train = y,
+                   nskip = 250,
+                   ndpost = 100,
+                   nkeeptreedraws = 1,
+                   ntree = 20
+                   )
+
+# create dbarts model:
+set.seed(99)
+dbartModel <- bart(x,
+                   y,
+                   ntree = 10,
+                   keeptrees = TRUE,
+                   nskip = 1000,
+                   ndpost = 1
+                   )
+
+```
+
+
+Now we create a dataframe, containing the tree structure for all the trees, for both both models.
+
+```{r}
+# create data frame of trees for BART model
+bmTreesData <- bartTreeData(bartModel)
+
+# create data frame of trees for dbarts model
+dbTreesData <- dbartsTreeData(dbartModel)
+```
+
+
+Taking a look at both dataframe outputs:
+```{r}
+bmTreesData
+dbTreesData
+```
+
+Now, we create a list off every tree for both models and take a look at just a single element:
+
+```{r}
+# create list of each tree for BART model
+bmTreesList <- treeList(bmTreesData)
+bmTreesList[[1]]
+
+
+# create list of trees for dbarts model
+dbTreeList <- treeList(dbTreesData)
+dbTreeList[[2]]
+```
+
+Now we can plot any tree (from any iteration). To begin we look at a tree from the BART model
+```{r}
+# plot tree
+plotTrees(bmTreesList,
+  treeNum = 1,
+  iteration = 1,
+  plotType = "dendrogram"
+)
+
+plotTrees(bmTreesList,
+  treeNum = 1,
+  iteration = 1,
+  plotType = "icicle"
+)
+
+```
+
+
+And now a tree from the dbarts model
+```{r}
+# plot tree
+plotTrees(dbTreeList,
+          treeNum = 2,
+          iteration = 1,
+          plotType = "dendrogram"
+)
+
+plotTrees(dbTreeList,
+          treeNum = 2,
+          iteration = 1,
+          plotType = "icicle"
+)
+```
+
+
+
