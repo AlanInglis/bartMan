@@ -1,9 +1,9 @@
-#' bartTreesList
+#' bartTreeList
 #'
 #' @description Creates a list of tree attributes for a model
 #' created by the bart package.
 #'
-#' @param bartTreesData A data frame created by bartTreesData function.
+#' @param trees A data frame created by bartTreesData function.
 #' @return A list of every tree and its attributes.
 #'
 #' @importFrom dplyr select
@@ -19,8 +19,8 @@
 
 
 
-bartTreesList <- function(bartTreesData) {
-  trees <- bartTreesData
+bartTreeList <- function(trees) {
+
 
   # Which columns to display
   keeps <- c("var", "node", "parent", "iteration", "treeNum", "label")

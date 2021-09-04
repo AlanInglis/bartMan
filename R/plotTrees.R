@@ -10,6 +10,10 @@
 #' @return A plot of an individual tree
 #'
 #' @import ggraph
+#' @import ggplot2
+#' @importFrom tidygraph activate
+#' @importFrom dplyr %>%
+#' @importFrom tibble as_tibble
 #' @export
 
 plotTrees <- function(treeData,
@@ -18,8 +22,8 @@ plotTrees <- function(treeData,
                       plotType = c("dendrogram", "icicle")) {
 
   list_obj <- lapply(treeData, function(x){
-    edges <- activate(x, edges) %>% as_tibble()
-    nodes <- activate(x, nodes) %>% as_tibble()
+    edges <- tidygraph::activate(x, edges) %>% tibble::as_tibble()
+    nodes <- tidygraph::activate(x, nodes) %>% tibble::as_tibble()
     return(list(edges = edges, nodes = nodes))
   } )
 

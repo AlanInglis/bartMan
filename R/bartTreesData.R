@@ -1,4 +1,4 @@
-#' bartTreesData
+#' bartTreeData
 #'
 #' @description Creates a data frame of all tree attributes for a model
 #' created by the bart package.
@@ -19,15 +19,8 @@
 #' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
 #' @importFrom dplyr ungroup
-#'
 #' @importFrom stats complete.cases
-#'
-#'
-#'
-#'
-#' @importFrom dplyr select
 #' @importFrom dplyr one_of
-
 #' @importFrom dplyr group_split
 #' @importFrom dplyr filter
 #' @importFrom purrr map
@@ -38,7 +31,7 @@
 
 
 
-bartTreesData <- function(model) {
+bartTreeData <- function(model) {
 
 
   # variable names:
@@ -171,6 +164,7 @@ bartTreesData <- function(model) {
     -tier
   )
 
-
+  # add class
+  class(trees) <- c("list", "bart")
   return(trees)
 }
