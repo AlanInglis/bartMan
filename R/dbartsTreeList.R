@@ -22,24 +22,21 @@
 
 dbartsTreeList <- function(trees){
 
-  noObservations <- max(trees$n)
-
-  # remove dbarts class to work with dplyr
-  class(trees) <- c("tbl_df", "tbl", "data.frame")
+  noObservations <- max(trees$structure$n)
 
   # Which columns to display
   keeps <- c("var", "node", "isLeaf", "iteration", "treeNum", "label", "n")
 
-  trees <- dplyr::select(
-    trees,
+  trees$structure <- dplyr::select(
+    trees$structure,
     dplyr::one_of(keeps)
   )
 
-  trees <- transform(trees, varValue = ifelse(is.na(var), -1, var))
+  trees$structure <- transform(trees$structure, varValue = ifelse(is.na(var), -1, var))
 
 
   # split into individual trees
-  treesSplit <- trees %>%
+  treesSplit <- trees$structure %>%
     group_split(cumsum(n == noObservations), .keep = FALSE)
 
 
@@ -59,7 +56,7 @@ dbartsTreeList <- function(trees){
     depthSize
   }
 
-  # get every tree max depth and add to trees df
+  # get every tree max depth and add to trees list
   dS <- as.vector(sapply(treesSplit, treeDepth)[1, ])
   treesSplit <- mapply(cbind, treesSplit, "depth" = dS, SIMPLIFY = F)
 
@@ -127,17 +124,13 @@ dbartsTreeList <- function(trees){
 
   allEdges <- sapply(treesSplit, getEdges)
 
-  # remove depth and varValue column
+  # remove unnessecery columns
   treesSplit <- lapply(treesSplit, function(x) {
     x["depth"] <- x["varValue"] <- x["isLeaf"] <- x["n"] <- NULL; x
   })
 
 
   # Turn into a table graph object
-
-    tblG <- tidygraph::tbl_graph(treesSplit[[2]], as.data.frame(allEdges[, 2]))
-
-
   eachTree <- list()
   for (i in 1:length(treesSplit)) {
     eachTree[[i]] <- tidygraph::tbl_graph(treesSplit[[i]], as.data.frame(allEdges[, i]))
