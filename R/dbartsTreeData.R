@@ -22,7 +22,7 @@ dbartsTreeData <- function(model) {
   # get all trees
   treesTotal <- model$call$ntree
   iteration  <- model$call$ndpost
-  trees <- model$fit$getTrees(treeNums = 1:treesTotal, chainNums = 1:iteration)
+  trees <- model$fit$getTrees(treeNums = 1:treesTotal, sampleNums = 1:iteration)
 
 
   # Get variable names

@@ -134,9 +134,9 @@ dbartsTreeList <- function(trees){
 
 
   # Turn into a table graph object
-  tableGraphFun <- function(trees, edges) {
+
     tblG <- tidygraph::tbl_graph(treesSplit[[2]], as.data.frame(allEdges[, 2]))
-  }
+
 
   eachTree <- list()
   for (i in 1:length(treesSplit)) {
