@@ -76,10 +76,10 @@ Now we create a dataframe, containing the tree structure for all the trees, for 
 
 ```{r}
 # create data frame of trees for BART model
-bmTreesData <- bartTreeData(bartModel)
+bmTreesData <- treeData(bartModel)
 
 # create data frame of trees for dbarts model
-dbTreesData <- dbartsTreeData(dbartModel)
+dbTreesData <- treeData(dbartModel)
 ```
 
 

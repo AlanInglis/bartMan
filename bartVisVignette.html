@@ -12,7 +12,7 @@
 
 <meta name="author" content="Alan Inglis" />
 
-<meta name="date" content="2021-09-04" />
+<meta name="date" content="2021-09-06" />
 
 <title>bartVis</title>
 
@@ -141,7 +141,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">bartVis</h1>
 <h4 class="author">Alan Inglis</h4>
-<h4 class="date">2021-09-04</h4>
+<h4 class="date">2021-09-06</h4>
 
 
 
@@ -195,10 +195,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>                   )</span></code></pre></div>
 <p>Now we create a dataframe, containing the tree structure for all the trees, for both both models.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create data frame of trees for BART model</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>bmTreesData <span class="ot">&lt;-</span> <span class="fu">bartTreeData</span>(bartModel)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>bmTreesData <span class="ot">&lt;-</span> <span class="fu">treeData</span>(bartModel)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># create data frame of trees for dbarts model</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>dbTreesData <span class="ot">&lt;-</span> <span class="fu">dbartsTreeData</span>(dbartModel)</span></code></pre></div>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>dbTreesData <span class="ot">&lt;-</span> <span class="fu">treeData</span>(dbartModel)</span></code></pre></div>
 <p>Taking a look at both dataframe outputs:</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>bmTreesData</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $structure</span></span>
@@ -230,20 +230,33 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
 <span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;list&quot; &quot;bart&quot;</span></span>
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>dbTreesData</span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 62 × 9</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    var   splitValue  node isLeaf leafValue iteration treeNum label           n</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt; &lt;lgl&gt;      &lt;dbl&gt;     &lt;int&gt;   &lt;int&gt; &lt;chr&gt;       &lt;int&gt;</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 x4         0.508     1 FALSE    NA              1       1 x4 ≤ 0.5078   200</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 &lt;NA&gt;      NA         2 TRUE     -0.158          1       1 -0.1575       111</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 &lt;NA&gt;      NA         3 TRUE     -0.0817         1       1 -0.0817        89</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 x4         0.694     1 FALSE    NA              1       2 x4 ≤ 0.6938   200</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 x2         0.602     2 FALSE    NA              1       2 x2 ≤ 0.602     60</span></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 &lt;NA&gt;      NA         3 TRUE     -0.126          1       2 -0.1256        23</span></span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 x6         0.759     4 FALSE    NA              1       2 x6 ≤ 0.7592    37</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 x4         0.449     5 FALSE    NA              1       2 x4 ≤ 0.4491     8</span></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 &lt;NA&gt;      NA         6 TRUE     -0.0385         1       2 -0.0385         8</span></span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 &lt;NA&gt;      NA         7 TRUE     -0.0347         1       2 -0.0347         0</span></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 52 more rows</span></span></code></pre></div>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $structure</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # A tibble: 62 × 9</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    var   splitValue  node isLeaf leafValue iteration treeNum label           n</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt; &lt;lgl&gt;      &lt;dbl&gt;     &lt;int&gt;   &lt;int&gt; &lt;chr&gt;       &lt;int&gt;</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  1 x4         0.508     1 FALSE    NA              1       1 x4 ≤ 0.5078   200</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  2 &lt;NA&gt;      NA         2 TRUE     -0.158          1       1 -0.1575       111</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  3 &lt;NA&gt;      NA         3 TRUE     -0.0817         1       1 -0.0817        89</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  4 x4         0.694     1 FALSE    NA              1       2 x4 ≤ 0.6938   200</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  5 x2         0.602     2 FALSE    NA              1       2 x2 ≤ 0.602     60</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  6 &lt;NA&gt;      NA         3 TRUE     -0.126          1       2 -0.1256        23</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  7 x6         0.759     4 FALSE    NA              1       2 x6 ≤ 0.7592    37</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  8 x4         0.449     5 FALSE    NA              1       2 x4 ≤ 0.4491     8</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt;  9 &lt;NA&gt;      NA         6 TRUE     -0.0385         1       2 -0.0385         8</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 10 &lt;NA&gt;      NA         7 TRUE     -0.0347         1       2 -0.0347         0</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; # … with 52 more rows</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $nMCMC</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $nTree</span></span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; $nVar</span></span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 10</span></span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; attr(,&quot;class&quot;)</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] &quot;list&quot;   &quot;dbarts&quot;</span></span></code></pre></div>
 <p>Now, we create a list off every tree for both models and take a look at just a single element:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># create list of each tree for BART model</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>bmTreesList <span class="ot">&lt;-</span> <span class="fu">treeList</span>(bmTreesData)</span>
