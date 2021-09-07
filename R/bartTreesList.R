@@ -23,7 +23,7 @@ bartTreeList <- function(trees) {
 
 
   # Which columns to display
-  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label")
+  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label", "value")
 
   res <- dplyr::select(
     trees$structure,

@@ -13,6 +13,7 @@
 #' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
 #' @importFrom dplyr ungroup
+#' @importFrom dplyr coalesce
 #'
 #'
 #' @export
@@ -43,8 +44,8 @@ dbartsTreeData <- function(model) {
   trees$structure <- transform(trees$structure, varName = ifelse(var < 0, NA, var))
   trees$structure$varName <- varNames[trees$structure$varName]
   trees$structure <- transform(trees$structure, label = ifelse(is.na(varName), value, paste(varName, value, sep = " ≤ ")))
-
-
+  trees$structure <-  trees$structure %>%
+    mutate(value = coalesce(splitValue, leafValue))
 
   # fix node number for each tree
   noObservations <- length(model$yhat.train)
@@ -67,6 +68,7 @@ dbartsTreeData <- function(model) {
       iteration,
       treeNum,
       label,
+      value,
       n
     )
 

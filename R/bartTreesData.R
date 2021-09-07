@@ -19,6 +19,7 @@
 #' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
 #' @importFrom dplyr ungroup
+#' @importFrom dplyr coalesce
 #' @importFrom stats complete.cases
 #' @importFrom dplyr one_of
 #' @importFrom dplyr group_split
@@ -140,11 +141,14 @@ bartTreeData <- function(model) {
   trees$structure$var <- ifelse(trees$structure$isLeaf, NA_character_, trees$structure$var)
   # Add a label column
   trees$structure$label <- ifelse(trees$structure$isLeaf,
-                                  as.character(round(trees$structure$leafValue, digits = 2)),
-                                  paste(trees$structure$var, " ≤ ", round(trees$structure$splitValue, digits = 2))
+                                  as.character(round(trees$structure$leafValue, digits = 4)),
+                                  paste(trees$structure$var, " ≤ ", round(trees$structure$splitValue, digits = 4))
   )
   # Add parent column
   trees$structure$parent <- parent(trees$structure$node)
+  # Add value column
+  trees$structure <- trees$structure %>%
+    dplyr::mutate(value = dplyr::coalesce(splitValue, leafValue))
 
   # reordering the data and removing unnecessary columns
   trees$structure <- dplyr::select(
@@ -160,6 +164,7 @@ bartTreeData <- function(model) {
     iteration,
     treeNum,
     label,
+    value,
     -splitID,
     -tier
   )

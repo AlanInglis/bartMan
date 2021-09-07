@@ -25,7 +25,7 @@ dbartsTreeList <- function(trees){
   noObservations <- max(trees$structure$n)
 
   # Which columns to display
-  keeps <- c("var", "node", "isLeaf", "iteration", "treeNum", "label", "n")
+  keeps <- c("var", "node", "isLeaf", "iteration", "treeNum", "label", "n", "value")
 
   trees$structure <- dplyr::select(
     trees$structure,
@@ -59,6 +59,9 @@ dbartsTreeList <- function(trees){
   # get every tree max depth and add to trees list
   dS <- as.vector(sapply(treesSplit, treeDepth)[1, ])
   treesSplit <- mapply(cbind, treesSplit, "depth" = dS, SIMPLIFY = F)
+
+
+# Get Nodes and Edges -----------------------------------------------------
 
   # Get all the edges
   getEdges <- function(trees) {
