@@ -1,4 +1,5 @@
 
+# This function extracts the node attributes fro a tree
 observationNodes <- function(tree, var, nRows) {
 
   # small set up of tree list
@@ -55,6 +56,24 @@ observationNodes <- function(tree, var, nRows) {
 rebuildTree <- function(tree, var, nRows) {
   result <- observationNodes(tree, var, nRows)
   return(result)
+}
+
+# This function extracts all the node attributes for every tree
+getAllNodeObsIndex <- function(tree, data, nRows) {
+
+  # small set up of tree
+  index <- nRows
+  tree  <- as.data.frame(tree$structure)
+  tree  <- transform(tree, var = ifelse(is.na(var), -1, var))
+
+  rebuiltTreesAll <- by(
+    tree[c("treeNum", "var", "value")],
+    tree[c("iteration")],
+    function(trees) {
+      by(tree[c("var", "value")], tree[["treeNum"]],
+         rebuildTree, var = data, nRows = index)
+    }
+  )
 }
 
 
