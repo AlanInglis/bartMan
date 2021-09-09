@@ -9,14 +9,28 @@
 #'
 #' @importFrom gridExtra grid.arrange
 #' @importFrom ggraph ggraph
+#' @importFrom dplyr %>%
+#' @importFrom dplyr pull
+#' @importFrom purrr keep
+#' @importFrom tibble as_tibble
 #'
 #' @export
 
 
 plotAllTrees <- function(treeList, sampleSize = 0) {
+
+  # plot a sample of trees
   if (sampleSize > 0) {
     treeList <- sample(treeList, sampleSize, replace = FALSE)
   }
+
+  # remove any of the lists that are only a single node
+  treeList <- keep(treeList, ~ .x %>%
+                   as_tibble %>%
+                   pull(var) %>%
+                   is.na %>%
+                   `!` %>%
+                   any)
 
   allPlots <- lapply(treeList, plotFun, n = length(treeList))
   n <- length(allPlots)
