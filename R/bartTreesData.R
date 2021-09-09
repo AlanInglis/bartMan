@@ -141,8 +141,8 @@ bartTreeData <- function(model) {
   trees$structure$var <- ifelse(trees$structure$isLeaf, NA_character_, trees$structure$var)
   # Add a label column
   trees$structure$label <- ifelse(trees$structure$isLeaf,
-                                  as.character(round(trees$structure$leafValue, digits = 4)),
-                                  paste(trees$structure$var, " ≤ ", round(trees$structure$splitValue, digits = 4))
+                                  as.character(round(trees$structure$leafValue, digits = 2)),
+                                  paste(trees$structure$var, " ≤ ", round(trees$structure$splitValue, digits = 2))
   )
   # Add parent column
   trees$structure$parent <- parent(trees$structure$node)
