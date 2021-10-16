@@ -26,15 +26,12 @@ proximityMatrix <- function(tree = tree,
   allIndex <- getIndex(tree = tree,
                        data = data,
                        nRows = nRows)
+
   # get max value
   maxVal <- max(unlist(allIndex))
 
   # turn into matrix
-  resMat <- Reduce(`+`, lapply(allIndex, function(x)
-    crossprod(table(transform(stack(setNames(
-      combn(x,
-            2, simplify = FALSE), combn(x, 2, paste, collapse = "_"))),
-      values = factor(values, levels = 1:maxVal))[2:1]))> 0))
+  resMat <- tcrossprod(table(stack(allIndex)))
 
   if(normalize){
     resMat <- resMat/noTrees
