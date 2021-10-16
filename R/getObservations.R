@@ -1,5 +1,10 @@
 
-# This function extracts the node attributes fro a tree
+# This function extracts the node attributes for a single tree
+# Additional info:
+# tree = tree$structure
+# var = data
+# nRows = sequence of observations
+
 observationNodes <- function(tree, var, nRows) {
 
   # small set up of tree list
