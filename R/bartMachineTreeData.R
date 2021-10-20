@@ -24,8 +24,14 @@
 
 bartMachineTreeData <- function(model){
 
-  # extract the raw node data
-  nodeData <- bartMachine::extract_raw_node_data(model)
+  iter <- model$num_iterations_after_burn_in
+
+  # extract the raw node data for all iterations
+  nodeData <- NULL
+  for(i in 1:iter){
+    nodeData[i] <- bartMachine::extract_raw_node_data(model, g = i)
+  }
+
   listNodesBM <- list(nodeData)
 
   # bind node data together
