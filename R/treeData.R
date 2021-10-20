@@ -1,9 +1,9 @@
 #' treeData
 #'
 #' @description Creates a data frame of tree attributes for a model
-#' created from either the bart or dbarts packages.
+#' created from either the bart, dbarts, or bartMachine packages.
 #'
-#' @param model A dmodel created from either the bart or dbarts packages.
+#' @param model A model created from either the bart, dbarts, or bartMachine packages.
 #' @return A tibble of every tree and its attributes.
 #'
 #'
@@ -15,6 +15,8 @@ treeData <- function(model){
     dataTrees <- dbartsTreeData(model)
   }else if(class(model) == "wbart"){
     dataTrees <- bartTreeData(model)
+  }else if(class(model) == "bartMachine"){
+    dataTrees <- bartMachineTreeData(model)
   }
   return(dataTrees)
 

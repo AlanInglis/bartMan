@@ -3,7 +3,7 @@
 #' @description plots individual trees from the R-packages BART, dbarts, and
 #' bartMachine
 #'
-#' @param treeData A data frame created by XXX function
+#' @param treeData A data frame created by treeList function
 #' @param treeNum The tree number to plot.
 #' @param iteration The MCMC iteration or chain to plot.
 #' @param plotType What type of plot to display. either dendrogram or icicle.
