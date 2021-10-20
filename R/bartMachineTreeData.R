@@ -25,7 +25,7 @@
 bartMachineTreeData <- function(model){
 
   # extract the raw node data
-  nodeData <- bartMachine::extract_raw_node_data(bM)
+  nodeData <- bartMachine::extract_raw_node_data(model)
   listNodesBM <- list(nodeData)
 
   # bind node data together
@@ -109,6 +109,10 @@ bartMachineTreeData <- function(model){
   # Add iteration column
   df$iteration <- 1
 
+  # round values
+  df$splitValue <- round(as.numeric(df$splitValue),4)
+  df$leafValue <- round(as.numeric(df$leafValue),  4)
+
   # add value column
   df <-  df %>%
     mutate(value = coalesce(splitValue, leafValue))
@@ -116,6 +120,8 @@ bartMachineTreeData <- function(model){
   # add label column
   df <- transform(df, label = ifelse(is.na(splitValue), value, paste(nodeID, value, sep = " ≤ ")))
 
+  # turn into tibble
+  df <- as_tibble(df)
 
   return(df)
 
