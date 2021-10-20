@@ -7,12 +7,12 @@
 treeData(model)
 }
 \arguments{
-\item{model}{A dmodel created from either the bart or dbarts packages.}
+\item{model}{A model created from either the bart, dbarts, or bartMachine packages.}
 }
 \value{
 A tibble of every tree and its attributes.
 }
 \description{
 Creates a data frame of tree attributes for a model
-created from either the bart or dbarts packages.
+created from either the bart, dbarts, or bartMachine packages.
 }

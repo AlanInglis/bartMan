@@ -12,7 +12,7 @@ plotTrees(
 )
 }
 \arguments{
-\item{treeData}{A data frame created by XXX function}
+\item{treeData}{A data frame created by treeList function}
 
 \item{treeNum}{The tree number to plot.}
 
