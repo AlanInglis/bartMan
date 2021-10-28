@@ -21,32 +21,15 @@ plotTrees <- function(treeData,
                       iteration = 1,
                       plotType = c("dendrogram", "icicle")) {
 
-  list_obj <- lapply(treeData, function(x){
-    edges <- tidygraph::activate(x, edges) %>% tibble::as_tibble()
-    nodes <- tidygraph::activate(x, nodes) %>% tibble::as_tibble()
-    return(list(edges = edges, nodes = nodes))
-  } )
-
-
   getTreeListNumber <- function(treeData, iter, tNum){
-
-    res <- 0
-    listNumber <- NA
-
-    for(i in 1:length(treeData)){
-      res <- iter %in% treeData[[i]]$nodes$iteration && tNum %in% treeData[[i]]$nodes$treeNum
-      if(res == TRUE){
-        listNumber <- i
-      }
-    }
-    if(is.na(listNumber)){
-      stop("ERROR: Either iteration or treeNum subscript out of bounds")
-    }
-
-    return(listNumber)
+    which(sapply(treeData, function(x) {
+      nodes <- tidygraph::activate(x, nodes) %>% tibble::as_tibble()
+      all(nodes$iteration == iteration & nodes$treeNum == treeNum)
+    }))
   }
 
-  listIndex <- getTreeListNumber(list_obj, iter = iteration, tNum = treeNum)
+
+  listIndex <- getTreeListNumber(treeData, iter = iteration, tNum = treeNum)
 
   if (plotType == "dendrogram") {
     gp <- ggraph(treeData[[listIndex]], "dendrogram") +
