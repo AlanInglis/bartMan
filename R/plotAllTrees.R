@@ -21,31 +21,42 @@ plotAllTrees <- function(treeList, sampleSize = 0) {
     treeList <- sample(treeList, sampleSize, replace = FALSE)
   }
 
- treeList <- Filter(function(x) gsize(x) > 0, treeList)
+ # remove stumps
+ treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
+
+  # set node colours
+ nodenames <- unique(na.omit(unlist(lapply(treeList, .%>%activate(nodes) %>% pull(var) ))))
+ nodecolors <- setNames(scales::hue_pal(c(0,360)+15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 
 
-  allPlots <- lapply(treeList, plotFun, n = length(treeList))
+  allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors)
   n <- length(allPlots)
   nRow <- floor(sqrt(n))
   do.call("grid.arrange", c(allPlots, nrow = nRow))
 }
 
-
-plotFun <- function(t, n) {
-
+plotFun <- function(List, colors = NULL, n) {
   if (n > 10) {
-    g <- ggraph(t, "partition") +
+    plot <- ggraph(List, "partition") +
       geom_node_tile(aes(fill = var), size = 0.25) +
       scale_y_reverse() +
       theme_void() +
       theme(legend.position = "none")
+    if (!is.null(colors)) {
+      plot <- plot + scale_fill_manual(values = colors) +
+        scale_color_manual(values = colors, na.value = "grey")
+    }
   } else {
-    g <- ggraph(t, "partition") +
+    plot <- ggraph(List, "partition") +
       geom_node_tile(aes(fill = var), size = 0.25) +
-      geom_node_label(aes(label = label, color = var)) +
+      geom_node_label(aes(label = label, color = label)) +
       scale_y_reverse() +
       theme_void() +
       theme(legend.position = "none")
+    if (!is.null(colors)) {
+      plot <- plot + scale_fill_manual(values = colors) +
+        scale_color_manual(values = colors, na.value = "grey")
+    }
   }
-  return(g)
+  return(plot)
 }
