@@ -24,23 +24,37 @@
 
 bartMachineTreeData <- function(model){
 
+  # Get variable names
+  varNames <- colnames(model$X)
+
+  # Get No of iterations after burn in
   iter <- model$num_iterations_after_burn_in
 
   # extract the raw node data for all iterations
   nodeData <- NULL
-  for(i in 1:iter){
-    nodeData[i] <- bartMachine::extract_raw_node_data(model, g = i)
+  if (iter > 1) {
+    nodeData <- NULL
+    for (i in 1:iter) {
+      nodeData[[i]] <- bartMachine::extract_raw_node_data(model, g = i)
+    }
+  } else {
+    nodeData <- bartMachine::extract_raw_node_data(model)
   }
 
-  listNodesBM <- list(nodeData)
 
   # bind node data together
-  out <- rrapply::rrapply(listNodesBM, how = 'bind')
+  out <- rrapply::rrapply(nodeData, how = 'bind')
 
   # get position of grep
   i1 <- grep('string_location', names(out))
 
   # extract relevant info:
+  resVar <- out[i1+1] %>%
+    transpose %>%
+    purrr::map( ~ keep(.x, lengths(.x) > 0)) %>%
+    flatten %>%
+    setNames(str_c('var', seq_along(.)))
+
   resNodeID <- out[i1] %>%
     transpose %>%
     purrr::map( ~ keep(.x, lengths(.x) > 0)) %>%
@@ -71,12 +85,16 @@ bartMachineTreeData <- function(model){
     flatten %>%
     setNames(str_c('isStump.', seq_along(.)))
 
-  myLists <- list(resNodeID, resSplitValue, resLeaf, resYPred, resStump)
+  myLists <- list(resVar, resNodeID, resSplitValue, resLeaf, resYPred, resStump)
 
   # Turn into dataframe
   df <- data.frame(matrix(unlist(myLists), nrow = length(myLists[[1]]), byrow=FALSE))
-  names(df) <- c("nodeID", "splitValue", "isLeaf", "leafValue", "isStump")
+  names(df) <- c("varID", "nodeID", "splitValue", "isLeaf", "leafValue", "isStump")
   df <- df[rowSums(is.na(df)) != ncol(df), ] # remove NA rows
+
+  # match var number to varName
+  names(varNames) <- c(0:(length(varNames)-1))
+  df$var <- varNames[as.character(df$varID)]
 
   # Add tree number
   df$treeNum <-cumsum(df$nodeID=="P")
@@ -113,7 +131,14 @@ bartMachineTreeData <- function(model){
     mutate(parentNodeNo = match(parentNode, nodeID))
 
   # Add iteration column
-  df$iteration <- 1
+  noTrees <- model$num_trees
+  dfIteration <- data.frame(nodeID = df$nodeID)
+  dfIteration <- dfIteration %>%
+    mutate(iter = replace(rep(NA_integer_, n()), nodeID == 'P',
+                          as.integer(gl(sum(nodeID == 'P'), noTrees, sum(nodeID == 'P'))))) %>%
+    fill(iter)
+
+  df$iteration <- dfIteration$iter
 
   # round values
   df$splitValue <- round(as.numeric(df$splitValue),4)
@@ -124,7 +149,7 @@ bartMachineTreeData <- function(model){
     mutate(value = coalesce(splitValue, leafValue))
 
   # add label column
-  df <- transform(df, label = ifelse(is.na(splitValue), value, paste(nodeID, value, sep = " ≤ ")))
+  df <- transform(df, label = ifelse(is.na(splitValue), value, paste(var, value, sep = " ≤ ")))
 
   # turn into tibble
   df <- as_tibble(df)
