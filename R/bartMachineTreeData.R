@@ -96,27 +96,27 @@ bartMachineTreeData <- function(model){
   names(varNames) <- c(0:(length(varNames)-1))
   df$var <- varNames[as.character(df$varID)]
 
-  # Add tree number
-  df$treeNum <-cumsum(df$nodeID=="P")
+  # Add tree number (ignoring iterration)
+  df$treeNumID <-cumsum(df$nodeID=="P")
 
   # rearrange the rows (ie nodes) so the left nodes come before
   # the right nodes
   df <- df %>%
-    group_by(treeNum) %>%
+    group_by(treeNumID) %>%
     mutate(level = nchar(nodeID)) %>%
-    group_by(treeNum) %>%
+    group_by(treeNumID) %>%
     arrange(level, ifelse(nodeID=="P", 1, match(LETTERS, nodeID)+1),
             .by_group = TRUE)
 
 
   # define node number sequentially
   df <- df %>%
-    group_by(treeNum) %>%
+    group_by(treeNumID) %>%
     mutate(node = row_number())
 
   # get the parent node
   df <- df %>%
-    group_by(treeNum) %>%
+    group_by(treeNumID) %>%
     mutate(parentNode = substr(nodeID, 0, nchar(nodeID)-1))
 
   # define parent node of P as NA
@@ -127,7 +127,7 @@ bartMachineTreeData <- function(model){
 
   # Match parent node names to node numbers
   df <- df %>%
-    group_by(treeNum) %>%
+    group_by(treeNumID) %>%
     mutate(parentNodeNo = match(parentNode, nodeID))
 
   # Add iteration column
@@ -150,6 +150,11 @@ bartMachineTreeData <- function(model){
 
   # add label column
   df <- transform(df, label = ifelse(is.na(splitValue), value, paste(var, value, sep = " ≤ ")))
+
+  # Change treeNum to reflect the iteration
+  df <- df %>%
+    group_by(iteration) %>%
+    mutate(treeNum = cumsum(nodeID == "P"))
 
   # turn into tibble
   df <- as_tibble(df)

@@ -15,11 +15,11 @@ bartMachineTreeList <- function(trees){
   df <- trees
 
   # split the dataframe into a list of dfs, one for each tree
-  list_edges <- split(df, df$treeNum)
+  list_edges <- split(df, df$treeNumID)
 
   # rename some columns
-  x <- c("varID", "nodeID", "splitValue", "isLeaf", "leafValue",  "isStump", "var", "treeNum",
-         "depth", "to",  "parentNode", "from", "iteration", "value", "label")
+  x <- c("varID", "nodeID", "splitValue", "isLeaf", "leafValue",  "isStump", "var", "treeNumID",
+         "depth", "to",  "parentNode", "from", "iteration", "value", "label", "treeNum")
   list_edges <- lapply(list_edges, setNames, x)
 
   # reorder columns
@@ -31,6 +31,7 @@ bartMachineTreeList <- function(trees){
         "isLeaf",
         "leafValue",
         "isStump",
+        "treeNumID",
         "treeNum",
         "iteration",
         "depth",
