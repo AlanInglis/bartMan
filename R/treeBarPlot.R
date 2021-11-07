@@ -1,15 +1,15 @@
-#' treeMap
+#' treeBarPlot
 #'
-#' @description Creates a treemap displaying the frequency of different tree structures.
+#' @description Creates a barplot displaying the frequency of different tree structures.
 #'
 #' @param treeList A list of trees created using the treeList function.
 #'
-#' @return A treemap plot.
+#' @return A barplot plot.
 #'
 #'
 #' @import ggplot2
 #' @importFrom purrr map_chr
-#' @importFrom purrr reduce
+#' @importFrom purrr map2
 #' @importFrom tidygraph activate
 #' @importFrom tidygraph tbl_graph
 #' @importFrom tidyr separate
@@ -28,11 +28,12 @@
 #'
 #' @export
 
+treeBarPlot <- function(treeList){
 
-treeMap <- function(treeList){
 
-  # get edge frequency
-  edgeFreq <- treeList %>%
+# Get Edge Frequency ------------------------------------------------------
+
+  edgeFreq <- bmTreesList %>%
     map_chr(~as_tibble(activate(.x, edges)) %>%
               map_chr(str_c, collapse = " ") %>%
               toString())%>%
@@ -44,27 +45,31 @@ treeMap <- function(treeList){
     arrange(-frequency) %>%
     mutate(treeNum = row_number())
 
-  # create treemap of tree structure frequency
-  tMap <- ggplot(edgeFreq,
-         aes(fill = frequency,
-             area = frequency,
-             label = treeNum
-             )) +
-    theme(legend.position = "none") +
-    treemapify::geom_treemap() +
-   treemapify::geom_treemap_text(colour = "white",
-                     place = "centre")
+
+# Create barplot of frequency ---------------------------------------------
+
+  bp <- edgeFreq %>%
+    ggplot() +
+    geom_bar(aes(x = from, y = frequency, fill = frequency), stat = "identity") +
+    ggtitle("tree frequency") +
+    ylab("Frequency") +
+    xlab("") +
+    theme_bw() +
+    theme(axis.title.x=element_blank(),
+          axis.text.x=element_blank(),
+          axis.ticks.x=element_blank())
 
 
-# Create Legend -----------------------------------------------------------
+# Create trees for x-axis -------------------------------------------------
 
-  # extract all edges from tree list
+  # extract all edges
   edgeList <- NULL
   for(i in 1:length(treeList)){
     edgeList[[i]] <- treeList[[i]] %>%
       activate(edges) %>%
       data.frame()
   }
+
 
   # get list of unique plots
   edgeListKeep <- edgeList[!duplicated(lapply(edgeList, function(x) x[,c("from","to")]))]
@@ -85,6 +90,7 @@ treeMap <- function(treeList){
       mutate(name = c(i, rep(NA, length.out = igraph::gsize(edgeListTBL[[i]]))))
   }
 
+
   # plotting function
   plotFun <- function(List, n) {
 
@@ -99,25 +105,35 @@ treeMap <- function(treeList){
   allPlots <- lapply(edgeListTBL, plotFun, n = length(edgeListTBL))
 
 
-# Create areas for legend -------------------------------------------------
-
-  vals = seq(1:length(allPlots))
-  maxVal <- max(vals)
-
-  # create list of all areas
-  areaList <- lapply(vals, function(x) area(x, maxVal+1))
-  # turn into a df
-  areaReduced <- purrr::reduce(areaList, c)
-  # put all areas together
-  design <- c(area(1, 1, maxVal, maxVal),
-              areaReduced)
+# Create final barplot ----------------------------------------------------
 
 
-# Plot treeMap ------------------------------------------------------------
+  width <- .9 # set default width of bars
+  p_axis <- ggplot(edgeFreq) +
+    geom_blank(aes(x = from)) +
+    purrr::map2(allPlots, seq_along(allPlots), ~ annotation_custom(ggplotGrob(.x), xmin = .y - width / 2, xmax = .y + width / 2)) +
+    theme_void()
 
- tMapPlot <- tMap + allPlots + plot_layout(design = design)
 
-  return(tMapPlot)
+  bpFinal <- bp / p_axis + plot_layout(heights = c(4, 1))
+
+  return(bpFinal)
 
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
