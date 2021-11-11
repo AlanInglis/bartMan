@@ -36,12 +36,12 @@ bartDiag <- function(model,
                     reorder = FALSE
                     ){
 
-  qq <- bartQQ(model, response)
-  trace <- bartTrace(model, burnIn = burnIn)
-  residual <- bartResiduals(model, response = response, pal = pal)
+  qq        <- bartQQ(model, response)
+  trace     <- bartTrace(model, burnIn = burnIn)
+  residual  <- bartResiduals(model, response = response, pal = pal)
   histogram <- bartHist(model)
-  fitVSact <- bartFitted(model)
-  vImp <- bartVimp(model,
+  fitVSact  <- bartFitted(model)
+  vImp      <- bartVimp(model,
                    impLims = impLims,
                    pal = pal,
                    reorder = reorder)
@@ -124,7 +124,7 @@ bartResiduals <- function(model,
     theme_bw() +
     xlab('Fitted') +
     ylab("Residual") +
-    ggtitle("Residuals vs Fitted")
+    ggtitle("Fitted vs Residuals")
 
   return(p)
 
@@ -156,14 +156,17 @@ bartFitted <- function(model){
 
   res <- tidybayes::residual_draws(model, response = y, include_newdata = FALSE)
 
+
   p <- res %>%
     summarise(.fitted = mean(.fitted), y = first(y)) %>%
     ggplot(aes(x = y, y = .fitted)) +
     geom_point(color = "blue", alpha = 0.2) +
-    geom_smooth(method = "lm", color = "black") +
+    geom_smooth(method = "lm", color = "black", formula = y ~ x) +
     xlab('Actual') +
     ylab("Fitted") +
-    theme_bw() + ggtitle("Observations vs Fitted")
+    theme_bw() +
+    ggtitle("Actual vs Fitted")
+
 
   return(p)
 }
