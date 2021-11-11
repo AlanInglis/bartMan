@@ -14,6 +14,7 @@
 #' @importFrom purrr map
 #' @importFrom purrr flatten
 #' @importFrom stringr str_c
+#' @importFrom tidyr fill
 #' @importFrom dplyr arrange
 #' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
@@ -136,7 +137,7 @@ bartMachineTreeData <- function(model){
   dfIteration <- dfIteration %>%
     mutate(iter = replace(rep(NA_integer_, n()), nodeID == 'P',
                           as.integer(gl(sum(nodeID == 'P'), noTrees, sum(nodeID == 'P'))))) %>%
-    fill(iter)
+    tidyr::fill(iter)
 
   df$iteration <- dfIteration$iter
 
@@ -158,6 +159,8 @@ bartMachineTreeData <- function(model){
 
   # turn into tibble
   df <- as_tibble(df)
+
+  class(df) <- c("bartMachine", "tbl_df", "tbl", "data.frame")
 
   return(df)
 

@@ -48,14 +48,22 @@ dbartsTreeData <- function(model) {
     mutate(value = coalesce(splitValue, leafValue))
 
   # fix node number for each tree
-  noObservations <- length(model$yhat.train)
+  # noObservations <- length(model$yhat.train)
+  # trees$structure <- trees$structure %>%
+  #   group_by(newSplit = cumsum(n == noObservations), .keep = FALSE) %>%
+  #   mutate(node = 1:length(tree)) %>%
+  #   ungroup() %>%
+  #   mutate(var = varName) %>%
+  #   rename(iteration = sample, treeNum = tree) %>%
+  #   select(-newSplit, -.keep, - varName)
+
   trees$structure <- trees$structure %>%
-    group_by(newSplit = cumsum(n == noObservations), .keep = FALSE) %>%
-    mutate(node = 1:length(tree)) %>%
+    group_by(tree, sample) %>%
+    mutate(node = row_number()) %>%
     ungroup() %>%
     mutate(var = varName) %>%
     rename(iteration = sample, treeNum = tree) %>%
-    select(-newSplit, -.keep, - varName)
+    select( - varName)
 
   # reorder columns
   trees$structure <- trees$structure %>%
