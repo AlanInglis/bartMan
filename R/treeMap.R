@@ -50,7 +50,7 @@ treeMap <- function(treeList){
              area = frequency,
              label = treeNum
              )) +
-    theme(legend.position = "none") +
+    #theme(legend.position = "bottom") +
     treemapify::geom_treemap() +
    treemapify::geom_treemap_text(colour = "white",
                      place = "centre")
