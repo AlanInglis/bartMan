@@ -13,7 +13,7 @@ treeData <- function(model){
 
   if(class(model) == "bart"){
     dataTrees <- dbartsTreeData(model)
-  }else if(class(model) == "wbart"){
+  }else if(class(model) == "wbart" || class(model) == "lbart" || class(model) == "pbart"){
     dataTrees <- bartTreeData(model)
   }else if(class(model) == "bartMachine"){
     dataTrees <- bartMachineTreeData(model)
