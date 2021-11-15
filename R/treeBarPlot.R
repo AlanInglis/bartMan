@@ -39,10 +39,10 @@ treeBarPlot <- function(treeList){
               toString())%>%
     table() %>%
     as_tibble() %>%
-    setNames(c("data", "frequency")) %>%
+    setNames(c("data", "Frequency")) %>%
     separate(data, c("from", "to"), ", ") %>%
     filter(. != "") %>%
-    arrange(-frequency) %>%
+    arrange(-Frequency) %>%
     mutate(treeNum = row_number())
 
 
@@ -50,14 +50,17 @@ treeBarPlot <- function(treeList){
 
   bp <- edgeFreq %>%
     ggplot() +
-    geom_bar(aes(x = from, y = frequency, fill = frequency), stat = "identity") +
-    ggtitle("tree frequency") +
+    geom_bar(aes(x = from, y = Frequency, fill = Frequency), stat = "identity") +
+    ggtitle("Tree Frequency") +
     ylab("Frequency") +
     xlab("") +
     theme_bw() +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
-          axis.ticks.x=element_blank())
+          axis.ticks.x=element_blank()) +
+    guides(fill = guide_colourbar(
+      frame.colour = "black",
+      ticks.colour = "black"))
 
 
 # Create trees for x-axis -------------------------------------------------
@@ -87,7 +90,7 @@ treeBarPlot <- function(treeList){
   for(i in 1:(length(edgeListTBL))){
     edgeListTBL[[i]] <- edgeListTBL[[i]] %>%
       activate(nodes) %>%
-      mutate(name = c(i, rep(NA, length.out = igraph::gsize(edgeListTBL[[i]]))))
+      mutate(name = c(i, rep("", length.out = igraph::gsize(edgeListTBL[[i]]))))
   }
 
 

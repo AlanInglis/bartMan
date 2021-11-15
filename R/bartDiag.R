@@ -31,20 +31,18 @@
 bartDiag <- function(model,
                     response,
                     burnIn = 0,
-                    pal = rev(colorspace::sequential_hcl(palette = "Blues 3", n = 100)),
                     impLims = NULL,
-                    reorder = FALSE
+                    vImpReorder = FALSE
                     ){
 
   qq        <- bartQQ(model, response)
   trace     <- bartTrace(model, burnIn = burnIn)
-  residual  <- bartResiduals(model, response = response, pal = pal)
+  residual  <- bartResiduals(model, response = response)
   histogram <- bartHist(model)
-  fitVSact  <- bartFitted(model)
+  fitVSact  <- bartFitted(model, response)
   vImp      <- bartVimp(model,
                    impLims = impLims,
-                   pal = pal,
-                   reorder = reorder)
+                   vImpReorder = vImpReorder)
 
   design <- c(
     area(1,1,3,3),
@@ -109,8 +107,7 @@ bartTrace <- function(model, burnIn = 0){
 
 
 bartResiduals <- function(model,
-                          response,
-                          pal = rev(colorspace::sequential_hcl(palette = "Reds 3", n = 100))){
+                          response){
 
   res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
 
@@ -152,9 +149,9 @@ bartHist <- function(model){
 # Fitted Vs Actual --------------------------------------------------------
 
 
-bartFitted <- function(model){
+bartFitted <- function(model, response){
 
-  res <- tidybayes::residual_draws(model, response = y, include_newdata = FALSE)
+  res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
 
 
   p <- res %>%
@@ -176,9 +173,11 @@ bartFitted <- function(model){
 
 bartVimp <- function(model,
                      impLims = NULL,
-                     pal = rev(colorspace::sequential_hcl(palette = "Reds 3", n = 100)),
-                     reorder = FALSE)
+                     vImpReorder = FALSE)
 {
+
+  # set palette
+  pal = rev(colorspace::sequential_hcl(palette = "Blues 3", n = 100))
 
   # get variable importance
   vImp <- model$varcount.mean
@@ -193,7 +192,7 @@ bartVimp <- function(model,
   }
 
   # reorder plots
-  if(reorder){
+  if(vImpReorder){
     vImp$Variable <- forcats::fct_rev(forcats::fct_reorder(vImp$Variable, vImp$Importance))
   }
 

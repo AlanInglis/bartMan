@@ -50,7 +50,7 @@ treeMap <- function(treeList){
              area = frequency,
              label = treeNum
              )) +
-    #theme(legend.position = "bottom") +
+    theme(legend.position = "none") +
     treemapify::geom_treemap() +
    treemapify::geom_treemap_text(colour = "white",
                      place = "centre")
@@ -82,7 +82,7 @@ treeMap <- function(treeList){
   for(i in 1:(length(edgeListTBL))){
     edgeListTBL[[i]] <- edgeListTBL[[i]] %>%
       activate(nodes) %>%
-      mutate(name = c(i, rep(NA, length.out = igraph::gsize(edgeListTBL[[i]]))))
+      mutate(name = c(i, rep("", length.out = igraph::gsize(edgeListTBL[[i]]))))
   }
 
   # plotting function
@@ -117,7 +117,9 @@ treeMap <- function(treeList){
 
  tMapPlot <- tMap + allPlots + plot_layout(design = design)
 
+
   return(tMapPlot)
+
 
 
 }
