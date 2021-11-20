@@ -24,6 +24,7 @@
 #' @importFrom dplyr filter
 #' @importFrom dplyr summarise
 #' @importFrom dplyr tibble
+#' @importFrom dplyr first
 #' @importFrom tibble as_tibble
 #' @export
 
@@ -31,7 +32,6 @@
 bartDiag <- function(model,
                     response,
                     burnIn = 0,
-                    impLims = NULL,
                     vImpReorder = FALSE
                     ){
 
@@ -41,7 +41,6 @@ bartDiag <- function(model,
   histogram <- bartHist(model)
   fitVSact  <- bartFitted(model, response)
   vImp      <- bartVimp(model,
-                   impLims = impLims,
                    vImpReorder = vImpReorder)
 
   design <- c(
@@ -154,11 +153,27 @@ bartFitted <- function(model, response){
   res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
 
 
-  p <- res %>%
-    summarise(.fitted = mean(.fitted), y = first(y)) %>%
-    ggplot(aes(x = y, y = .fitted)) +
-    geom_point(color = "blue", alpha = 0.2) +
-    geom_smooth(method = "lm", color = "black", formula = y ~ x) +
+  # p <- res %>%
+  # # tidybayes::point_interval(.fitted, y, .width = c(0.95) ) %>%
+  #  # select(-y.lower, -y.upper) %>%
+  #   summarise(.fitted = mean(.fitted), y = dplyr::first(y)) %>%
+  #   ggplot(aes(x = y, y = .fitted)) +
+  #   geom_point(color = "blue", alpha = 0.2) +
+  #   geom_smooth(method = "lm", color = "black", formula = y ~ x) +
+  #   xlab('Actual') +
+  #   ylab("Fitted") +
+  #   theme_bw() +
+  #   ggtitle("Actual vs Fitted")
+
+
+ p <-  res %>%
+    tidybayes::point_interval(.fitted, y, .width = c(0.95) ) %>%
+    select(-y.lower, -y.upper) %>%
+    ggplot() +
+    tidybayes::geom_pointinterval(aes(x = y, y = .fitted, ymin = .fitted.lower,  ymax = .fitted.upper),
+                                  alpha = 0.2,
+                                  color = "blue") +
+    geom_smooth(aes(x = y, y = .fitted), method = "lm", color = "black", formula = y ~ x) +
     xlab('Actual') +
     ylab("Fitted") +
     theme_bw() +
@@ -172,24 +187,23 @@ bartFitted <- function(model, response){
 # Variable Importance -----------------------------------------------------
 
 bartVimp <- function(model,
-                     impLims = NULL,
                      vImpReorder = FALSE)
 {
 
   # set palette
-  pal = rev(colorspace::sequential_hcl(palette = "Blues 3", n = 100))
+  #pal = rev(colorspace::sequential_hcl(palette = "Blues 3", n = 100))
 
   # get variable importance
   vImp <- model$varcount.mean
   vImp <- dplyr::tibble(Variable = names(vImp), Importance = vImp)
 
   # set limits
-  if (is.null(impLims)) {
-    impLims <- range(vImp$Importance)
-    limitsImp <- range(labeling::rpretty(impLims[1], impLims[2]))
-  } else {
-    limitsImp <- impLims
-  }
+  # if (is.null(impLims)) {
+  #   impLims <- range(vImp$Importance)
+  #   limitsImp <- range(labeling::rpretty(impLims[1], impLims[2]))
+  # } else {
+  #   limitsImp <- impLims
+  # }
 
   # reorder plots
   if(vImpReorder){
@@ -197,21 +211,37 @@ bartVimp <- function(model,
   }
 
   # plot
-  p <- ggplot(vImp, aes(x = Variable, y = Importance)) +
-    geom_col(aes(fill = Importance)) +
-    scale_fill_gradientn(
-      colors = pal, limits = limitsImp, name = "Vimp",
-      guide = guide_colorbar(
-        frame.colour = "black",
-        ticks.colour = "black"
-      ), oob = scales::squish
-    ) +
+  # p <- ggplot(vImp, aes(x = Variable, y = Importance)) +
+  #   geom_col(aes(fill = Importance)) +
+  #   scale_fill_gradientn(
+  #     colors = pal, limits = limitsImp, name = "Vimp",
+  #     guide = guide_colorbar(
+  #       frame.colour = "black",
+  #       ticks.colour = "black"
+  #     ), oob = scales::squish
+  #   ) +
+  #   ggtitle(label = "BART Variable Importance") +
+  #   theme_bw() +
+  #   xlab('Variable') +
+  #   ylab("Inclusion") +
+  #   theme(axis.title.y = element_text(angle = 90, vjust = 0.5),
+  #         legend.key.size = unit(0.5, "cm"))
+
+ p <- vImp %>%
+    arrange(Importance) %>%
+    mutate(Variable = factor(Variable, unique(Variable))) %>%
+    ggplot() + aes(x=Variable, y=Importance) +
+    geom_segment(aes(x=Variable, xend=Variable, y=0, yend=Importance), color="blue") +
+    geom_point(color="blue") +
+    theme_light() +
+    coord_flip()+
     ggtitle(label = "BART Variable Importance") +
     theme_bw() +
     xlab('Variable') +
-    ylab("Inclusion") +
+    ylab("Importance") +
     theme(axis.title.y = element_text(angle = 90, vjust = 0.5),
           legend.key.size = unit(0.5, "cm"))
+
 
   return(p)
 }
