@@ -4,14 +4,7 @@
 \alias{bartDiag}
 \title{bartDiag}
 \usage{
-bartDiag(
-  model,
-  response,
-  burnIn = 0,
-  pal = rev(colorspace::sequential_hcl(palette = "Blues 3", n = 100)),
-  impLims = NULL,
-  reorder = FALSE
-)
+bartDiag(model, response, burnIn = 0, vImpReorder = FALSE)
 }
 \arguments{
 \item{model}{a model created from the BART package}
