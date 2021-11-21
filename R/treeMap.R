@@ -111,7 +111,7 @@ treeMap <- function(treeList, topTrees = NULL){
       scale_y_reverse() +
       theme_void()
     if (!is.null(colors)) {
-      plot <- plot + scale_fill_manual(values = colors) +
+      plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
         scale_color_manual(values = colors, na.value = "grey")
     }
   }
