@@ -5,9 +5,6 @@
 #' @param model a model created from the BART package
 #' @param response The name of the response for the fit.
 #' @param burnIn Trace plot will only show iterations above selected burn in value.
-#' @param pal A vector of colours to show importance, for use with scale_fill_gradientn.
-#' @param impLims Specifies the fit range for the color map for importance.
-#' @param reorder If TRUE, then the variable importance plot is reordered in terms of importance.
 #'
 #' @return A selection of diagnostic plots
 #'
@@ -31,8 +28,7 @@
 
 bartDiag <- function(model,
                     response,
-                    burnIn = 0,
-                    vImpReorder = FALSE
+                    burnIn = 0
                     ){
 
   qq        <- bartQQ(model, response)
@@ -40,8 +36,7 @@ bartDiag <- function(model,
   residual  <- bartResiduals(model, response = response)
   histogram <- bartHist(model)
   fitVSact  <- bartFitted(model, response)
-  vImp      <- bartVimp(model,
-                   vImpReorder = vImpReorder)
+  vImp      <- bartVimp(model)
 
   design <- c(
     area(1,1,3,3),
@@ -186,46 +181,13 @@ bartFitted <- function(model, response){
 
 # Variable Importance -----------------------------------------------------
 
-bartVimp <- function(model,
-                     vImpReorder = FALSE)
+bartVimp <- function(model)
 {
-
-  # set palette
-  #pal = rev(colorspace::sequential_hcl(palette = "Blues 3", n = 100))
 
   # get variable importance
   vImp <- model$varcount.mean
   vImp <- dplyr::tibble(Variable = names(vImp), Importance = vImp)
 
-  # set limits
-  # if (is.null(impLims)) {
-  #   impLims <- range(vImp$Importance)
-  #   limitsImp <- range(labeling::rpretty(impLims[1], impLims[2]))
-  # } else {
-  #   limitsImp <- impLims
-  # }
-
-  # reorder plots
-  if(vImpReorder){
-    vImp$Variable <- forcats::fct_rev(forcats::fct_reorder(vImp$Variable, vImp$Importance))
-  }
-
-  # plot
-  # p <- ggplot(vImp, aes(x = Variable, y = Importance)) +
-  #   geom_col(aes(fill = Importance)) +
-  #   scale_fill_gradientn(
-  #     colors = pal, limits = limitsImp, name = "Vimp",
-  #     guide = guide_colorbar(
-  #       frame.colour = "black",
-  #       ticks.colour = "black"
-  #     ), oob = scales::squish
-  #   ) +
-  #   ggtitle(label = "BART Variable Importance") +
-  #   theme_bw() +
-  #   xlab('Variable') +
-  #   ylab("Inclusion") +
-  #   theme(axis.title.y = element_text(angle = 90, vjust = 0.5),
-  #         legend.key.size = unit(0.5, "cm"))
 
  p <- vImp %>%
     arrange(Importance) %>%

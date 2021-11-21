@@ -4,7 +4,7 @@
 \alias{bartDiag}
 \title{bartDiag}
 \usage{
-bartDiag(model, response, burnIn = 0, vImpReorder = FALSE)
+bartDiag(model, response, burnIn = 0)
 }
 \arguments{
 \item{model}{a model created from the BART package}
@@ -12,12 +12,6 @@ bartDiag(model, response, burnIn = 0, vImpReorder = FALSE)
 \item{response}{The name of the response for the fit.}
 
 \item{burnIn}{Trace plot will only show iterations above selected burn in value.}
-
-\item{pal}{A vector of colours to show importance, for use with scale_fill_gradientn.}
-
-\item{impLims}{Specifies the fit range for the color map for importance.}
-
-\item{reorder}{If TRUE, then the variable importance plot is reordered in terms of importance.}
 }
 \value{
 A selection of diagnostic plots
