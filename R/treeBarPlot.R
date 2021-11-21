@@ -24,6 +24,8 @@
 #' @importFrom ggraph geom_node_text
 #' @importFrom patchwork area
 #' @importFrom patchwork plot_layout
+#' @importFrom cowplot get_legend
+#' @importFrom cowplot plot_grid
 #' @importFrom treemapify geom_treemap
 #' @importFrom treemapify geom_treemap_text
 #'
@@ -105,21 +107,27 @@ treeBarPlot <- function(treeList, topTrees = NULL){
   # plotting function
   plotFun <- function(List, colors = NULL, n) {
 
-
     plot <- ggraph(List, "partition") +
       geom_node_tile(aes(fill = var), size = 0.25) +
-      # geom_node_label(aes(label = var, color = var)) +
-      #geom_node_text(aes(label = name), size = 4) +
+      geom_node_text(aes(label = ''), size = 4) +
+      theme(legend.position = "bottom") +
       scale_y_reverse() +
-      theme_void() +
-      theme(legend.position = "none")
+      theme_void()
     if (!is.null(colors)) {
       plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
-        scale_color_manual(values = colors, na.value = "grey")
+        scale_color_manual(values = colors, na.value = "grey")  +
+        theme(legend.position = "bottom")
     }
   }
 
+
   allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors)
+
+  # get legend
+  legend <- cowplot::get_legend(allPlots[[1]])
+
+  # remove legends from individual plots
+  allPlots <- lapply(allPlots, function(x) x + theme(legend.position = "none"))
 
   # filter top X% of plots
   if(!is.null(topTrees)){
@@ -135,8 +143,8 @@ treeBarPlot <- function(treeList, topTrees = NULL){
     purrr::map2(allPlots, seq_along(allPlots), ~ annotation_custom(ggplotGrob(.x),  .y - width / 2, xmax = .y + width / 2)) +
     theme_void()
 
-
-  bpFinal <- bp / p_axis + plot_layout(heights = c(4, 1))
+  bpAxis <- bp / p_axis + plot_layout(heights = c(4, 1))
+  bpFinal <- cowplot::plot_grid(bpAxis, legend, rel_heights = c(1, .1), ncol = 1)
 
   return(bpFinal)
 
