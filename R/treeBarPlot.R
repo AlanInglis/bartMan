@@ -3,6 +3,7 @@
 #' @description Creates a barplot displaying the frequency of different tree structures.
 #'
 #' @param treeList A list of trees created using the treeList function.
+#' @param topTrees integer value to show the top x variables.
 #'
 #' @return A barplot plot.
 #'
@@ -13,6 +14,7 @@
 #' @importFrom tidygraph activate
 #' @importFrom tidygraph tbl_graph
 #' @importFrom tidyr separate
+#' @importFrom tidyr replace_na
 #' @importFrom dplyr as_tibble
 #' @importFrom dplyr arrange
 #' @importFrom dplyr mutate
@@ -28,29 +30,57 @@
 #'
 #' @export
 
-treeBarPlot <- function(treeList){
+treeBarPlot <- function(treeList, topTrees = NULL){
 
+  # remove stumps
+  treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
 
-# Get Edge Frequency ------------------------------------------------------
-
-  edgeFreq <- bmTreesList %>%
-    map_chr(~as_tibble(activate(.x, edges)) %>%
-              map_chr(str_c, collapse = " ") %>%
-              toString())%>%
-    table() %>%
+  # get the frequency off similar trees:
+  freqs <- map(treeList, function(x){
+    x %>%
+      pull(var) %>%
+      replace_na("..") %>%
+      paste0(collapse = "")
+  }) %>%
+    unlist(use.names = F) %>%
     as_tibble() %>%
-    setNames(c("data", "Frequency")) %>%
-    separate(data, c("from", "to"), ", ") %>%
-    filter(. != "") %>%
-    arrange(-Frequency) %>%
-    mutate(treeNum = row_number())
+    mutate(ids = 1:n()) %>%
+    group_by(value) %>%
+    mutate(val = n():1)
+
+
+  freqDf <-  freqs %>% slice(1) %>%  arrange(-val) %>%  rename(frequency = val)  # frequency tibble
+  freqDf$treeNum <- seq(1:nrow(freqDf)) # add tree number
+
+
+  if(!is.null(topTrees)){
+    freqDf <- freqDf[1:topTrees,]
+  }
+
+  ids <- freqs %>% slice(1) %>% pull(ids) # remove duplicates
+  freqs <- freqs %>% pull(val) # get frequencies
+
+  treeListNew <- purrr::imap(treeList, ~.x %>%
+                               mutate(frequency = freqs[.y]) %>%
+                               select(var, frequency))
+
+  # return new list of trees
+  treeList <- treeListNew[sort(ids)]
+
+  # add plot name as number
+  for(i in 1:(length(treeList))){
+    treeList[[i]] <- treeList[[i]] %>%
+      activate(nodes) %>%
+      mutate(name = c(i, rep("", length.out = igraph::gsize(treeList[[i]]))))
+  }
 
 
 # Create barplot of frequency ---------------------------------------------
-
-  bp <- edgeFreq %>%
+  names <- freqDf$value
+  bp <- freqDf %>%
     ggplot() +
-    geom_bar(aes(x = from, y = Frequency, fill = Frequency), stat = "identity") +
+    geom_bar(aes(x = value, y = frequency, fill = frequency), stat = "identity") +
+    scale_x_discrete(limits = names) +
     ggtitle("Tree Frequency") +
     ylab("Frequency") +
     xlab("") +
@@ -63,58 +93,46 @@ treeBarPlot <- function(treeList){
       ticks.colour = "black"))
 
 
-# Create trees for x-axis -------------------------------------------------
 
-  # extract all edges
-  edgeList <- NULL
-  for(i in 1:length(treeList)){
-    edgeList[[i]] <- treeList[[i]] %>%
-      activate(edges) %>%
-      data.frame()
-  }
+# ggraph plotting funtion -------------------------------------------------
 
 
-  # get list of unique plots
-  edgeListKeep <- edgeList[!duplicated(lapply(edgeList, function(x) x[,c("from","to")]))]
-
-  # remove stumps
-  edgeListKeep <- Filter(NROW, edgeListKeep)
-
-  # turn into table graph objects
-  edgeListTBL <- NULL
-  for(i in 1:length(edgeListKeep)){
-    edgeListTBL[i] <- list(tbl_graph(edges = edgeListKeep[[i]]))
-  }
-
-  # add plot name as number
-  for(i in 1:(length(edgeListTBL))){
-    edgeListTBL[[i]] <- edgeListTBL[[i]] %>%
-      activate(nodes) %>%
-      mutate(name = c(i, rep("", length.out = igraph::gsize(edgeListTBL[[i]]))))
-  }
-
+  # set node colours
+  nodenames <- unique(na.omit(unlist(lapply(treeList, .%>%activate(nodes) %>% pull(var)))))
+  nodenames <- sort(nodenames)
+  nodecolors <- setNames(scales::hue_pal(c(0,360)+15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 
   # plotting function
-  plotFun <- function(List, n) {
+  plotFun <- function(List, colors = NULL, n) {
+
 
     plot <- ggraph(List, "partition") +
-      geom_node_tile(aes(fill = "red"), size = 0.25) +
-      geom_node_text(aes(label = name), size = 4) +
+      geom_node_tile(aes(fill = var), size = 0.25) +
+      # geom_node_label(aes(label = var, color = var)) +
+      #geom_node_text(aes(label = name), size = 4) +
       scale_y_reverse() +
       theme_void() +
       theme(legend.position = "none")
+    if (!is.null(colors)) {
+      plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
+        scale_color_manual(values = colors, na.value = "grey")
+    }
   }
 
-  allPlots <- lapply(edgeListTBL, plotFun, n = length(edgeListTBL))
+  allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors)
 
+  # filter top X% of plots
+  if(!is.null(topTrees)){
+    allPlots <- allPlots[1:topTrees]
+  }
 
 # Create final barplot ----------------------------------------------------
 
 
-  width <- .9 # set default width of bars
-  p_axis <- ggplot(edgeFreq) +
-    geom_blank(aes(x = from)) +
-    purrr::map2(allPlots, seq_along(allPlots), ~ annotation_custom(ggplotGrob(.x), xmin = .y - width / 2, xmax = .y + width / 2)) +
+  width <- 1 # set default width of bars
+  p_axis <- ggplot(freqDf) +
+    geom_blank(aes(x = value)) +
+    purrr::map2(allPlots, seq_along(allPlots), ~ annotation_custom(ggplotGrob(.x),  .y - width / 2, xmax = .y + width / 2)) +
     theme_void()
 
 
@@ -122,21 +140,5 @@ treeBarPlot <- function(treeList){
 
   return(bpFinal)
 
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
