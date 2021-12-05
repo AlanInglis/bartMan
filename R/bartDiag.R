@@ -148,19 +148,6 @@ bartFitted <- function(model, response){
   res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
 
 
-  # p <- res %>%
-  # # tidybayes::point_interval(.fitted, y, .width = c(0.95) ) %>%
-  #  # select(-y.lower, -y.upper) %>%
-  #   summarise(.fitted = mean(.fitted), y = dplyr::first(y)) %>%
-  #   ggplot(aes(x = y, y = .fitted)) +
-  #   geom_point(color = "blue", alpha = 0.2) +
-  #   geom_smooth(method = "lm", color = "black", formula = y ~ x) +
-  #   xlab('Actual') +
-  #   ylab("Fitted") +
-  #   theme_bw() +
-  #   ggtitle("Actual vs Fitted")
-
-
  p <-  res %>%
     tidybayes::point_interval(.fitted, y, .width = c(0.95) ) %>%
     select(-y.lower, -y.upper) %>%
