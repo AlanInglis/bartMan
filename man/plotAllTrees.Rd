@@ -4,12 +4,14 @@
 \alias{plotAllTrees}
 \title{plotAllTrees}
 \usage{
-plotAllTrees(treeList, sampleSize = 0)
+plotAllTrees(treeList, sampleSize = 0, cluster = FALSE)
 }
 \arguments{
 \item{treeList}{A list of trees created by treeList function.}
 
 \item{sampleSize}{Sample the tree list.}
+
+\item{cluster}{LOGICAL. If TRUE, then cluster by tree structures.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.
