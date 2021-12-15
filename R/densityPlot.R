@@ -5,7 +5,7 @@
 #' @param model a model created from either the BART dbarts, or bartMachine packages
 #' @param treeList A list of trees created using the treeList function.
 #' @param colBy A parameter used to control the colour of the density plots.
-#' @param display Choose how to display the plot. Either facet wrap of overlayed.
+#' @param display Choose how to display the plot. Either histogram, facet wrap or ridges.
 #'
 #' @return A faceted group of density plots
 #'
@@ -13,12 +13,13 @@
 #' @importFrom dplyr %>%
 #' @importFrom dplyr select
 #' @importFrom dplyr bind_rows
+#' @importFrom ggridges geom_density_ridges
 #' @import ggplot2
 #'
 #' @export
 
 
-splitDensity <- function(model, treeList, colBy = NULL, display = "ridge") {
+splitDensity <- function(model, treeList, colBy = NULL, display = "histogram") {
 
   # split into dataframe of trees
   dfTrees <- NULL
@@ -37,10 +38,9 @@ splitDensity <- function(model, treeList, colBy = NULL, display = "ridge") {
   nam <- colnames(model$varcount)
   tt$var <- factor(tt$var, levels = nam)
 
-  intPal <- rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100))
   # create plot
 
-  if (display == "facet") {
+  if (display == "density") {
     dPlot <- tt %>%
       ggplot(aes(x = value)) +
       geom_density(aes(colour = var, fill = var)) +
@@ -54,6 +54,15 @@ splitDensity <- function(model, treeList, colBy = NULL, display = "ridge") {
       ggplot(aes(x = value, y = var, fill = stat(x))) +
       geom_density_ridges(aes(fill = var, alpha = 0.1)) +
       theme_bw() +
+      theme(legend.position = "none")
+  } else if(display == "histogram") {
+    dPlot <- tt %>%
+      ggplot(aes(x = value)) +
+      geom_histogram(aes(colour = var, fill = var), bins = 30) +
+      facet_wrap(~var) +
+      theme_bw() +
+      ylab("Density") +
+      xlab("Split value") +
       theme(legend.position = "none")
   }
 
