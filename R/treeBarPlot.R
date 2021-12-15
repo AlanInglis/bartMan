@@ -83,16 +83,14 @@ treeBarPlot <- function(treeList, topTrees = NULL){
     ggplot() +
     geom_bar(aes(x = value, y = frequency, fill = frequency), stat = "identity") +
     scale_x_discrete(limits = names) +
-    ggtitle("Tree Frequency") +
-    ylab("Frequency") +
+    ggtitle("") +
+    ylab("Count") +
     xlab("") +
     theme_bw() +
     theme(axis.title.x=element_blank(),
           axis.text.x=element_blank(),
-          axis.ticks.x=element_blank()) +
-    guides(fill = guide_colourbar(
-      frame.colour = "black",
-      ticks.colour = "black"))
+          axis.ticks.x=element_blank(),
+          legend.position = "none")
 
 
 
