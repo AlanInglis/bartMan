@@ -4,7 +4,7 @@
 \alias{splitDensity}
 \title{splitDensity}
 \usage{
-splitDensity(model, treeList, colBy = NULL)
+splitDensity(model, treeList, colBy = NULL, display = "histogram")
 }
 \arguments{
 \item{model}{a model created from either the BART dbarts, or bartMachine packages}
@@ -12,6 +12,8 @@ splitDensity(model, treeList, colBy = NULL)
 \item{treeList}{A list of trees created using the treeList function.}
 
 \item{colBy}{A parameter used to control the colour of the density plots.}
+
+\item{display}{Choose how to display the plot. Either histogram, facet wrap or ridges.}
 }
 \value{
 A faceted group of density plots
