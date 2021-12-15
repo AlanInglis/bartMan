@@ -54,7 +54,7 @@ treeMap <- function(treeList, topTrees = NULL){
 
 
   freqDf <-  freqs %>% slice(1) %>%  arrange(-val) %>%  rename(frequency = val)  # frequency tibble
-  freqDf$treeNum <- seq(1:nrow(freqDf)) # a~dd tree number
+  freqDf$treeNum <- seq(1:nrow(freqDf)) # add tree number
 
   if(!is.null(topTrees)){
     freqDf <- freqDf[1:topTrees,]
