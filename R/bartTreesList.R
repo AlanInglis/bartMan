@@ -62,5 +62,13 @@ bartTreeList <- function(trees) {
     )
   )
 
+
+  # add tree depth column
+  for(i in 1:(length(tblgList))){
+    tblgList[[i]] <- tblgList[[i]] %>%
+      activate(nodes) %>%
+      mutate(depth = bfs_dist(root = 1))
+  }
+
   return(tblgList)
 }
