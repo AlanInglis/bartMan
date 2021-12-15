@@ -14,7 +14,7 @@ treeList <- function(trees){
     listOfTrees <- bartTreeList(trees)
   }else if(any(class(trees) == "dbarts")){
     listOfTrees<- dbartsTreeList(trees)
-  }else if(any(class(trees) == "bartMachine")){
+  }else if(any(class(trees) == "bartMach")){
     listOfTrees<- bartMachineTreeList(trees)
   }
   return(listOfTrees)
