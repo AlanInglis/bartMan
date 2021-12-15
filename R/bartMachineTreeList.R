@@ -17,35 +17,10 @@ bartMachineTreeList <- function(trees){
   # split the dataframe into a list of dfs, one for each tree
   list_edges <- split(df, df$treeNumID)
 
-  # rename some columns
-  x <- c("varID", "nodeID", "splitValue", "isLeaf", "leafValue",  "isStump", "var", "treeNumID",
-         "depth", "to",  "parentNode", "from", "iteration", "value", "label", "treeNum")
-  list_edges <- lapply(list_edges, setNames, x)
-
-  # reorder columns
-  list_edges <- lapply(list_edges, function(x){
-    x[c("var",
-        "varID",
-        "nodeID",
-        "splitValue",
-        "isLeaf",
-        "leafValue",
-        "isStump",
-        "treeNumID",
-        "treeNum",
-        "iteration",
-        "depth",
-        "parentNode",
-        "value",
-        "label",
-        "from",
-        "to")]})
-
-  # remove unnessecery columns
+  # remove unnecessary columns
   treesSplit <- lapply(list_edges, function(x) {
-    x["isStump"] <- x["isLeaf"] <- x["parentNode"] <- x["value"] <- NULL; x
+    x["isStump"] <- x["to"] <- x['from'] <-  x["node"] <- x["parentNode"] <- x["treeNumID"] <- NULL; x
   })
-
 
   # create dataframe of edges
   dfOfEdges <- lapply(list_edges, function(df_tree){
@@ -54,7 +29,7 @@ bartMachineTreeList <- function(trees){
       to = df_tree$to
     )
     # delete NAs from result
-    res <- res[!is.na(res$from),]
+    res <- na.omit(res)
     return(res)
   })
 
