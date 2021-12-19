@@ -129,7 +129,7 @@ dbartsTreeList <- function(trees){
 
   # remove unnessecery columns
   treesSplit <- lapply(treesSplit, function(x) {
-    x["depth"] <- x["varValue"] <- x["isLeaf"] <- x["n"] <- NULL; x
+     x["varValue"] <- x["isLeaf"] <- x["n"] <- NULL; x
   })
 
 
