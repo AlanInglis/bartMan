@@ -33,10 +33,10 @@
 #'
 #' @export
 
-plotAllTrees <- function(treeData, iter = NULL, treeNo = NULL, cluster = FALSE) {
+plotAllTrees <- function(treeData, iter = NULL, treeNo = NULL, sampleSize = NULL,  cluster = FALSE) {
   allTrees <- plotAll(treeData, iter = iter, treeNo = treeNo)
   suppressWarnings(
-    p <- plotAllTreesPlotFn(allTrees, cluster = cluster)
+    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize, cluster = cluster)
   )
   return(p)
 }
@@ -322,11 +322,13 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL) {
 #'
 #'
 
-plotAllTreesPlotFn <- function(treeList, sampleSize, cluster = FALSE) {
+plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, cluster = FALSE) {
 
   # plot a sample of trees
   if (length(treeList) > 200) {
     sampleSize <- 200
+    treeList <- sample(treeList, sampleSize, replace = FALSE)
+  } else if(!is.null(sampleSize)){
     treeList <- sample(treeList, sampleSize, replace = FALSE)
   }
 

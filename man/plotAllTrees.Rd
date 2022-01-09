@@ -4,7 +4,13 @@
 \alias{plotAllTrees}
 \title{plotAllTrees}
 \usage{
-plotAllTrees(treeData, iter = NULL, treeNo = NULL, cluster = FALSE)
+plotAllTrees(
+  treeData,
+  iter = NULL,
+  treeNo = NULL,
+  sampleSize = NULL,
+  cluster = FALSE
+)
 }
 \arguments{
 \item{treeData}{A list of tree attributes created by treeDatafunction.}
@@ -13,9 +19,9 @@ plotAllTrees(treeData, iter = NULL, treeNo = NULL, cluster = FALSE)
 
 \item{treeNo}{The selected tree number.}
 
-\item{cluster}{LOGICAL. If TRUE, then cluster by tree structures.}
-
 \item{sampleSize}{Sample the tree list.}
+
+\item{cluster}{LOGICAL. If TRUE, then cluster by tree structures.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.

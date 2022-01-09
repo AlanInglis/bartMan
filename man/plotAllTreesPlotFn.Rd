@@ -4,7 +4,7 @@
 \alias{plotAllTreesPlotFn}
 \title{plotAllTreesplotFn}
 \usage{
-plotAllTreesPlotFn(treeList, sampleSize, cluster = FALSE)
+plotAllTreesPlotFn(treeList, sampleSize = NULL, cluster = FALSE)
 }
 \arguments{
 \item{treeList}{A list of trees created by treeList function.}
