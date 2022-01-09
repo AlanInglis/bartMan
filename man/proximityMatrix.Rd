@@ -4,25 +4,19 @@
 \alias{proximityMatrix}
 \title{proximityMatrix}
 \usage{
-proximityMatrix(
-  tree = tree,
-  data = data,
-  nRows = nRows,
-  normalize = TRUE,
-  reorder = TRUE
-)
+proximityMatrix(tree, data, nRows, normalize = TRUE, reorder = TRUE)
 }
 \arguments{
 \item{data}{Data frame of data excluding the response.}
 
-\item{nRows}{Sequence of integers from 1 to the number of rows in the data.}
+\item{nRows}{Number of rows to consider.}
 
 \item{normalize}{Default is TRUE. Divide the total number of pairs of observations by
 the number of trees.}
 
 \item{reorder}{Default is TRUE. Whether to sort the matrix so high values are pushed to top left.}
 
-\item{treeData}{A data frame created by treeData function.}
+\item{treeData}{A list of tree attributes created by treeData function.}
 }
 \value{
 A matrix containing proximity values.

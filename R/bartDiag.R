@@ -126,7 +126,7 @@ bartResiduals <- function(model,
 
 bartHist <- function(model){
 
-  res <- tidybayes::residual_draws(model, response = y, include_newdata = FALSE)
+  res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
 
   p <- ggplot(data = res, aes(.residual)) +
   geom_histogram(bins = 50, color="blue", fill="white") +
@@ -171,6 +171,7 @@ bartFitted <- function(model, response){
 bartVimp <- function(model)
 {
 
+  if(class(model) == "wbart"){
   # get variable importance
   vImp <- model$varcount.mean
   vImp <- dplyr::tibble(Variable = names(vImp), Importance = vImp)
@@ -190,8 +191,26 @@ bartVimp <- function(model)
     ylab("Importance") +
     theme(axis.title.y = element_text(angle = 90, vjust = 0.5),
           legend.key.size = unit(0.5, "cm"))
+  }else{
+   bmVimp <- bartMachine::investigate_var_importance(model, num_replicates_for_avg = 5)
+   vimpVals <- bmVimp$avg_var_props
+   vImp <- data.frame(Variable = names(vimpVals), Importance = vimpVals, row.names=NULL)
 
-
+   p <- vImp %>%
+     arrange(Importance) %>%
+     mutate(Variable = factor(Variable, unique(Variable))) %>%
+     ggplot() + aes(x=Variable, y=Importance) +
+     geom_segment(aes(x=Variable, xend=Variable, y=0, yend=Importance), color="blue") +
+     geom_point(color="blue") +
+     theme_light() +
+     coord_flip()+
+     ggtitle(label = "BART Variable Importance") +
+     theme_bw() +
+     xlab('Variable') +
+     ylab("Importance") +
+     theme(axis.title.y = element_text(angle = 90, vjust = 0.5),
+           legend.key.size = unit(0.5, "cm"))
+  }
   return(p)
 }
 
