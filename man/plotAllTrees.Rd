@@ -4,18 +4,23 @@
 \alias{plotAllTrees}
 \title{plotAllTrees}
 \usage{
-plotAllTrees(treeList, sampleSize = 0, cluster = FALSE)
+plotAllTrees(treeData, iter = NULL, treeNo = NULL, cluster = FALSE)
 }
 \arguments{
-\item{treeList}{A list of trees created by treeList function.}
+\item{treeData}{A list of tree attributes created by treeDatafunction.}
 
-\item{sampleSize}{Sample the tree list.}
+\item{iter}{The selected iteration}
+
+\item{treeNo}{The selected tree number.}
 
 \item{cluster}{LOGICAL. If TRUE, then cluster by tree structures.}
+
+\item{sampleSize}{Sample the tree list.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.
 }
 \description{
-Plots all the trees created by the treeList function.
+Plots all the trees. By default, it shows the last iteration. If number of
+trees is greater than 200, a sample of trees from that iteration will be shown.
 }
