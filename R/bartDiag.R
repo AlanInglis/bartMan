@@ -175,8 +175,17 @@ bartFitted <- function(model, response) {
   if (class(model) == "wbart" || class(model) == "bartMachine") {
     res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
   } else {
-    res <- data.frame(y = response,
-                      .fitted = fitted(model))
+    plquants = c(.05,.95)
+    cols = c('blue', 'black')
+
+    qLow <- apply(dB$yhat.train, length(dim(dB$yhat.train)), quantile, probs = plquants[1])
+    qMid <- apply(dB$yhat.train, length(dim(dB$yhat.train)), quantile, probs = 0.5)
+    qUpp <- apply(dB$yhat.train, length(dim(dB$yhat.train)), quantile, probs=plquants[2])
+
+    res <- data.frame(y = y,
+                      qMid = qMid,
+                      qLow = qLow,
+                      qUpp = qUpp)
   }
 
 
@@ -196,14 +205,17 @@ bartFitted <- function(model, response) {
     ggtitle("Actual vs Fitted")
 
   }else{
-    p <-  ggplot(data = res, aes(y, .fitted)) +
+    p <-  ggplot(data = res, aes(y, qMid)) +
       geom_point(color = "blue", alpha = 0.2) +
       theme_bw() +
       xlab("Actual") +
       ylab("Fitted") +
       ggtitle("Actial vs Fitted") +
-      geom_smooth(aes(x = y, y = .fitted), method = "lm", color = "black", formula = y ~ x)
-
+      geom_smooth(aes(x = y, y = qMid), method = "lm", color = "black", formula = y ~ x) +
+      tidybayes::geom_pointinterval(aes(x = y, y = qMid, ymin = qLow, ymax = qUpp),
+                                    alpha = 0.2,
+                                    color = "blue"
+      )
   }
 
 
