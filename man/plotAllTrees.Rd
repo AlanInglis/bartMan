@@ -9,7 +9,7 @@ plotAllTrees(
   iter = NULL,
   treeNo = NULL,
   sampleSize = NULL,
-  cluster = FALSE
+  cluster = NULL
 )
 }
 \arguments{
