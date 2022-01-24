@@ -81,7 +81,7 @@ bartQQ <- function(model, response) {
 bartTrace <- function(model, burnIn = 0) {
   if (class(model) == "wbart" || class(model) == "bartMachine") {
     # get values
-    varDraws <- tidytreatment::variance_draws(bT, value = "siqsq")
+    varDraws <- tidytreatment::variance_draws(model, value = "siqsq")
     varDraws$sigma <- sqrt(varDraws$siqsq)
   } else {
     varDraws <- data.frame(
