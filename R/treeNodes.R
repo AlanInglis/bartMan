@@ -28,10 +28,10 @@ treeNodes <- function(treeData, burnIn) {
     geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
     geom_point(alpha = 0.5) +
     geom_line(alpha = 0.5) +
-    geom_smooth(formula = y ~ x, method = "lm", colour = "red", se = F) +
+    geom_smooth(formula = y ~ x, method = "loess", colour = "red", se = F) +
     geom_point(data = df[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
     geom_line(data = df[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-    geom_smooth(formula = y ~ x, data = df[burnIn:maxIter, ], color = "black", method = "lm", se = F) +
+    geom_smooth(formula = y ~ x, data = df[burnIn:maxIter, ], color = "black", method = "loess", se = F) +
     theme_bw() +
     xlab("Iteration") +
     ylab("Average Tree Nodes")
