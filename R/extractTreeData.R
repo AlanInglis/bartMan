@@ -244,8 +244,8 @@ extractTrees.bart <- function(model){
   varNames <- colnames(model$fit$data@x)
 
   # set up data frame
-  trees$structure$node <- c(1:(nrow(trees$structure)))
-  trees$structure$value <- round(trees$structure$value, 4)
+  trees$structure$node <- 1:(nrow(trees$structure))
+  #trees$structure$value <- round(trees$structure$value, 4)
   trees$structure <- transform(trees$structure, isLeaf = ifelse(var < 0, TRUE, FALSE))
   trees$structure <- transform(trees$structure, leafValue = ifelse(isLeaf == TRUE, value, NA_integer_))
   trees$structure <- transform(trees$structure, splitValue = ifelse(isLeaf == FALSE, value, NA_integer_))
@@ -325,6 +325,7 @@ extractTrees.bartMachine <- function(model){
     nodeData <- bartMachine::extract_raw_node_data(model)
   }
 
+
   # Melting the tree data into useable format
   df <- rrapply::rrapply(nodeData, how = 'melt')
   nCol <- ncol(df)
@@ -394,7 +395,6 @@ extractTrees.bartMachine <- function(model){
     mutate(to = node)
   df <- transform(df, to = ifelse(is.na(parentNode), NA, to))
 
-
   # turn into tibble
   df <- as_tibble(df)
 
@@ -404,9 +404,9 @@ extractTrees.bartMachine <- function(model){
                  "node", "parentNode", "from", "value", "label", "to")
   df <- df %>%
     select(
+      "var",
       "iteration",
       "treeNum",
-      "var",
       "isStump",
       "isLeaf",
       "splitValue",
@@ -424,6 +424,14 @@ extractTrees.bartMachine <- function(model){
 
   df$iteration <- as.numeric(df$iteration)
   df$treeNum <- as.numeric(df$treeNum)
+
+  # add depth column
+  df <- rename(df, c('depthAll'= 'depth'))
+
+  df <- df %>%
+    ungroup() %>%
+    group_by(iteration, treeNum) %>%
+    mutate(depth = max(depthAll))
 
   trees <- list()
   trees$structure <- df
