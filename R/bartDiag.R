@@ -2,7 +2,7 @@
 #'
 #' @description Displays a selection of diagnostic plots for a BART model.
 #'
-#' @param model a model created from the BART package
+#' @param model a model created from either the BART, dbarts, or bartMachine package.
 #' @param response The name of the response for the fit.
 #' @param burnIn Trace plot will only show iterations above selected burn in value.
 #'
