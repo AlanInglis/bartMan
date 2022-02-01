@@ -3,6 +3,8 @@ title: "bartVis"
 author: "Alan Inglis"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
+fig_width: 6 
+fig_height: 4 
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
@@ -47,15 +49,17 @@ Now we will create some basic BART models. To begin we load the libraries and th
 # load libraries
 library(BART)
 library(dbarts)
+library(bartMachine)
 library(bartVis)
+library(gridExtra) # for plots
 
 # create BART model:
 set.seed(99)
 bartModel <- wbart(x.train = x,
                    y.train = y,
-                   nskip = 250,
-                   ndpost = 100,
-                   nkeeptreedraws = 1,
+                   nskip = 100,
+                   ndpost = 500,
+                   nkeeptreedraws = 500,
                    ntree = 20
                    )
 
@@ -63,89 +67,105 @@ bartModel <- wbart(x.train = x,
 set.seed(99)
 dbartModel <- bart(x,
                    y,
-                   ntree = 10,
+                   ntree = 20,
                    keeptrees = TRUE,
-                   nskip = 1000,
-                   ndpost = 1
+                   nskip = 100,
+                   ndpost = 500
                    )
 
+
+# create bartMachine model (smaller to save time)
+set.seed(90)
+bartMachineModel <-  bartMachine(X = x,
+                   y = y,
+                   num_trees = 20,
+                   flush_indices_to_save_RAM = FALSE,
+                   num_burn_in = 50,
+                   num_iterations_after_burn_in = 100)
+
 ```
 
 
-Now we create a dataframe, containing the tree structure for all the trees, for both both models.
+Now we create a list of tree attributes, containing the tree structure for all the trees and additional information of the model. We extract the tree data for each model.
 
 ```{r}
-# create data frame of trees for BART model
-bmTreesData <- treeData(bartModel)
-
-# create data frame of trees for dbarts model
-dbTreesData <- treeData(dbartModel)
+# Create data frames ------------------------------------------------------
+btT <- extractTreeData(bartModel) 
+dbT <- extractTreeData(dbartModel) 
+bmT <- extractTreeData(bartMachineModel) 
 ```
 
 
-Taking a look at both dataframe outputs:
+Taking a look at at the structure for the BART model:
 ```{r}
-bmTreesData
-dbTreesData
+btT
 ```
 
-Now, we create a list off every tree for both models and take a look at just a single element:
+
+* Diagnostic Plots
+
+To view the acceptance rate of the trees, we use the `acceptanceRate` function. This function has an additional argument to select the burn-in.
+```{r}
+# acceptance rate
+acceptRate(treeData = btT, burnIn = 100) # BART
+```
+
+Additionally, we can also view the tree depth per iterration and the average number of nodes per iteration:
+```{r}
+# tree depth per iteration
+td <- treeDepth(treeData = btT, burnIn = 100) # BART
+# tree nodes per iteration
+tn <- treeNodes(treeData = btT, burnIn = 100)
+
+grid.arrange(td, tn, ncol=2)
+```
+
+
+The `splitDensity` function shows the frequency of split values:
+```{r}
+splitDensity(btT)
+```
+
+
+proximity matrix:
+NEED TO ADD THIS!!!
+
+Finally, for a more complete diagnostic, we can use:
 
 ```{r}
-# create list of each tree for BART model
-bmTreesList <- treeList(bmTreesData)
-bmTreesList[[1]]
-
-
-# create list of trees for dbarts model
-dbTreeList <- treeList(dbTreesData)
-dbTreeList[[2]]
+bartDiag(model = bartModel, response = y, burnIn = 100)
 ```
 
-Now we can plot any tree (from any iteration). To begin we look at a tree from the BART model
+
+
+## Tree Based Plots
+
+To plot an individual tree, we can choose to display it either in dendrogram format, or icicle format. Additionally, we can choose which tree number or iteration to display:
 ```{r}
-# plot tree
-plotTrees(bmTreesList,
-  treeNum = 1,
-  iteration = 1,
-  plotType = "dendrogram"
-)
+dend <- plotTree(btT, treeNo = 1, iter = 1, plotType = "dendrogram")
+ice  <- plotTree(btT, treeNo = 1, iter = 1, plotType = "icicle")
 
-plotTrees(bmTreesList,
-  treeNum = 1,
-  iteration = 1,
-  plotType = "icicle"
-)
-
+#grid.arrange(dend, ice, ncol=2)
 ```
 
-
-And now a tree from the dbarts model
+The `plotAllTrees` allows for a few different options when plotting. To begin, if no iteration or tree number is defined, we automatically plot all the trees from the final iteration:
 ```{r}
-# plot tree
-plotTrees(dbTreeList,
-          treeNum = 2,
-          iteration = 1,
-          plotType = "dendrogram"
-)
-
-plotTrees(dbTreeList,
-          treeNum = 2,
-          iteration = 1,
-          plotType = "icicle"
-)
+plotAllTrees(btT) # final iteration
 ```
 
-# Extract the observations in nodes
-
-To extract the observations contained in each node:
+We can also choose which tree number to display. For example, if we pick tree number 1, we display that tree over all iterations:
 ```{r}
-allObsBART <- getNodeObsIndex(tree = bmTreesData, x, seq_len(n))
-allObsDBARTS <- getNodeObsIndex(tree = dbTreesData, x, seq_len(n))
+plotAllTrees(btT, treeNo = 1) # final iteration
 ```
 
-The output of the object is a nested list containing node attributes like the number of observations and whether it is a leaf or not. For example,
+Additionally, we can cluster the displayed trees by either the variable:
 ```{r}
-allObsBART
+plotAllTrees(btT, cluster = "var")
 ```
+
+or by the depth of the trees:
+```{r}
+plotAllTrees(btT, cluster = "depth")
+```
+
 
