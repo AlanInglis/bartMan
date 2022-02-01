@@ -59,6 +59,9 @@ extractTrees <- function(model) {
 
 
 # BART --------------------------------------------------------------------
+extractTrees.pbart <- function(model){
+  extractTrees.wbart(model)
+}
 
 extractTrees.wbart <- function(model){
 
@@ -84,6 +87,8 @@ extractTrees.wbart <- function(model){
       na = c("")
     )
   )
+
+
 
   # Adding in columns
   trees$structure$var <- varNames[trees$structure$var + 1] # as vars are indexed at 0
@@ -127,6 +132,13 @@ extractTrees.wbart <- function(model){
 
   # Functions to get the left and right children nodes
   # and the parent nodes
+
+  # rename test
+  trees$structure$nodes <-  trees$structure$node
+  trees$structure <- trees$structure %>%
+    group_by(iteration, treeNum) %>%
+    mutate(nodeX = 1:n())
+
   childLeft <- function(nodes) {
     childL <- nodes * 2
     childL[!childL %in% nodes] <- NA_integer_
@@ -192,6 +204,7 @@ extractTrees.wbart <- function(model){
     treeNum,
     label,
     value,
+    nodeX,
     -splitID,
     -tier
   )
@@ -264,6 +277,39 @@ extractTrees.bart <- function(model){
     rename(iteration = sample, treeNum = tree) %>%
     select( - varName)
 
+  # get parent nodes
+  # Functions to get the left and right children nodes
+  # and the parent nodes
+  childLeft <- function(nodes) {
+    childL <- nodes * 2
+    childL[!childL %in% nodes] <- NA_integer_
+
+    return(childL)
+  }
+
+  childRight <- function(nodes) {
+    childR <- nodes * 2 + 1
+    childR[!childR %in% nodes] <- NA_integer_
+
+    return(childR)
+  }
+
+  parent <- function(nodes) {
+    parents <- nodes %/% 2
+    parents[parents == 0] <- NA_integer_
+
+    return(parents)
+  }
+
+  trees$structure <- dplyr::group_by(trees$structure, iteration, treeNum)
+  trees$structure <- dplyr::mutate(
+    trees$structure,
+    childLeft = childLeft(node),
+    childRight = childRight(node)
+  )
+  trees$structure$parent <- parent(trees$structure$node)
+
+
   # reorder columns
   trees$structure <- trees$structure %>%
     select(
@@ -274,6 +320,9 @@ extractTrees.bart <- function(model){
       leafValue,
       iteration,
       treeNum,
+      childLeft,
+      childRight,
+      parent,
       label,
       value,
       n
@@ -433,6 +482,38 @@ extractTrees.bartMachine <- function(model){
     group_by(iteration, treeNum) %>%
     mutate(depth = max(depthAll))
 
+  # add observation per node:
+  childLeft <- function(nodes) {
+    childL <- nodes * 2
+    childL[!childL %in% nodes] <- NA_integer_
+
+    return(childL)
+  }
+
+  childRight <- function(nodes) {
+    childR <- nodes * 2 + 1
+    childR[!childR %in% nodes] <- NA_integer_
+
+    return(childR)
+  }
+
+  parent <- function(nodes) {
+    parents <- nodes %/% 2
+    parents[parents == 0] <- NA_integer_
+
+    return(parents)
+  }
+
+  df <- dplyr::group_by(df, iteration, treeNum)
+  df <- dplyr::mutate(
+    df,
+    childLeft = childLeft(node),
+    childRight = childRight(node)
+  )
+
+  df$parent <- parent(df$node)
+
+
   trees <- list()
   trees$structure <- df
   trees$MCMC <- iter
@@ -445,3 +526,15 @@ extractTrees.bartMachine <- function(model){
 
   return(trees)
 }
+
+
+
+# Function to find obs in each node ---------------------------------------
+
+# get parent nodes
+# Functions to get the left and right children nodes
+# and the parent nodes
+
+
+
+
