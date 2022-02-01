@@ -11,7 +11,7 @@
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
-#' @importFrom gridExtra grid.arrange
+#' @importFrom gridExtra arrangeGrob
 #' @importFrom ggraph ggraph
 #' @importFrom igraph gsize
 #' @importFrom cowplot get_legend
