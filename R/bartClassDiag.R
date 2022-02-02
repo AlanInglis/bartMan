@@ -7,59 +7,59 @@
 #'
 #' @return A selection of diagnostic plots
 #'
-
 #' @import ggplot2
 #' @importFrom patchwork area
 #' @importFrom patchwork plot_layout
-#' @importfrom ROCR prediction
+#' @importFrom ROCR prediction
 #' @importFrom ROCR performance
 #' @export
-
 
 bartClassDiag <- function(model, response){
 
   responseVals <- response
 
+
+  if(class(model) == "bartMachine"){
+    yhatTrain <- model$y_hat_train
+  }else{
+    yhatTrain <- colMeans(model$yhat.train)
+    yhatTrain <- pnorm(yhatTrain)
+  }
+
   # get prediction using ROCR package:
-  pred <- prediction(colMeans(pnorm(model$yhat.train)), responseVals)
+  pred <- prediction(yhatTrain, responseVals)
 
   # get auc value
-  auc <- performance(pred,"auc")@y.values[[1]]
+  auc <- performance(pred, "auc")
+  auc <- auc@y.values[[1]]
+  print(paste0("AUC: ", round(auc, 5)))
 
   # get false/true positive rates
   perfTF <- performance(pred, "tpr", "fpr")
 
   # create dataframe for ROC plot
-  dfROC <- data.frame(fpr=perfTF@x.values[[1]],
-                      tpr=perfTF@y.values[[1]])
-
-  # get sens and spec vals
-  perfSS <- performance(pred, "sens", "spec")
-
-  # extract values
-  SS <- (perfSS@x.values[[1]] + perfSS@y.values[[1]] - 1)
-
-  # turn into datframe
-  dfSS <- data.frame(alpha = perfSS@alpha.values[[1]], trueSkill = SS)
-
-  # get threshold value
-  thresholdVal <- min(dfSS$alpha[which(dfSS$trueSkill == max(dfSS$trueSkill))])
+  dfROC <- data.frame(fpr = perfTF@x.values[[1]],
+                      tpr = perfTF@y.values[[1]])
 
   # create dataframe for fitted vals plot
-  dfFitClassBart <- data.frame(fitted = pnorm(colMeans(model$yhat.train)),
-                               class = as.numeric(pnorm(colMeans(model$yhat.train)) > thresholdVal),
+  dfFitClassBart <- data.frame(fitted = yhatTrain,
                                actual = responseVals)
 
+  threshold <- mean(dfFitClassBart$fitted)
+  class <- as.numeric(yhatTrain > threshold)
+  dfFitClassBart$class <- class
+
+
   # create data frame for histogram
-  dfPnorm <- data.frame(pnorm = colMeans(pnorm(model$yhat.train)))
+  dfPnorm <- data.frame(vals = yhatTrain)
 
 
-# -------------------------------------------------------------------------
+  # -------------------------------------------------------------------------
 
   ROC <- bartROC(dfROC)
-  classF <- classFit(dfFitClassBart, thresholdVal)
+  classF <- classFit(dfFitClassBart)
   histogram <- classHist(dfPnorm)
-  thres <- thresPerf(dfSS, thresholdVal)
+  vimp <- bartVimpClass(model)
 
   design <- c(
     area(1, 1, 3, 3),
@@ -68,7 +68,7 @@ bartClassDiag <- function(model, response){
     area(5, 5, 7, 7)
   )
 
-  diagPlot <- ROC + classF + histogram + thres + plot_layout(design = design)
+  diagPlot <- ROC + classF + histogram + vimp + plot_layout(design = design)
 
   return(diagPlot)
 
@@ -96,25 +96,27 @@ bartROC <- function(data){
 # Class fitted ------------------------------------------------------------
 
 
-classFit <- function(data, threshold){
+classFit <- function(data){
 
-p <- ggplot(data, aes(x = fitted,
-                                 y = factor(actual),
-                                 fill = factor(class),
-                                 col = factor(class))
-             ) +
-  #geom_point(alpha = 0.2) +
-  geom_jitter(height = 0.2, size = 1, alpha = 0.2) +
-  scale_color_manual(values = c("red",  "blue")) +
-  xlab('Predicted probability') +
-  ylab('True classification') +
-  ggtitle('Class of fitted values') +
-  xlim(0,1) +
-  theme_bw() +
-  theme(legend.position = 'none') +
-  geom_vline(xintercept = threshold, col = 'black')
+  threshold <- mean(data$fitted)
 
-return(p)
+  p <- ggplot(data, aes(x = fitted,
+                        y = factor(actual),
+                        fill = factor(class),
+                        col = factor(class))
+  ) +
+    #geom_point(alpha = 0.2) +
+    geom_jitter(height = 0.2, size = 1, alpha = 0.2) +
+    scale_color_manual(values = c("red",  "blue")) +
+    xlab('Predicted probability') +
+    ylab('') +
+    ggtitle('Fitted values') +
+    #xlim(0,1) +
+    theme_bw() +
+    theme(legend.position = 'none') +
+    geom_vline(xintercept = threshold, col = 'black')
+
+  return(p)
 
 }
 
@@ -123,10 +125,10 @@ return(p)
 
 classHist <- function(data){
 
-  p <- ggplot(data, aes(pnorm)) +
+  p <- ggplot(data, aes(vals)) +
     #geom_histogram(stat = 'bin', binwidth = 0.05) +
     geom_histogram(bins = 50, color = "blue", fill = "white") +
-    ylab('Number of training data points') +
+    ylab('') +
     xlab('Predicted probability') +
     ggtitle("Histogram") +
     theme_bw()
@@ -137,30 +139,46 @@ classHist <- function(data){
 
 
 
-# Threshold performace ----------------------------------------------------
+# VIMP --------------------------------------------------------------------
 
-thresPerf <- function(data, threshold){
+bartVimpClass <- function(model) {
 
-  p <- ggplot(data, aes(x = alpha, y = trueSkill)) +
-    geom_line() +
-    ggtitle('Threshold-performance curve') +
-    xlab('Threshold') +
-    ylab('True skill statistic') +
-    geom_vline(xintercept = threshold, col = 'blue')+
-    theme_bw()
+  if (class(model) == "pbart") {
+    # get variable importance
+    vImp <- model$varcount.mean
+    vImp <- dplyr::tibble(Variable = names(vImp), Importance = vImp)
+  } else if(class(model) == "bartMachine"){
+    bmVimp <- bartMachine::investigate_var_importance(model, num_replicates_for_avg = 5)
+    vimpVals <- bmVimp$avg_var_props
+    vImp <- data.frame(Variable = names(vimpVals), Importance = vimpVals, row.names = NULL)
+  }else{
+    varCount <- NULL
+    for(i in 1:length(model$varcount[,1])){
+      varCount[[i]] <-  prop.table(model$varcount[i,])
+    }
+    vImp <- varCount %>%
+      bind_rows() %>%
+      colMeans()
+    vImp <- tibble(Variable = names(vImp), Importance = vImp)
+  }
+
+  p <- vImp %>%
+    arrange(Importance) %>%
+    mutate(Variable = factor(Variable, unique(Variable))) %>%
+    ggplot() +
+    aes(x = Variable, y = Importance) +
+    geom_segment(aes(x = Variable, xend = Variable, y = 0, yend = Importance), color = "blue") +
+    geom_point(color = "blue") +
+    theme_light() +
+    coord_flip() +
+    ggtitle(label = "Variable Importance") +
+    theme_bw() +
+    xlab("Variable") +
+    ylab("Importance") +
+    theme(
+      axis.title.y = element_text(angle = 90, vjust = 0.5),
+      legend.key.size = unit(0.5, "cm")
+    )
 
   return(p)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
