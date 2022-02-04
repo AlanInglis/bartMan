@@ -2,8 +2,9 @@ library(reshape2)
 library(ggplot2)
 library(multiscales)
 
-
-
+library(scales)
+library(dplyr)
+library(purrr)
 
 set.seed(100)
 # create some data
@@ -28,7 +29,6 @@ pp <- ggplot(s) +
   bivariate_scale(
     name = c("Value", "Uncertainty"),
     aesthetics = "fill",
-    #limits = lim,
     limits = list(c(0, 5), c(0, 1)),
     palette = pal_vsup(
       values = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 8)),
@@ -37,8 +37,13 @@ pp <- ggplot(s) +
   )
 
 pp
-grid.force()
-grid.ls()
+
+
+lims <- tibble(
+  x = c(0.5,5),
+  y = c(0,1)
+)
+
 
 # fails
 p <- ggplot(s) +
@@ -46,7 +51,8 @@ p <- ggplot(s) +
   bivariate_scale(
     name = c("Value", "Uncertainty"),
     aesthetics = "fill",
-    limits = list(c(0.5, 5), c(0, 1)), # changed 0 to 0.5 for the limits of value
+    limits = list(c(1, 5), c(0, 1)), # changed 0 to 0.5 for the limits of value
+    breaks = list(1:5, c(0,0.5,1)),
     palette = pal_vsup(
       values = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 8)),
     ),

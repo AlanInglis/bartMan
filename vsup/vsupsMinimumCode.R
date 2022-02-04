@@ -1,3 +1,27 @@
+#' VSUP
+#'
+#' @description Functions from 'multiscales' package to create VSUP plots
+#'
+#'
+
+#' @import ggplot2
+#' @importFrom patchwork area
+#' @importFrom patchwork plot_layout
+#' @importFrom tidybayes residual_draws
+#' @importFrom tidytreatment variance_draws
+#' @importFrom tidybayes point_interval
+#' @importFrom tidybayes geom_pointinterval
+#' @importFrom dplyr %>%
+#' @importFrom dplyr select
+#' @importFrom dplyr filter
+#' @importFrom dplyr summarise
+#' @importFrom dplyr tibble
+#' @importFrom dplyr first
+#' @importFrom tibble as_tibble
+#' @export
+
+
+
 library(grid)
 library(scales)
 library(tibble)
@@ -805,9 +829,9 @@ colourfan_grob <- function(colours, nrow, ncol, nmunch = 10) {
   polygonGrob(data$x, data$y, id, gp = gpar(fill = colours, col = colours, lwd = 0.5, lty = 1))
 }
 
-colourfan_grob(pal, 4,4)
-ncol = 4
-colours = pal
+#colourfan_grob(pal, 4,4)
+#ncol = 4
+#colours = pal
 
 # map square into fan
 # assumes x and y run from 0 to 1
