@@ -16,9 +16,9 @@ viviBartPlot(
 )
 }
 \arguments{
-\item{intPal}{A vector of colours to show interactions, for use with scale_fill_gradientn.}
+\item{intPal}{A vector of colours to show interactions, for use with scale_fill_gradientn. Palette number has to be 2^x/2}
 
-\item{impPal}{A vector of colours to show importance, for use with scale_fill_gradientn.}
+\item{impPal}{A vector of colours to show importance, for use with scale_fill_gradientn. Palette number has to be 2^x/2}
 
 \item{intLims}{Specifies the fit range for the color map for interaction strength.}
 
