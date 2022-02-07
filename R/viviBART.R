@@ -51,6 +51,27 @@ viviBART <- function(model,
     stop("noReplications must be > 1")
   }
 
+  classif <- is.factor(data[[response]])
+  if(classif){
+    message("Importance works for numeric and numeric binary response only; setting importance to 1.")
+  }
+
+  # if(class(model) == "pbart"){
+  #  pFun <- function(fit, data, prob=TRUE) as.numeric(condvis2::CVpredict(fit, data[,-response]))
+  # } else if(SOMETHING){
+  #   pFun <- function(fit, data, prob=TRUE) apply(predict(fit, data[,-response]), 2, mean)
+  # } else {
+  #   pFun <- NULL
+  # }
+
+
+  # need to fix... need to make response actual response
+  if(class(model) == "pbart"){
+    pFun <- function(fit, data, prob=TRUE) as.numeric(condvis2::CVpredict(fit, data[,-response]))
+  } else {
+    pFun <- NULL
+  }
+
   mat <- NULL
   vimp = NULL
 
@@ -64,7 +85,8 @@ viviBART <- function(model,
                             gridSize = gridSize,
                             nmax = nmax,
                             normalized = normalized,
-                            class = class)
+                            class = class,
+                            predictFun = pFun)
     vimp[[i]] <- diag(mat[[i]])
   }
   vimps <- bind_rows(vimp)
