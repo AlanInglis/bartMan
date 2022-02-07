@@ -168,8 +168,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
       filter(iteration == iter, treeNum == treeNo)
   }
 
-  noObservations <- max(treeData$structure$n)
-  treeData$structure <- rename(treeData$structure,c('noObs'= 'n'))
+  noObservations <- max(treeData$structure$noObs)
 
   treeData$structure <- treeData$structure %>%
     group_by(iteration, treeNum)
