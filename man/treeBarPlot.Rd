@@ -4,12 +4,16 @@
 \alias{treeBarPlot}
 \title{treeBarPlot}
 \usage{
-treeBarPlot(treeList, topTrees = NULL)
+treeBarPlot(treeData, iter = NULL, treeNo = NULL, topTrees = NULL)
 }
 \arguments{
-\item{treeList}{A list of trees created using the treeList function.}
+\item{iter}{The selected iteration}
+
+\item{treeNo}{The selected tree number.}
 
 \item{topTrees}{integer value to show the top x variables.}
+
+\item{treeList}{A list of trees created using the treeList function.}
 }
 \value{
 A barplot plot.

@@ -9,7 +9,8 @@ plotAllTrees(
   iter = NULL,
   treeNo = NULL,
   sampleSize = NULL,
-  cluster = NULL
+  cluster = NULL,
+  sizeNode = FALSE
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ plotAllTrees(
 \item{sampleSize}{Sample the tree list.}
 
 \item{cluster}{LOGICAL. If TRUE, then cluster by tree structures.}
+
+\item{sizeNode}{Whether to size node width by the number of observations that fall into that node.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.

@@ -4,12 +4,14 @@
 \alias{plotAllTreesPlotFn}
 \title{plotAllTreesplotFn}
 \usage{
-plotAllTreesPlotFn(treeList, sampleSize = NULL)
+plotAllTreesPlotFn(treeList, sampleSize = NULL, sizeNode = FALSE)
 }
 \arguments{
 \item{treeList}{A list of trees created by treeList function.}
 
 \item{sampleSize}{Sample the tree list.}
+
+\item{sizeNode}{Whether to size node width by the number of observations that fall into that node.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.
