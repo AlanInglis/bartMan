@@ -238,7 +238,6 @@ extractTrees.wbart <- function(model, data){
 
   trees$structure$noObs <- sapply(noObser, function(y) sum(do.call(rbind, y)[, 1]))
 
-
   # add class
   class(trees) <- c("list", "bart")
   return(trees)
