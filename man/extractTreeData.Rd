@@ -4,7 +4,7 @@
 \alias{extractTreeData}
 \title{extractTreeData}
 \usage{
-extractTreeData(model)
+extractTreeData(model, data)
 }
 \arguments{
 \item{model}{Model created from either the BART, dbarts or bartMachine packages.}

@@ -4,12 +4,14 @@
 \alias{bartClassDiag}
 \title{bartClassDiag}
 \usage{
-bartClassDiag(model, response)
+bartClassDiag(model, response, pNorm = FALSE)
 }
 \arguments{
 \item{model}{a model created from either the BART, dbarts, or bartMachine package.}
 
 \item{response}{The name of the response for the fit.}
+
+\item{pNorm}{apply pnorm to the y-hat data}
 }
 \value{
 A selection of diagnostic plots
