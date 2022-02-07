@@ -1,4 +1,4 @@
-#' viviBART
+#' viviBart
 #'
 #' @description Creates a matrix displaying variable importance on the diagonal
 #'  and variable interaction on the off-diagonal with the uncertainty included.
@@ -37,7 +37,7 @@
 
 # -------------------------------------------------------------------------
 
-viviBART <- function(model,
+viviBart <- function(model,
                      response,
                      data,
                      noReplications = 2,
@@ -56,19 +56,17 @@ viviBART <- function(model,
     message("Importance works for numeric and numeric binary response only; setting importance to 1.")
   }
 
-  # if(class(model) == "pbart"){
-  #  pFun <- function(fit, data, prob=TRUE) as.numeric(condvis2::CVpredict(fit, data[,-response]))
-  # } else if(SOMETHING){
-  #   pFun <- function(fit, data, prob=TRUE) apply(predict(fit, data[,-response]), 2, mean)
-  # } else {
-  #   pFun <- NULL
-  # }
-
-
-  # need to fix... need to make response actual response
-  if(class(model) == "pbart"){
-    pFun <- function(fit, data, prob=TRUE) as.numeric(condvis2::CVpredict(fit, data[,-response]))
-  } else {
+  # check if classification or not
+  responseIdx <- which(colnames(data) == response)
+  if(class(model) == "wbart" || class(model) == "pbart"){
+    pFun <- function(fit, data, prob=TRUE) as.numeric(condvis2::CVpredict(fit, data[,-responseIdx]))
+  } else if(class(model) == 'bart'){
+    if(is.null(model$sigma)){
+      pFun <- function(fit, data, prob=TRUE) apply(predict(fit, data[,-responseIdx]), 2, mean)
+    } else {
+      pFun <- NULL
+      }
+    } else {
     pFun <- NULL
   }
 
@@ -89,7 +87,7 @@ viviBART <- function(model,
                             predictFun = pFun)
     vimp[[i]] <- diag(mat[[i]])
   }
-  vimps <- bind_rows(vimp)
+  vimps <- dplyr::bind_rows(vimp)
   apSD <- apply(vimps, 2, sd)
   uncVimp  <- 1.96 * apSD/sqrt(noReplications)
 
@@ -107,7 +105,7 @@ viviBART <- function(model,
     return(vintAll)
   }
 
-  vInt <- lapply(mat, getIntValues) %>% bind_rows()
+  vInt <- lapply(mat, getIntValues) %>% dplyr::bind_rows()
   apSDvint <- apply(vInt, 2, sd)
   uncVint <- 1.96 * apSDvint/sqrt(noReplications)
 
@@ -150,15 +148,15 @@ viviBART <- function(model,
 }
 
 
-# palette number has to be 2^x
+#
 #' viviBartPlot
 #'
 #' @description Plots a Heatmap showing variable importance on the diagonal
 #' and variable interaction on the off-diagonal with uncertainty included.
 #'
 #' @param mat Matrices, such as that returned by viviBART, of values to be plotted.
-#' @param intPal A vector of colours to show interactions, for use with scale_fill_gradientn.
-#' @param impPal A vector of colours to show importance, for use with scale_fill_gradientn.
+#' @param intPal A vector of colours to show interactions, for use with scale_fill_gradientn. Palette number has to be 2^x/2
+#' @param impPal A vector of colours to show importance, for use with scale_fill_gradientn. Palette number has to be 2^x/2
 #' @param intLims Specifies the fit range for the color map for interaction strength.
 #' @param impLims Specifies the fit range for the color map for importance.
 #' @param border Logical. If TRUE then draw a black border around the diagonal elements.
