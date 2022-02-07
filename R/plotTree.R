@@ -46,6 +46,7 @@ plotTree <- function(treeData,
       geom_node_tile(aes(fill = var), size = 0.25) +
       geom_node_label(aes(label = label, color = var)) +
       scale_y_reverse() +
+      theme_void() +
       theme(legend.position = "none")
   }
 
@@ -126,7 +127,7 @@ plotAnyTree.dbarts <- function(treeData,
   noObservations <- max(treeData$structure$n)
 
   # Which columns to display
-  keeps <- c("var", "node", "isLeaf", "iteration", "treeNum", "label", "n", "value")
+  keeps <- c("var", "node", "isLeaf", "iteration", "treeNum", "label", "noObs", "value")
 
   treeData$structure <- dplyr::select(
     treeData$structure,
@@ -233,7 +234,7 @@ plotAnyTree.dbarts <- function(treeData,
 
   # remove unnessecery columns
   df <- df %>%
-    select(-varValue, -isLeaf, -n)
+    select(-varValue, -isLeaf, -noObs)
 
   # Turn into a table graph object
   singleTree <- tidygraph::tbl_graph(nodes = df, edges = allEdges)
