@@ -8,6 +8,7 @@
 #' @param treeNo The selected tree number.
 #' @param sampleSize Sample the tree list.
 #' @param cluster LOGICAL. If TRUE, then cluster by tree structures.
+#' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
@@ -34,10 +35,17 @@
 #'
 #' @export
 
-plotAllTrees <- function(treeData, iter = NULL, treeNo = NULL, sampleSize = NULL, cluster = NULL) {
+plotAllTrees <- function(treeData,
+                         iter = NULL,
+                         treeNo = NULL,
+                         sampleSize = NULL,
+                         cluster = NULL,
+                         sizeNode = FALSE) {
+
   allTrees <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = cluster)
+
   suppressWarnings(
-    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize)
+    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize, sizeNode = sizeNode)
   )
   return(p)
 }
@@ -46,7 +54,7 @@ plotAllTrees <- function(treeData, iter = NULL, treeNo = NULL, sampleSize = NULL
 
 # -------------------------------------------------------------------------
 
-
+#' @export
 # Main plot function:
 plotAll <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
   UseMethod("plotAll")
@@ -56,7 +64,7 @@ plotAll <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
 # BART --------------------------------------------------------------------
 
-
+#' @export
 plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
   maxIter <- treeData$nMCMC
 
@@ -74,13 +82,14 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
       filter(iteration == iter, treeNum == treeNo)
   }
 
-  # cluster trees
-  if (!is.null(cluster)){
-    df <- clusterTrees(df, cluster = cluster)
+  if (!is.null(cluster)) {
+    if (cluster == "depth") {
+      df <- df[with(df, order(-depth)), ]
+    }
   }
 
   # Which columns to display
-  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label", "value", "depth")
+  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label", "value", "depth", 'noObs')
 
   res <- dplyr::select(
     df,
@@ -143,13 +152,19 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
       select(-helper)
   })
 
+  if (!is.null(cluster)) {
+    if (cluster == "var") {
+      tblgList <- clusterTrees(tblgList)
+    }
+  }
+
   return(tblgList)
 }
 
 
 # dbarts ------------------------------------------------------------------
 # -------------------------------------------------------------------------
-
+#' @export
 plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
   maxIter <- treeData$nMCMC
@@ -176,8 +191,10 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
   # -------------------------------------------------------------------------
 
   # cluster trees
-  if (!is.null(cluster)){
-    treeData$structure <- clusterTrees(df, cluster = cluster)
+  if (!is.null(cluster)) {
+    if (cluster == "depth") {
+      df <- df[with(df, order(-depth)), ]
+    }
   }
 
   # Which columns to display
@@ -300,6 +317,12 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
     eachTree[[i]] <- tidygraph::tbl_graph(treesSplit[[i]], as.data.frame(allEdges[, i]))
   }
 
+  if (!is.null(cluster)) {
+    if (cluster == "var") {
+      eachTree <- clusterTrees(eachTree)
+    }
+  }
+
   return(eachTree)
 }
 
@@ -307,6 +330,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 
 # bartMachine -------------------------------------------------------------
 # -------------------------------------------------------------------------
+#' @export
 plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
   df <- treeData$structure
@@ -333,8 +357,10 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
   # -------------------------------------------------------------------------
 
   # cluster trees
-  if (!is.null(cluster)){
-    df <- clusterTrees(df, cluster = cluster)
+  if (!is.null(cluster)) {
+    if (cluster == "depth") {
+      df <- df[with(df, order(-depth)), ]
+    }
   }
 
   # split the dataframe into a list of dfs, one for each tree
@@ -367,49 +393,47 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
     eachTree[[i]] <- tidygraph::tbl_graph(treesSplit[[i]], dfOfEdges[[i]])
   }
 
+  if (!is.null(cluster)) {
+    if (cluster == "var") {
+      eachTree <- clusterTrees(eachTree)
+    }
+  }
+
   return(eachTree)
 }
 
 
 # -------------------------------------------------------------------------
-# cluster function --------------------------------------------------------
+# cluster function by variable --------------------------------------------
 # -------------------------------------------------------------------------
 
-clusterTrees <- function(data, cluster = NULL) {
+clusterTrees <- function(treeList) {
 
-  df <- data
+  #df <- data
+    indIDS <- map(treeList, function(x) {
+      x %>%
+        pull(var) %>%
+        replace_na("a") %>%
+        paste0(collapse = "")
+    }) %>%
+      unlist(use.names = F) %>%
+      as_tibble() %>%
+      mutate(ids = 1:n()) %>%
+      group_by(value) %>%
+      mutate(count = n():1) %>%
+      arrange(value)
 
-  if (cluster == "var") {
-    df1 <- df %>%
-      mutate(var_string = paste(var, collapse = ";"), var = list(var)) %>%
-      group_by(iteration, var_string) %>%
-      add_tally() %>%
-      mutate(min_nam = min(treeNum)) %>%
-      arrange(iteration, desc(n), min_nam, treeNum) %>%
-      ungroup()
-
-    dfSmall <- df %>%
+    ind <- indIDS %>%
+      group_by(value) %>%
+      mutate(valrank = max(count)) %>%
       ungroup() %>%
-      select(var, splitValue) %>%
-      as.data.frame()
+      arrange(-valrank, value, -count) %>%
+      pull(ids)
 
-    df1Small <- data.frame(
-      splitValue = df1$splitValue
-    )
 
-    dfNew <- dfSmall[match(df1Small[, 1], dfSmall[, 2]), ]
+    treeList <- treeList[ind]
 
-    df <- df1 %>%
-      select(-var, -n, -min_nam, -var_string) %>%
-      mutate(var = dfNew$var) %>%
-      select(var, everything()) %>%
-      group_by(iteration, treeNum)
-
-  } else if (cluster == "depth") {
-    df <- df[with(df, order(-depth)), ]
-  }
-
-  return(df)
+  return(treeList)
 }
 
 # -------------------------------------------------------------------------
@@ -420,14 +444,14 @@ clusterTrees <- function(data, cluster = NULL) {
 #'
 #' @param treeList A list of trees created by treeList function.
 #' @param sampleSize Sample the tree list.
+#' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #'
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
 #'
-# @param cluster LOGICAL. If TRUE, then cluster by tree structures.
 
-plotAllTreesPlotFn <- function(treeList, sampleSize = NULL) {
+plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = FALSE) {
 
   # plot a sample of trees
   if (length(treeList) > 200) {
@@ -446,6 +470,11 @@ plotAllTreesPlotFn <- function(treeList, sampleSize = NULL) {
   nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 
   allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors)
+  #allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors, sizeNode = sizeNode)
+  #allPlots <- lapply(treeList, function(x) plotFun(List = x, n = length(treeList), sizeNode = sizeNode, color = nodecolors))
+
+
+
   # get legend
   legend <- cowplot::get_legend(allPlots[[1]])
   # remove legends from individual plots
@@ -458,7 +487,19 @@ plotAllTreesPlotFn <- function(treeList, sampleSize = NULL) {
 }
 
 
-plotFun <- function(List, colors = NULL, n) {
+plotFun <- function(List, colors = NULL, n, sizeNode = FALSE) {
+
+  if (sizeNode) {
+  plot <- ggraph(List, "partition", weight = noObs) +
+    geom_node_tile(aes(fill = var), size = 0.25) +
+    geom_node_text(aes(label = ""), size = 4) +
+    scale_y_reverse() +
+    theme_void()
+  if (!is.null(colors)) {
+    plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
+      scale_color_manual(values = colors, na.value = "grey")
+  }
+} else {
   plot <- ggraph(List, "partition") +
     geom_node_tile(aes(fill = var), size = 0.25) +
     geom_node_text(aes(label = ""), size = 4) +
@@ -468,5 +509,6 @@ plotFun <- function(List, colors = NULL, n) {
     plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
       scale_color_manual(values = colors, na.value = "grey")
   }
+}
   return(plot)
 }
