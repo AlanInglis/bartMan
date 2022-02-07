@@ -4,6 +4,8 @@
 #'
 #' @param treeList A list of trees created using the treeList function.
 #' @param topTrees integer value to show the top x variables.
+#' @param iter The selected iteration
+#' @param treeNo The selected tree number.
 #'
 #' @return A barplot plot.
 #'
@@ -32,7 +34,13 @@
 #'
 #' @export
 
-treeBarPlot <- function(treeList, topTrees = NULL){
+treeBarPlot <- function(treeData,
+                        iter = NULL,
+                        treeNo = NULL,
+                        topTrees = NULL){
+
+
+  treeList <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = FALSE)
 
   # remove stumps
   treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
@@ -41,7 +49,7 @@ treeBarPlot <- function(treeList, topTrees = NULL){
   freqs <- map(treeList, function(x){
     x %>%
       pull(var) %>%
-      replace_na("..") %>%
+      tidyr::replace_na("..") %>%
       paste0(collapse = "")
   }) %>%
     unlist(use.names = F) %>%
@@ -51,7 +59,10 @@ treeBarPlot <- function(treeList, topTrees = NULL){
     mutate(val = n():1)
 
 
-  freqDf <-  freqs %>% slice(1) %>%  arrange(-val) %>%  rename(frequency = val)  # frequency tibble
+  freqDf <-  freqs %>%
+    slice(1) %>%
+    arrange(-val) %>%
+    rename(frequency = val)  # frequency tibble
   freqDf$treeNum <- seq(1:nrow(freqDf)) # add tree number
 
 
