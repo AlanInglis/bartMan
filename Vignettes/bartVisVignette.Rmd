@@ -1,5 +1,5 @@
 ---
-title: "bartVis"
+title: "bartMan"
 author: "Alan Inglis"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
@@ -50,7 +50,7 @@ Now we will create some basic BART models. To begin we load the libraries and th
 library(BART)
 library(dbarts)
 library(bartMachine)
-library(bartVis)
+library(bartMan)
 library(gridExtra) # for plots
 
 # create BART model:

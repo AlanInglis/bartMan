@@ -1,4 +1,4 @@
-Package: bartVis
+Package: bartMan
 Type: Package
 Title: Create Visualisations for BART models
 Version: 0.1.0
