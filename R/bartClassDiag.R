@@ -4,6 +4,7 @@
 #'
 #' @param model a model created from either the BART, dbarts, or bartMachine package.
 #' @param response The name of the response for the fit.
+#' @param pNorm apply pnorm to the y-hat data
 #'
 #' @return A selection of diagnostic plots
 #'
@@ -12,9 +13,10 @@
 #' @importFrom patchwork plot_layout
 #' @importFrom ROCR prediction
 #' @importFrom ROCR performance
+#' @importFrom bartMachine investigate_var_importance
 #' @export
 
-bartClassDiag <- function(model, response){
+bartClassDiag <- function(model, response, pNorm = FALSE){
 
   responseVals <- response
 
@@ -23,6 +25,9 @@ bartClassDiag <- function(model, response){
     yhatTrain <- model$y_hat_train
   }else{
     yhatTrain <- colMeans(model$yhat.train)
+  }
+
+  if(pNorm){
     yhatTrain <- pnorm(yhatTrain)
   }
 
@@ -51,14 +56,14 @@ bartClassDiag <- function(model, response){
 
 
   # create data frame for histogram
-  dfPnorm <- data.frame(vals = yhatTrain)
+  dfHist <- data.frame(vals = yhatTrain)
 
 
   # -------------------------------------------------------------------------
 
   ROC <- bartROC(dfROC)
   classF <- classFit(dfFitClassBart)
-  histogram <- classHist(dfPnorm)
+  histogram <- classHist(dfHist)
   vimp <- bartVimpClass(model)
 
   design <- c(
@@ -148,7 +153,7 @@ bartVimpClass <- function(model) {
     vImp <- model$varcount.mean
     vImp <- dplyr::tibble(Variable = names(vImp), Importance = vImp)
   } else if(class(model) == "bartMachine"){
-    bmVimp <- bartMachine::investigate_var_importance(model, num_replicates_for_avg = 5)
+    bmVimp <- bartMachine::investigate_var_importance(model, num_replicates_for_avg = 5, plot = FALSE)
     vimpVals <- bmVimp$avg_var_props
     vImp <- data.frame(Variable = names(vimpVals), Importance = vimpVals, row.names = NULL)
   }else{

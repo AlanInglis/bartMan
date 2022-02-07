@@ -23,6 +23,7 @@
 #' @importFrom dplyr tibble
 #' @importFrom dplyr first
 #' @importFrom tibble as_tibble
+#' @importFrom  bartMachine investigate_var_importance
 #' @export
 
 
@@ -232,7 +233,7 @@ bartVimp <- function(model) {
     vImp <- model$varcount.mean
     vImp <- dplyr::tibble(Variable = names(vImp), Importance = vImp)
   } else if(class(model) == "bartMachine"){
-    bmVimp <- bartMachine::investigate_var_importance(model, num_replicates_for_avg = 5)
+    bmVimp <- bartMachine::investigate_var_importance(model, num_replicates_for_avg = 5, plot = FALSE)
     vimpVals <- bmVimp$avg_var_props
     vImp <- data.frame(Variable = names(vimpVals), Importance = vimpVals, row.names = NULL)
   }else{
