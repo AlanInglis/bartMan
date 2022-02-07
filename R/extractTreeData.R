@@ -39,13 +39,14 @@
 #' @importFrom dplyr arrange
 #' @importFrom dplyr as_tibble
 #' @importFrom data.table rowid
+#' @importFrom rJava .jcall
 #'
 #' @export
 
 
 
-extractTreeData <- function(model){
-  trees <- extractTrees(model)
+extractTreeData <- function(model, data){
+  trees <- extractTrees(model, data)
   return(trees)
 }
 
@@ -53,17 +54,17 @@ extractTreeData <- function(model){
 # -------------------------------------------------------------------------
 
 # Main function:
-extractTrees <- function(model) {
+extractTrees <- function(model, data) {
   UseMethod("extractTrees")
 }
 
 
 # BART --------------------------------------------------------------------
-extractTrees.pbart <- function(model){
-  extractTrees.wbart(model)
+extractTrees.pbart <- function(model, data){
+  extractTrees.wbart(model, data)
 }
 
-extractTrees.wbart <- function(model){
+extractTrees.wbart <- function(model, data){
 
   # variable names:
   varNames <- names(model$varcount.mean)
@@ -133,12 +134,6 @@ extractTrees.wbart <- function(model){
   # Functions to get the left and right children nodes
   # and the parent nodes
 
-  # rename test
-  trees$structure$nodes <-  trees$structure$node
-  trees$structure <- trees$structure %>%
-    group_by(iteration, treeNum) %>%
-    mutate(nodeX = 1:n())
-
   childLeft <- function(nodes) {
     childL <- nodes * 2
     childL[!childL %in% nodes] <- NA_integer_
@@ -204,7 +199,6 @@ extractTrees.wbart <- function(model){
     treeNum,
     label,
     value,
-    nodeX,
     -splitID,
     -tier
   )
@@ -229,6 +223,20 @@ extractTrees.wbart <- function(model){
 
   trees$structure$depth <- rep(tDepth$Depth, times = lengthDepth$depth)
 
+  # get which observations
+  dat <- data
+
+  dfObs <-  trees$structure %>%
+    group_by(iteration, treeNum) %>%
+    mutate(obsList = evalNode(dat, var, splitValue))
+
+  # get number of observation
+  noObser <- NULL
+  for(i in 1:nrow(dfObs)){
+    noObser[[i]] <- lapply(dfObs$obsList[[i]], dim)
+  }
+
+  trees$structure$noObs <- sapply(noObser, function(y) sum(do.call(rbind, y)[, 1]))
 
 
   # add class
@@ -240,7 +248,7 @@ extractTrees.wbart <- function(model){
 
 # dbarts ------------------------------------------------------------------
 
-extractTrees.bart <- function(model){
+extractTrees.bart <- function(model, data){
   # get all trees
   treesTotal <- model$call$ntree
   iteration  <- model$call$ndpost
@@ -277,39 +285,6 @@ extractTrees.bart <- function(model){
     rename(iteration = sample, treeNum = tree) %>%
     select( - varName)
 
-  # get parent nodes
-  # Functions to get the left and right children nodes
-  # and the parent nodes
-  childLeft <- function(nodes) {
-    childL <- nodes * 2
-    childL[!childL %in% nodes] <- NA_integer_
-
-    return(childL)
-  }
-
-  childRight <- function(nodes) {
-    childR <- nodes * 2 + 1
-    childR[!childR %in% nodes] <- NA_integer_
-
-    return(childR)
-  }
-
-  parent <- function(nodes) {
-    parents <- nodes %/% 2
-    parents[parents == 0] <- NA_integer_
-
-    return(parents)
-  }
-
-  trees$structure <- dplyr::group_by(trees$structure, iteration, treeNum)
-  trees$structure <- dplyr::mutate(
-    trees$structure,
-    childLeft = childLeft(node),
-    childRight = childRight(node)
-  )
-  trees$structure$parent <- parent(trees$structure$node)
-
-
   # reorder columns
   trees$structure <- trees$structure %>%
     select(
@@ -320,12 +295,8 @@ extractTrees.bart <- function(model){
       leafValue,
       iteration,
       treeNum,
-      childLeft,
-      childRight,
-      parent,
       label,
-      value,
-      n
+      value
     )
 
   trees$varName <- colnames(model$varcount)
@@ -348,6 +319,22 @@ extractTrees.bart <- function(model){
 
   trees$structure$depth <- rep(tDepth$Depth, times = lengthDepth$depth)
 
+  # get which observations
+  dat <- as.data.frame(model$fit$data@x)
+
+  dfObs <-  trees$structure %>%
+    group_by(iteration, treeNum) %>%
+    mutate(obsList = evalNode(dat, var, splitValue))
+
+  # get number of observation
+  noObser <- NULL
+  for(i in 1:nrow(dfObs)){
+    noObser[[i]] <- lapply(dfObs$obsList[[i]], dim)
+  }
+
+  trees$structure$noObs <- sapply(noObser, function(y) sum(do.call(rbind, y)[, 1]))
+
+
   # add class
   class(trees) <- c("list", "dbarts")
   return(trees)
@@ -356,24 +343,18 @@ extractTrees.bart <- function(model){
 
 # bartMachine -------------------------------------------------------------
 
-extractTrees.bartMachine <- function(model){
+extractTrees.bartMachine <- function(model, data){
   # Get variable names
   varNames <- colnames(model$X)
 
   # Get No of iterations after burn in
   iter <- model$num_iterations_after_burn_in
 
-  # extract the raw node data for all iterations
-  nodeData <- NULL
-  if (iter > 1) {
-    nodeData <- NULL
-    for (i in 1:iter) {
-      nodeData[[i]] <- bartMachine::extract_raw_node_data(model, g = i)
-    }
-  } else {
-    nodeData <- bartMachine::extract_raw_node_data(model)
-  }
-
+  # function to extract tree data
+    nodeData <- vector("list", iter)
+    nodeData <- lapply(1:iter,  function(i){
+      extract_raw_node_dataSP(model, g = i, iter = iter)
+    })
 
   # Melting the tree data into useable format
   df <- rrapply::rrapply(nodeData, how = 'melt')
@@ -382,7 +363,7 @@ extractTrees.bartMachine <- function(model){
   suppressMessages(
   df <- df %>%
     pivot_longer(cols = 3:(nCol-1), values_drop_na = TRUE, names_repair = "unique") %>%
-    filter(grepl('depth|isLeaf|is_stump|string_location|y_pred|splitValue|splitAttributeM|n_eta', value...5)) %>%
+    filter(grepl('depth|isLeaf|is_stump|string_location|y_pred|splitValue|splitAttributeM', value...5)) %>%
     select(-name) %>%
     mutate(rn = rowid(L1, L2, value...5)) %>%
     pivot_wider(names_from = value...5, values_from = value...3) %>%
@@ -392,7 +373,7 @@ extractTrees.bartMachine <- function(model){
   # convert to correct types
   df$depth    <- as.numeric(df$depth)
   df$isLeaf   <- as.logical(df$isLeaf)
-  df$n_eta    <- as.numeric(df$n_eta)
+  #df$n_eta    <- as.numeric(df$n_eta)
   df$is_stump <- as.logical(df$is_stump)
   df$string_location <- as.character(df$string_location)
   df$splitAttributeM <- as.numeric(df$splitAttributeM)
@@ -448,7 +429,7 @@ extractTrees.bartMachine <- function(model){
   df <- as_tibble(df)
 
   # rename columns and reorder/remove cols
-  names(df) <- c("iteration", "treeNum", "depth", "isLeaf", "noObs", "isStump", "direction",
+  names(df) <- c("iteration", "treeNum", "depth", "isLeaf", "isStump", "direction",
                  "splitAtt", "splitValue", "leafValue", "var", "treeNumID",
                  "node", "parentNode", "from", "value", "label", "to")
   df <- df %>%
@@ -460,7 +441,6 @@ extractTrees.bartMachine <- function(model){
       "isLeaf",
       "splitValue",
       "depth",
-      "noObs",
       "direction",
       "leafValue",
       "node",
@@ -482,36 +462,20 @@ extractTrees.bartMachine <- function(model){
     group_by(iteration, treeNum) %>%
     mutate(depth = max(depthAll))
 
-  # add observation per node:
-  childLeft <- function(nodes) {
-    childL <- nodes * 2
-    childL[!childL %in% nodes] <- NA_integer_
+  # get which observations
+  dat <- as.data.frame(model$X)
 
-    return(childL)
+  dfObs <-  df %>%
+    group_by(iteration, treeNum) %>%
+    mutate(obsList = evalNode(dat, var, splitValue))
+
+  # get number of observation
+  noObs <- NULL
+  for(i in 1:nrow(dfObs)){
+    noObs[[i]] <- lapply(dfObs$obsList[[i]], dim)
   }
 
-  childRight <- function(nodes) {
-    childR <- nodes * 2 + 1
-    childR[!childR %in% nodes] <- NA_integer_
-
-    return(childR)
-  }
-
-  parent <- function(nodes) {
-    parents <- nodes %/% 2
-    parents[parents == 0] <- NA_integer_
-
-    return(parents)
-  }
-
-  df <- dplyr::group_by(df, iteration, treeNum)
-  df <- dplyr::mutate(
-    df,
-    childLeft = childLeft(node),
-    childRight = childRight(node)
-  )
-
-  df$parent <- parent(df$node)
+  df$noObs <- sapply(noObs, function(y) sum(do.call(rbind, y)[, 1]))
 
 
   trees <- list()
@@ -531,10 +495,104 @@ extractTrees.bartMachine <- function(model){
 
 # Function to find obs in each node ---------------------------------------
 
-# get parent nodes
-# Functions to get the left and right children nodes
-# and the parent nodes
+evalNode <- function(df, x, v) {
+
+  out <- vector("list", length(x))
+  stk <- vector("list", sum(is.na(x)))
+  pos <- 1L
+  stk[[pos]] <- df
+
+  for (i in seq_along(x)) {
+    if (!is.na(x[[i]])) {
+
+      subs <- pos + c(0L, 1L)
+      stk[subs] <- split(stk[[pos]], stk[[pos]][[x[[i]]]] <= v[[i]])
+
+      names(stk)[subs] <- trimws(paste0(
+        names(stk[pos]), ",", x[[i]], c(">", "<="), v[[i]]
+      ), "left", ",")
+
+      out[[i]] <- rev(stk[subs])
+      pos <- pos + 1L
+    } else {
+
+      out[[i]] <- stk[pos]
+      stk[[pos]] <- NULL
+      pos <- pos - 1L
+    }
+  }
+  return(out)
+}
 
 
+# Function to improve bartMachine speeds ----------------------------------
 
+extract_raw_node_dataSP <- function (bart_machine, g = 1, iter)
+{
+
+  raw_data_java = .jcall(bart_machine$java_bart_machine, "[LbartMachine/bartMachineTreeNode;",
+                         "extractRawNodeInformation", as.integer(g - 1), simplify = TRUE)
+
+  raw_data <- vector('list', iter)
+  raw_data <- lapply(raw_data_java, bMachineNode)
+  raw_data
+}
+
+
+# recursivly go through java object
+bMachineNode <- function (node_java)
+{
+
+  BAD_FLAG_INT = -2147483647
+  BAD_FLAG_DOUBLE = -1.7976931348623157e+308
+
+
+  node_data = list()
+  #node_data = vector("list", 19)
+  node_data$java_obj = node_java
+  node_data$depth = node_java$depth
+  node_data$isLeaf = node_java$isLeaf
+  node_data$n_eta = node_java$n_eta
+  node_data$is_stump = node_java$isStump()
+  node_data$string_location = node_java$stringLocation()
+
+
+  if (node_java$splitAttributeM == BAD_FLAG_INT) {
+    node_data$splitAttributeM = NA
+  }
+  else {
+    node_data$splitAttributeM = node_java$splitAttributeM
+  }
+
+
+  if (node_java$splitValue == BAD_FLAG_DOUBLE) {
+    node_data$splitValue = NA
+  }
+  else {
+    node_data$splitValue = node_java$splitValue
+  }
+
+
+  if (node_java$y_pred == BAD_FLAG_DOUBLE) {
+    node_data$y_pred = NA
+  }
+  else {
+    node_data$y_pred = node_java$y_pred
+  }
+
+
+  if (!is.jnull(node_java$left)) {
+    node_data$left = bMachineNode(node_java$left)
+  }
+  else {
+    node_data$left = NA
+  }
+  if (!is.jnull(node_java$right)) {
+    node_data$right = bMachineNode(node_java$right)
+  }
+  else {
+    node_data$right = NA
+  }
+  node_data
+}
 
