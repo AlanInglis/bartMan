@@ -20,6 +20,7 @@
 #' @importFrom dplyr as_tibble
 #' @importFrom dplyr arrange
 #' @importFrom dplyr mutate
+#' @importFrom dplyr slice
 #' @importFrom igraph gsize
 #' @importFrom ggraph ggraph
 #' @importFrom ggraph geom_node_tile
