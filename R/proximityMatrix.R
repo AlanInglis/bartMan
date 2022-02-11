@@ -49,13 +49,26 @@ proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = T
   myNames <- myLetters(idxLength)
   allIndex <- setNames(whichObs, myNames)
 
+  #add back to dataframe to find terminal nodes
+  dfObs$whichNode <- allIndex
+
+  # filter terminal nodes
+  dfTerm <- dfObs %>%
+    filter(is.na(var))
+
+  # get observations
+  allIndex <- dfTerm$whichNode
+
   # turn into matrix
   resMat <- tcrossprod(table(stack(allIndex)))
   diag(resMat) <- 0
-  maxVal <- max(resMat)
 
+  # normalize
+  treeNumber <- treeData$nTree
+  iterNumber <- treeData$nMCMC
+  treeTotal <- treeNumber*iterNumber
   if (normalize) {
-    resMat <- resMat / maxVal
+    resMat <- resMat / treeTotal
   }
 
   if (reorder) {
