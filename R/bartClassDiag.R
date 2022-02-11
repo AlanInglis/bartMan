@@ -46,34 +46,61 @@ bartClassDiag <- function(model, response, pNorm = FALSE){
   dfROC <- data.frame(fpr = perfTF@x.values[[1]],
                       tpr = perfTF@y.values[[1]])
 
+  # calculate Youden's Index
+  youdenIndex <- function(pred) {
+
+    sens <- performance(pred, measure = "sens")@y.values[[1]]
+    spec <- performance(pred, measure = "spec")@y.values[[1]]
+    ss <- sens + spec
+    Yindex <- which.max(ss)
+
+    cutoffs   <- performance(pred, measure = "sens")@x.values[[1]]
+    youdenVal <- cutoffs[Yindex]
+
+    return(youdenVal)
+  }
+
+  yI <- youdenIndex(pred)
+
   # create dataframe for fitted vals plot
   dfFitClassBart <- data.frame(fitted = yhatTrain,
                                actual = responseVals)
 
-  threshold <- mean(dfFitClassBart$fitted)
+  threshold <- yI
   class <- as.numeric(yhatTrain > threshold)
   dfFitClassBart$class <- class
 
 
   # create data frame for histogram
   dfHist <- data.frame(vals = yhatTrain)
+  dfHist$group = ifelse(dfHist$vals < yI, "low", "high")
+
+  # create data fro precision-recall plot
+  predRec <- performance(pred, "prec", "rec")
+
+  dfPR <- data.frame(Recall = predRec@x.values[[1]],
+                     Precision = predRec@y.values[[1]])
+
+
 
 
   # -------------------------------------------------------------------------
 
   ROC <- bartROC(dfROC)
-  classF <- classFit(dfFitClassBart)
-  histogram <- classHist(dfHist)
+  PrecRec <- bartPrecRec(dfPR)
+  classF <- classFit(dfFitClassBart, threshold = yI)
+  histogram <- classHist(dfHist, threshold = yI)
   vimp <- bartVimpClass(model)
 
   design <- c(
     area(1, 1, 3, 3),
     area(1, 5, 3, 7),
     area(5, 1, 7, 3),
-    area(5, 5, 7, 7)
+    area(5, 5, 7, 7),
+    area(9, 1, 11, 3)
   )
 
-  diagPlot <- ROC + classF + histogram + vimp + plot_layout(design = design)
+  diagPlot <- ROC + PrecRec + classF + histogram + vimp + plot_layout(design = design)
 
   return(diagPlot)
 
@@ -97,13 +124,27 @@ bartROC <- function(data){
 
 
 
+# Precision-Recall --------------------------------------------------------
+
+
+bartPrecRec <- function(data) {
+
+  data <- na.omit(data)
+  p <- ggplot(data, aes(x = Recall, y = Precision)) +
+    geom_line() +
+    xlab("Recall") +
+    ylab("Precision") +
+    ggtitle("Precision-Recall") +
+    theme_bw()
+
+  return(p)
+}
+
 
 # Class fitted ------------------------------------------------------------
 
 
-classFit <- function(data){
-
-  threshold <- mean(data$fitted)
+classFit <- function(data, threshold){
 
   p <- ggplot(data, aes(x = fitted,
                         y = factor(actual),
@@ -128,15 +169,18 @@ classFit <- function(data){
 # Histogram fitted vals ---------------------------------------------------
 
 
-classHist <- function(data){
+classHist <- function(data, threshold){
 
-  p <- ggplot(data, aes(vals)) +
-    #geom_histogram(stat = 'bin', binwidth = 0.05) +
-    geom_histogram(bins = 50, color = "blue", fill = "white") +
+  p <- ggplot(data, aes(vals, fill = group)) +
+    geom_histogram(bins = 50, color = "black", alpha = 0.5) +
     ylab('') +
     xlab('Predicted probability') +
     ggtitle("Histogram") +
-    theme_bw()
+    geom_vline(xintercept = threshold, col = 'black') +
+    scale_fill_manual(values = c("low" = 'red',
+                                 "high" = "blue")) +
+    theme_bw() +
+    theme(legend.position = "none")
 
   return(p)
 
