@@ -205,6 +205,8 @@ extractTrees.wbart <- function(model, data){
 
   trees$varName <- colnames(model$varcount)
 
+
+
   # add tree depth
   treeDepth <- function(x) {
     vals <- !is.na(x)
@@ -226,9 +228,20 @@ extractTrees.wbart <- function(model, data){
   # get which observations
   dat <- data
 
+
+
   dfObs <-  trees$structure %>%
     group_by(iteration, treeNum) %>%
     mutate(obsList = evalNode(dat, var, splitValue))
+
+  obsIndex <- lapply(dfObs$obsList, function(x) {
+    lapply(x, row.names)
+  })
+
+  whichObs <- lapply(obsIndex, rapply, f = c)
+  whichObs <- lapply(whichObs, as.numeric)
+
+  trees$structure$obsNode <- whichObs
 
   # get number of observation
   noObser <- NULL
