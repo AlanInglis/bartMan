@@ -9,6 +9,7 @@
 #' @param sampleSize Sample the tree list.
 #' @param cluster LOGICAL. If TRUE, then cluster by tree structures.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
+#' @param pal A palette to colour the terminal nodes.
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
@@ -40,12 +41,14 @@ plotAllTrees <- function(treeData,
                          treeNo = NULL,
                          sampleSize = NULL,
                          cluster = NULL,
-                         sizeNode = FALSE) {
+                         sizeNode = TRUE,
+                         pal = RColorBrewer::brewer.pal(9, "Purples")) {
+
 
   allTrees <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = cluster)
 
   suppressWarnings(
-    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize, sizeNode = sizeNode)
+    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize, sizeNode = sizeNode, pal = pal)
   )
   return(p)
 }
@@ -82,6 +85,12 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
       filter(iteration == iter, treeNum == treeNo)
   }
 
+
+  # add mean response per node:
+  respNode <- apply(df, 1, function(x) {y[x$obsNode]})
+  respNode <- lapply(respNode, mean)
+  df$respNode <- unlist(respNode)
+
   if (!is.null(cluster)) {
     if (cluster == "depth") {
       df <- df[with(df, order(-depth)), ]
@@ -89,7 +98,7 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
   }
 
   # Which columns to display
-  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label", "value", "depth", 'noObs')
+  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label", "value", "depth", 'noObs', 'respNode', 'obsNode')
 
   res <- dplyr::select(
     df,
@@ -105,20 +114,7 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
   )
   res <- dplyr::select(res, -newNode, -newParent)
 
-  res$helper <- cumsum(is.na(res$parent))
-
-  res <- res %>%
-    ungroup() %>%
-    group_by(helper)
-
-
   nodeList <- dplyr::group_split(dplyr::select(res, -parent), .keep = TRUE)
-
-  nL <- map(nodeList, function(x) {
-    x %>%
-      select(-helper) %>%
-      group_by(iteration, treeNum)
-  })
 
   edgeList <- purrr::map(
     dplyr::group_split(dplyr::select(
@@ -131,11 +127,6 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
     ~ dplyr::filter(., !is.na(parent))
   )
 
-  edgeList <- map(edgeList, function(x) {
-    x %>%
-      select(-iteration, -treeNum)
-  })
-
   # Turn into data structure for tidy graph manipulation
   tblgList <- purrr::map2(
     .x = nodeList,
@@ -147,10 +138,6 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
     )
   )
 
-  tblgList <- map(tblgList, function(x) {
-    x %>%
-      select(-helper)
-  })
 
   if (!is.null(cluster)) {
     if (cluster == "var") {
@@ -190,10 +177,10 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 
   # -------------------------------------------------------------------------
 
-  # cluster trees
+  # cluster trees by depth
   if (!is.null(cluster)) {
     if (cluster == "depth") {
-      df <- df[with(df, order(-depth)), ]
+      treeData$structure <-  treeData$structure[with(treeData$structure, order(-depth)), ]
     }
   }
 
@@ -208,13 +195,11 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 
   treeData$structure <- transform(treeData$structure, varValue = ifelse(is.na(var), -1, var))
   treeData$structure <- treeData$structure %>%
-    tibble() %>%
-    group_by(iteration, treeNum)
-
+    tibble()
 
 
   treesSplit <- treeData$structure %>%
-    group_split(cumsum(noObs == noObservations), .keep = FALSE)
+    group_split(cumsum(noObs == noObservations))
 
   # add the depth of the tree
   treeDepth <- function(trees) {
@@ -303,6 +288,16 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
   }
 
   allEdges <- sapply(treesSplit, getEdges)
+
+  # temporary fix for single type of tree
+  needLe <- paste0("\\b", paste(c(1, 1, 1, 4, 4, 6, 6, 1), collapse = ","), "\\b")
+  changeTo <- paste(c(1, 1, 3, 4, 4, 6, 6, 3), collapse = ",")
+  allEdges <- lapply(
+    strsplit(sapply(allEdges, function(L) gsub(needLe, changeTo, paste(L, collapse = ","))), ","),
+    as.integer)
+  allEdges <- matrix(allEdges, nrow = 2)
+  rownames(allEdges) <- c('from', 'to')
+
 
   # remove unnecessary columns
   treesSplit <- lapply(treesSplit, function(x) {
@@ -445,13 +440,15 @@ clusterTrees <- function(treeList) {
 #' @param treeList A list of trees created by treeList function.
 #' @param sampleSize Sample the tree list.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
+#' @param pal A palette to colour the terminal nodes.
 #'
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
 #'
 
-plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = FALSE) {
+plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = TRUE, pal =  RColorBrewer::brewer.pal(9, "Purples")) {
+
 
   # plot a sample of trees
   if (length(treeList) > 200) {
@@ -464,16 +461,34 @@ plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = FALSE) {
   # remove stumps
   treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
 
+  # get legend for response vals
+  respVals <- unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode)))
+  respDf <- data.frame(respVals = respVals)
+
+  legendPlot <- ggplot(respDf) +
+    geom_histogram(aes(respVals, fill = respVals))  +
+    scale_fill_gradientn(
+      colors = pal, limits = range(respVals), name = "avg resp",
+      guide = guide_colorbar(
+        frame.colour = "black",
+        ticks.colour = "black"
+      ))
+  # get the legend
+  suppressMessages(
+    respLegend <- cowplot::get_legend(legendPlot)
+  )
+
   # set node colours
   nodenames <- unique(na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
   nodenames <- sort(nodenames)
   nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 
-  allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors)
-  #allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors, sizeNode = sizeNode)
-  #allPlots <- lapply(treeList, function(x) plotFun(List = x, n = length(treeList), sizeNode = sizeNode, color = nodecolors))
-
-
+  allPlots <- lapply(treeList,
+                     plotFun,
+                     n = length(treeList),
+                     color = nodecolors,
+                     sizeNode = sizeNode,
+                     pal = pal)
 
   # get legend
   legend <- cowplot::get_legend(allPlots[[1]])
@@ -483,11 +498,18 @@ plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = FALSE) {
   nRow <- floor(sqrt(n))
   allTreesPlot <- arrangeGrob(grobs=allPlots, nrow=nRow)
 
-  cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(1, .1), ncol = 2)
+  cowplot::plot_grid(allTreesPlot, legend, respLegend , rel_widths = c(1, 0.11, 0.11), ncol = 3)
 }
 
 
-plotFun <- function(List, colors = NULL, n, sizeNode = FALSE) {
+
+
+
+plotFun <- function(List, colors = NULL, n, sizeNode = TRUE, pal = RColorBrewer::brewer.pal(9, "Purples")) {
+
+  if(is.null(pal)){
+    pal = "grey"
+  }
 
   if (sizeNode) {
   plot <- ggraph(List, "partition", weight = noObs) +
@@ -496,8 +518,8 @@ plotFun <- function(List, colors = NULL, n, sizeNode = FALSE) {
     scale_y_reverse() +
     theme_void()
   if (!is.null(colors)) {
-    plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
-      scale_color_manual(values = colors, na.value = "grey")
+    plot <- plot + scale_fill_manual(values = colors, name = "Variable", na.value = pal) #+
+      #scale_color_manual(values = colors, na.value = "grey")
   }
 } else {
   plot <- ggraph(List, "partition") +
@@ -506,9 +528,19 @@ plotFun <- function(List, colors = NULL, n, sizeNode = FALSE) {
     scale_y_reverse() +
     theme_void()
   if (!is.null(colors)) {
-    plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
-      scale_color_manual(values = colors, na.value = "grey")
+    plot <- plot + scale_fill_manual(values = colors, name = "Variable", na.value = pal) #+
+      #scale_color_manual(values = colors, na.value = "grey")
   }
 }
   return(plot)
 }
+
+
+
+# -------------------------------------------------------------------------
+
+
+
+
+
+
