@@ -4,7 +4,12 @@
 \alias{plotAllTreesPlotFn}
 \title{plotAllTreesplotFn}
 \usage{
-plotAllTreesPlotFn(treeList, sampleSize = NULL, sizeNode = FALSE)
+plotAllTreesPlotFn(
+  treeList,
+  sampleSize = NULL,
+  sizeNode = TRUE,
+  pal = RColorBrewer::brewer.pal(9, "Purples")
+)
 }
 \arguments{
 \item{treeList}{A list of trees created by treeList function.}
@@ -12,6 +17,8 @@ plotAllTreesPlotFn(treeList, sampleSize = NULL, sizeNode = FALSE)
 \item{sampleSize}{Sample the tree list.}
 
 \item{sizeNode}{Whether to size node width by the number of observations that fall into that node.}
+
+\item{pal}{A palette to colour the terminal nodes.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.

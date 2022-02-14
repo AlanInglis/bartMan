@@ -10,7 +10,8 @@ plotAllTrees(
   treeNo = NULL,
   sampleSize = NULL,
   cluster = NULL,
-  sizeNode = FALSE
+  sizeNode = TRUE,
+  pal = RColorBrewer::brewer.pal(9, "Purples")
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ plotAllTrees(
 \item{cluster}{LOGICAL. If TRUE, then cluster by tree structures.}
 
 \item{sizeNode}{Whether to size node width by the number of observations that fall into that node.}
+
+\item{pal}{A palette to colour the terminal nodes.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.
