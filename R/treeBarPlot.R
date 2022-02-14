@@ -29,8 +29,6 @@
 #' @importFrom patchwork plot_layout
 #' @importFrom cowplot get_legend
 #' @importFrom cowplot plot_grid
-#' @importFrom treemapify geom_treemap
-#' @importFrom treemapify geom_treemap_text
 #'
 #'
 #' @export
