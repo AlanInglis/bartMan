@@ -4,7 +4,14 @@
 \alias{proximityMatrix}
 \title{proximityMatrix}
 \usage{
-proximityMatrix(treeData, data, nRows, normalize = TRUE, reorder = TRUE)
+proximityMatrix(
+  treeData,
+  data,
+  nRows,
+  normalize = TRUE,
+  reorder = TRUE,
+  iter = NULL
+)
 }
 \arguments{
 \item{treeData}{A list of tree attributes created by treeData function.}
@@ -17,6 +24,9 @@ proximityMatrix(treeData, data, nRows, normalize = TRUE, reorder = TRUE)
 the number of trees.}
 
 \item{reorder}{Default is TRUE. Whether to sort the matrix so high values are pushed to top left.}
+
+\item{iter}{Which iteration to use, if NULL the proximity matrix is calculated over all
+iterations.}
 }
 \value{
 A matrix containing proximity values.
