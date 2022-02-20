@@ -4,10 +4,12 @@
 \alias{bartClassDiag}
 \title{bartClassDiag}
 \usage{
-bartClassDiag(model, response, pNorm = FALSE)
+bartClassDiag(model, data, response, pNorm = FALSE)
 }
 \arguments{
 \item{model}{a model created from either the BART, dbarts, or bartMachine package.}
+
+\item{data}{A dataframe}
 
 \item{response}{The name of the response for the fit.}
 
