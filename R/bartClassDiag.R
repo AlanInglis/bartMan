@@ -3,6 +3,7 @@
 #' @description Displays a selection of diagnostic plots for a BART model.
 #'
 #' @param model a model created from either the BART, dbarts, or bartMachine package.
+#' @param data A dataframe
 #' @param response The name of the response for the fit.
 #' @param pNorm apply pnorm to the y-hat data
 #'
@@ -14,9 +15,12 @@
 #' @importFrom ROCR prediction
 #' @importFrom ROCR performance
 #' @importFrom bartMachine investigate_var_importance
+#' @importFrom caret confusionMatrix
+#' @importFrom condvis2 CVpredict
+#'
 #' @export
 
-bartClassDiag <- function(model, response, pNorm = FALSE){
+bartClassDiag <- function(model, data, response, pNorm = FALSE){
 
   responseVals <- response
 
@@ -37,7 +41,7 @@ bartClassDiag <- function(model, response, pNorm = FALSE){
   # get auc value
   auc <- performance(pred, "auc")
   auc <- auc@y.values[[1]]
-  print(paste0("AUC: ", round(auc, 5)))
+  aucLab <- print(paste0("AUC: ", round(auc, 5)))
 
   # get false/true positive rates
   perfTF <- performance(pred, "tpr", "fpr")
@@ -51,11 +55,8 @@ bartClassDiag <- function(model, response, pNorm = FALSE){
 
     sens <- performance(pred, measure = "sens")@y.values[[1]]
     spec <- performance(pred, measure = "spec")@y.values[[1]]
-    ss <- sens + spec
-    Yindex <- which.max(ss)
-
-    cutoffs   <- performance(pred, measure = "sens")@x.values[[1]]
-    youdenVal <- cutoffs[Yindex]
+    #youdenVal <- mean(sens) + mean(spec) - 1
+    youdenVal <- max(sens + spec -1)
 
     return(youdenVal)
   }
@@ -86,21 +87,23 @@ bartClassDiag <- function(model, response, pNorm = FALSE){
 
   # -------------------------------------------------------------------------
 
-  ROC <- bartROC(dfROC)
+  ROC <- bartROC(dfROC, threshold = yI, label = aucLab)
   PrecRec <- bartPrecRec(dfPR)
   classF <- classFit(dfFitClassBart, threshold = yI)
   histogram <- classHist(dfHist, threshold = yI)
   vimp <- bartVimpClass(model)
+  cM <- confMat(model, data, response)
 
   design <- c(
     area(1, 1, 3, 3),
     area(1, 5, 3, 7),
     area(5, 1, 7, 3),
     area(5, 5, 7, 7),
-    area(9, 1, 11, 3)
+    area(9, 1, 11, 3),
+    area(9, 5, 11, 7)
   )
 
-  diagPlot <- ROC + PrecRec + classF + histogram + vimp + plot_layout(design = design)
+  diagPlot <- ROC + PrecRec + classF + histogram + cM + vimp + plot_layout(design = design)
 
   return(diagPlot)
 
@@ -109,14 +112,20 @@ bartClassDiag <- function(model, response, pNorm = FALSE){
 # ROC curve for dbarts ----------------------------------------------------
 
 
-bartROC <- function(data){
+bartROC <- function(data, threshold, label){
 
   p <- ggplot(data, aes(x = fpr, y = tpr)) +
     geom_line() +
     xlab('False positive rate') +
     ylab('True positive rate') +
     ggtitle('ROC') +
-    geom_abline(intercept = 0, slope = 1, col = 'blue')+
+    #geom_abline(intercept = 0, slope = 1, col = 'blue') +
+    geom_segment(aes(x = threshold, xend = threshold, y = -Inf,  yend = 1), linetype = 2) +
+    geom_segment(aes(x = -Inf, xend = threshold, y = 1, yend = 1),  linetype = 2) +
+    geom_segment(aes(x = 0, xend = 1, y = 0, yend = 1), col = 'blue') +
+    xlim(0, 1) +
+    annotate("text", x = 0.75, y = 0.1, label = label, size = 3) +
+    #geom_vline(xintercept = threshold, col = 'black') +
     theme_bw()
 
   return(p)
@@ -231,3 +240,39 @@ bartVimpClass <- function(model) {
 
   return(p)
 }
+
+
+# Confusion Matrix --------------------------------------------------------
+
+confMat <- function(model, data, response){
+
+  respIdx <- which(sapply(data, identical, y = response))
+  pred <- as.numeric(condvis2::CVpredict(model, data[, -respIdx]))
+  pred <-  ifelse(pred == 2, 1, 0)
+  pred <- as.factor(pred)
+  response <- as.factor(response)
+
+
+  tab <- table(pred, response)
+  acc <- 100 - (mean(pred != response) * 100) # accuracy
+
+
+  confMatPlot <- function(mat){
+    mytitle <- paste("Accuracy: ", acc, "%")
+
+    p <- ggplot(data = as.data.frame(tab), aes(x = response, y = pred)) +
+      geom_tile(aes(fill = log(Freq)), colour = "white") +
+      scale_fill_gradient(low = "white", high = "steelblue") +
+      geom_text(aes(x = response, y = pred, label = Freq)) +
+      ylab('Prediciton') +
+      xlab("Response") +
+      theme_bw() +
+      theme(legend.position = "none") +
+      ggtitle(mytitle)
+    return(p)
+  }
+  confMatPlot(cfm)
+}
+
+
+
