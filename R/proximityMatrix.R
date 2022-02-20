@@ -8,6 +8,8 @@
 #' @param normalize Default is TRUE. Divide the total number of pairs of observations by
 #' the number of trees.
 #' @param reorder Default is TRUE. Whether to sort the matrix so high values are pushed to top left.
+#' @param iter Which iteration to use, if NULL the proximity matrix is calculated over all
+#' iterations.
 #'
 #' @return A matrix containing proximity values.
 #'
@@ -18,7 +20,18 @@
 #' @importFrom DendSer dser
 #' @export
 
-proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = TRUE) {
+proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = TRUE, iter = NULL) {
+
+
+  if (!is.null(iter)) {
+    treeData$structure <- treeData$structure %>%
+      filter(iteration == iter)
+    treeTotal <- max(treeData$structure$treeNum)
+  } else {
+    treeNumber <- treeData$nTree
+    iterNumber <- treeData$nMCMC
+    treeTotal <- treeNumber*iterNumber
+  }
 
   data <- data[nRows, ]
   # get observations in each node
@@ -64,9 +77,6 @@ proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = T
   diag(resMat) <- 0
 
   # normalize
-  treeNumber <- treeData$nTree
-  iterNumber <- treeData$nMCMC
-  treeTotal <- treeNumber*iterNumber
   if (normalize) {
     resMat <- resMat / treeTotal
   }
