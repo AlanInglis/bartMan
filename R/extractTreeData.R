@@ -223,16 +223,13 @@ extractTrees.wbart <- function(model, data){
     group_by(iteration, treeNum) %>%
     summarise(depth = n())
 
-  trees$structure$depth <- rep(tDepth$Depth, times = lengthDepth$depth)
+  trees$structure$depthMax <- rep(tDepth$Depth, times = lengthDepth$depth)
 
   # get which observations
-  dat <- data
-
-
 
   dfObs <-  trees$structure %>%
     group_by(iteration, treeNum) %>%
-    mutate(obsList = evalNode(dat, var, splitValue))
+    mutate(obsList = evalNode(data, var, splitValue))
 
   obsIndex <- lapply(dfObs$obsList, function(x) {
     lapply(x, row.names)
@@ -329,14 +326,24 @@ extractTrees.bart <- function(model, data){
     group_by(iteration, treeNum) %>%
     summarise(depth = n())
 
-  trees$structure$depth <- rep(tDepth$Depth, times = lengthDepth$depth)
+  trees$structure$depthMax <- rep(tDepth$Depth, times = lengthDepth$depth)
 
   # get which observations
+
   dat <- as.data.frame(model$fit$data@x)
 
   dfObs <-  trees$structure %>%
     group_by(iteration, treeNum) %>%
     mutate(obsList = evalNode(dat, var, splitValue))
+
+  obsIndex <- lapply(dfObs$obsList, function(x) {
+    lapply(x, row.names)
+  })
+
+  whichObs <- lapply(obsIndex, rapply, f = c)
+  whichObs <- lapply(whichObs, as.numeric)
+
+  trees$structure$obsNode <- whichObs
 
   # get number of observation
   noObser <- NULL
@@ -345,6 +352,7 @@ extractTrees.bart <- function(model, data){
   }
 
   trees$structure$noObs <- sapply(noObser, function(y) sum(do.call(rbind, y)[, 1]))
+
 
 
   # add class
@@ -472,22 +480,33 @@ extractTrees.bartMachine <- function(model, data){
   df <- df %>%
     ungroup() %>%
     group_by(iteration, treeNum) %>%
-    mutate(depth = max(depthAll))
+    mutate(depthMax = max(depthAll))
 
   # get which observations
+
   dat <- as.data.frame(model$X)
 
   dfObs <-  df %>%
     group_by(iteration, treeNum) %>%
     mutate(obsList = evalNode(dat, var, splitValue))
 
+  obsIndex <- lapply(dfObs$obsList, function(x) {
+    lapply(x, row.names)
+  })
+
+  whichObs <- lapply(obsIndex, rapply, f = c)
+  whichObs <- lapply(whichObs, as.numeric)
+
+  df$obsNode <- whichObs
+
   # get number of observation
-  noObs <- NULL
+  noObser <- NULL
   for(i in 1:nrow(dfObs)){
-    noObs[[i]] <- lapply(dfObs$obsList[[i]], dim)
+    noObser[[i]] <- lapply(dfObs$obsList[[i]], dim)
   }
 
-  df$noObs <- sapply(noObs, function(y) sum(do.call(rbind, y)[, 1]))
+  df$noObs <- sapply(noObser, function(y) sum(do.call(rbind, y)[, 1]))
+
 
 
   trees <- list()
