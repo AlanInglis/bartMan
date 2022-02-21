@@ -4,7 +4,7 @@
 #'
 #' @param matrix A matrix of proximities created by the proximityMatrix function
 #' @param pal A vector of colours used to colour the facrtor levels..
-#' @param factorLevel A factorized response used to train BART model.
+#' @param response The respose used to get factor levels to colour points in plot.
 #'
 #' @return A MDS plot.
 #'
@@ -13,7 +13,9 @@
 #' @export
 #'
 
-plotMDS <- function(matrix, pal = NULL, factorLevel){
+plotMDS <- function(matrix, pal = NULL, response){
+
+  factorLevel <- as.factor(response)
 
   fit <- cmdscale(1 - matrix, eig = TRUE, k = 2)
 
