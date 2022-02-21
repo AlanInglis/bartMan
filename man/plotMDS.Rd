@@ -4,14 +4,14 @@
 \alias{plotMDS}
 \title{plotMDS}
 \usage{
-plotMDS(matrix, pal = NULL, factorLevel)
+plotMDS(matrix, pal = NULL, response)
 }
 \arguments{
 \item{matrix}{A matrix of proximities created by the proximityMatrix function}
 
 \item{pal}{A vector of colours used to colour the facrtor levels..}
 
-\item{factorLevel}{A factorized response used to train BART model.}
+\item{response}{The respose used to get factor levels to colour points in plot.}
 }
 \value{
 A MDS plot.

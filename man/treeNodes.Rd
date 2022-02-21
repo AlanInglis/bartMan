@@ -12,7 +12,7 @@ treeNodes(treeData, burnIn)
 \item{burnIn}{Selected burn in value.}
 }
 \value{
-A plot of tree depth over iteration
+A plot of tree number of nodes over iterations.
 }
 \description{
 A plot of number of nodes over iterations.
