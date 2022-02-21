@@ -93,12 +93,12 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
   if (!is.null(cluster)) {
     if (cluster == "depth") {
-      df <- df[with(df, order(-depth)), ]
+      df <- df[with(df, order(-depthMax)), ]
     }
   }
 
   # Which columns to display
-  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label", "value", "depth", 'noObs', 'respNode', 'obsNode')
+  keeps <- c("var", "node", "parent", "iteration", "treeNum", "label", "value", "depthMax", 'noObs', 'respNode', 'obsNode')
 
   res <- dplyr::select(
     df,
@@ -177,15 +177,21 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 
   # -------------------------------------------------------------------------
 
+  # add mean response per node:
+  respNode <- apply(treeData$structure, 1, function(x) {y[x$obsNode]})
+  respNode <- lapply(respNode, mean)
+  treeData$structure$respNode <- unlist(respNode)
+
+
   # cluster trees by depth
   if (!is.null(cluster)) {
     if (cluster == "depth") {
-      treeData$structure <-  treeData$structure[with(treeData$structure, order(-depth)), ]
+      treeData$structure <-  treeData$structure[with(treeData$structure, order(-depthMax)), ]
     }
   }
 
   # Which columns to display
-  keeps <- c("var", "node", "isLeaf", "iteration", "treeNum", "label", "noObs", "value", "depth")
+  keeps <- c("var", "node", "isLeaf", "iteration", "treeNum", "label", "noObs", "value", "depthMax", "respNode")
 
   treeData$structure <- dplyr::select(
     treeData$structure,
@@ -198,7 +204,10 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
     tibble()
 
 
+  # treesSplit <- treeData$structure %>%
+  #   group_split(cumsum(noObs == noObservations))
   treesSplit <- treeData$structure %>%
+    ungroup() %>%
     group_split(cumsum(noObs == noObservations))
 
   # add the depth of the tree
@@ -330,7 +339,7 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
 
   df <- treeData$structure
   maxIter <- treeData$MCMC
-  noObservations <- max(treeData$structure$noObs)
+  noObservations <- treeData$structure$noObs[1]
 
   if (is.null(iter) & is.null(treeNo)) {
     df <- df %>%
@@ -351,17 +360,32 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
 
   # -------------------------------------------------------------------------
 
+  # add mean response per node:
+  respNode <- apply(df, 1, function(x) {y[x$obsNode]})
+  respNode <- lapply(respNode, mean)
+  df$respNode <- unlist(respNode)
+
   # cluster trees
+  suppressWarnings(
   if (!is.null(cluster)) {
     if (cluster == "depth") {
-      df <- df[with(df, order(-depth)), ]
+      df <- df[with(df, order(-depthMax)), ]
+
+      # split the dataframe into a list of dfs, one for each tree
+      list_edges <- df %>%
+        ungroup() %>%
+        group_split(cumsum(noObs == noObservations))
     }
   }
+  )
 
-  # split the dataframe into a list of dfs, one for each tree
-  list_edges <- df %>%
-    ungroup() %>%
-    group_split(cumsum(noObs == noObservations), .keep = FALSE)
+  suppressWarnings(
+  if(cluster == 'var' || is.null(cluster)){
+    # split the dataframe into a list of dfs, one for each tree
+    list_edges <- df %>%
+      group_split(cumsum(noObs == noObservations))
+  }
+)
 
 
   # remove unnecessary columns
@@ -505,7 +529,7 @@ plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = TRUE, pal
 
 
 
-plotFun <- function(List, colors = NULL, n, sizeNode = TRUE, pal = RColorBrewer::brewer.pal(9, "Purples")) {
+plotFun <- function(List, color = NULL, n, sizeNode = TRUE, pal = RColorBrewer::brewer.pal(9, "Purples")) {
 
   if(is.null(pal)){
     pal = "grey"
@@ -518,7 +542,7 @@ plotFun <- function(List, colors = NULL, n, sizeNode = TRUE, pal = RColorBrewer:
     scale_y_reverse() +
     theme_void()
   if (!is.null(colors)) {
-    plot <- plot + scale_fill_manual(values = colors, name = "Variable", na.value = pal) #+
+    plot <- plot + scale_fill_manual(values = color, name = "Variable", na.value = pal) #+
       #scale_color_manual(values = colors, na.value = "grey")
   }
 } else {
@@ -528,7 +552,7 @@ plotFun <- function(List, colors = NULL, n, sizeNode = TRUE, pal = RColorBrewer:
     scale_y_reverse() +
     theme_void()
   if (!is.null(colors)) {
-    plot <- plot + scale_fill_manual(values = colors, name = "Variable", na.value = pal) #+
+    plot <- plot + scale_fill_manual(values = color, name = "Variable", na.value = pal) #+
       #scale_color_manual(values = colors, na.value = "grey")
   }
 }
