@@ -8,7 +8,8 @@ plotAllTreesPlotFn(
   treeList,
   sampleSize = NULL,
   sizeNode = TRUE,
-  pal = RColorBrewer::brewer.pal(9, "Purples")
+  pal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+  fillBy = NULL
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ plotAllTreesPlotFn(
 \item{sizeNode}{Whether to size node width by the number of observations that fall into that node.}
 
 \item{pal}{A palette to colour the terminal nodes.}
+
+\item{fillBy}{WHich parameter to colour the terminal nodes. Either 'response' or 'mu'.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.
