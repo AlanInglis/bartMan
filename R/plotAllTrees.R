@@ -10,6 +10,7 @@
 #' @param cluster LOGICAL. If TRUE, then cluster by tree structures.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
+#' @param fillBy WHich parameter to colour the terminal nodes. Either 'response' or 'mu'.
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
@@ -42,13 +43,14 @@ plotAllTrees <- function(treeData,
                          sampleSize = NULL,
                          cluster = NULL,
                          sizeNode = TRUE,
-                         pal = RColorBrewer::brewer.pal(9, "Purples")) {
+                         pal = RColorBrewer::brewer.pal(9, "Purples"),
+                         fillBy = NULL) {
 
 
   allTrees <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = cluster)
 
   suppressWarnings(
-    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize, sizeNode = sizeNode, pal = pal)
+    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize, sizeNode = sizeNode, pal = pal, fillBy = fillBy)
   )
   return(p)
 }
@@ -465,13 +467,18 @@ clusterTrees <- function(treeList) {
 #' @param sampleSize Sample the tree list.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
+#' @param fillBy WHich parameter to colour the terminal nodes. Either 'response' or 'mu'.
 #'
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
 #'
 
-plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = TRUE, pal =  RColorBrewer::brewer.pal(9, "Purples")) {
+plotAllTreesPlotFn <- function(treeList,
+                               sampleSize = NULL,
+                               sizeNode = TRUE,
+                               pal =  rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+                               fillBy = NULL) {
 
 
   # plot a sample of trees
@@ -485,34 +492,34 @@ plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = TRUE, pal
   # remove stumps
   treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
 
-  # get legend for response vals
-  respVals <- unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode)))
-  respDf <- data.frame(respVals = respVals)
-
-  legendPlot <- ggplot(respDf) +
-    geom_histogram(aes(respVals, fill = respVals))  +
-    scale_fill_gradientn(
-      colors = pal, limits = range(respVals), name = "avg resp",
-      guide = guide_colorbar(
-        frame.colour = "black",
-        ticks.colour = "black"
-      ))
-  # get the legend
-  suppressMessages(
-    respLegend <- cowplot::get_legend(legendPlot)
-  )
+  # get limits
+  if(!is.null(fillBy)){
+  if(fillBy == 'response'){
+    lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode))))
+    nam <- 'avg \nresponse'
+  } else if(fillBy == "mu"){
+    lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var)) %>% pull(value))))
+    nam <- 'mu'
+  }
+    }else{
+    nam <- 'Variable'
+  }
 
   # set node colours
   nodenames <- unique(na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
   nodenames <- sort(nodenames)
   nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 
+
   allPlots <- lapply(treeList,
                      plotFun,
                      n = length(treeList),
                      color = nodecolors,
                      sizeNode = sizeNode,
-                     pal = pal)
+                     pal = pal,
+                     range = lims,
+                     name = nam,
+                     fill = fillBy)
 
   # get legend
   legend <- cowplot::get_legend(allPlots[[1]])
@@ -522,40 +529,164 @@ plotAllTreesPlotFn <- function(treeList, sampleSize = NULL, sizeNode = TRUE, pal
   nRow <- floor(sqrt(n))
   allTreesPlot <- arrangeGrob(grobs=allPlots, nrow=nRow)
 
-  cowplot::plot_grid(allTreesPlot, legend, respLegend , rel_widths = c(1, 0.11, 0.11), ncol = 3)
+  cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(1, 0.11), ncol = 2)
 }
 
 
 
 
 
-plotFun <- function(List, color = NULL, n, sizeNode = TRUE, pal = RColorBrewer::brewer.pal(9, "Purples")) {
+plotFun <- function(List,
+                    color = NULL,
+                    n,
+                    sizeNode = TRUE,
+                    pal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+                    range,
+                    name,
+                    fill) {
 
   if(is.null(pal)){
     pal = "grey"
   }
 
+  if(!is.null(fill)){
+  if (fill == "response") {
   if (sizeNode) {
-  plot <- ggraph(List, "partition", weight = noObs) +
-    geom_node_tile(aes(fill = var), size = 0.25) +
-    geom_node_text(aes(label = ""), size = 4) +
-    scale_y_reverse() +
-    theme_void()
-  if (!is.null(colors)) {
-    plot <- plot + scale_fill_manual(values = color, name = "Variable", na.value = pal) #+
-      #scale_color_manual(values = colors, na.value = "grey")
+    plot <- ggraph(List, "partition", weight = noObs) +
+      geom_node_tile(aes(fill = var), size = 0.25) +
+      geom_node_text(aes(label = ""), size = 4) +
+      scale_y_reverse() +
+      theme_void()
+    if (!is.null(colors)) {
+      plot <- plot + scale_fill_manual(values = color, name = "Variable") +
+        ggnewscale::new_scale_fill() +
+        ggnewscale::new_scale_color() +
+        geom_node_tile(
+          size = 0.15,
+          data = . %>% filter(is.na(var)),
+          aes(fill = respNode)
+        ) +
+        scale_fill_gradientn(
+          colours = pal,
+          limits = range,
+          name = name,
+          guide = guide_colorbar(
+            frame.colour = "black",
+            ticks.colour = "black",
+            order = 2
+          )
+        )
+    }
+  } else {
+    plot <- ggraph(List, "partition") +
+      geom_node_tile(aes(fill = var), size = 0.25) +
+      geom_node_text(aes(label = ""), size = 4) +
+      scale_y_reverse() +
+      theme_void()
+    if (!is.null(colors)) {
+      plot <- plot + scale_fill_manual(values = color, name = "Variable") +
+        ggnewscale::new_scale_fill() +
+        ggnewscale::new_scale_color() +
+        geom_node_tile(
+          size = 0.15,
+          data = . %>% filter(is.na(var)),
+          aes(fill = respNode)
+        ) +
+        scale_fill_gradientn(
+          colours = pal,
+          limits = range,
+          name = name,
+          guide = guide_colorbar(
+            frame.colour = "black",
+            ticks.colour = "black",
+            order = 2
+          )
+        )
+    }
   }
-} else {
-  plot <- ggraph(List, "partition") +
-    geom_node_tile(aes(fill = var), size = 0.25) +
-    geom_node_text(aes(label = ""), size = 4) +
-    scale_y_reverse() +
-    theme_void()
-  if (!is.null(colors)) {
-    plot <- plot + scale_fill_manual(values = color, name = "Variable", na.value = pal) #+
-      #scale_color_manual(values = colors, na.value = "grey")
   }
-}
+  }
+
+  if(!is.null(fill)){
+  if (fill == "mu") {
+    if (sizeNode) {
+      plot <- ggraph(List, "partition", weight = noObs) +
+        geom_node_tile(aes(fill = var), size = 0.25) +
+        geom_node_text(aes(label = ""), size = 4) +
+        scale_y_reverse() +
+        theme_void()
+      if (!is.null(colors)) {
+        plot <- plot + scale_fill_manual(values = color, name = "Variable") +
+          ggnewscale::new_scale_fill() +
+          ggnewscale::new_scale_color() +
+          geom_node_tile(
+            size = 0.15,
+            data = . %>% filter(is.na(var)),
+            aes(fill = value)
+          ) +
+          scale_fill_gradientn(
+            colours = pal,
+            limits = range,
+            name = name,
+            guide = guide_colorbar(
+              frame.colour = "black",
+              ticks.colour = "black",
+              order = 2
+            )
+          )
+      }
+    } else {
+      plot <- ggraph(List, "partition") +
+        geom_node_tile(aes(fill = var), size = 0.25) +
+        geom_node_text(aes(label = ""), size = 4) +
+        scale_y_reverse() +
+        theme_void()
+      if (!is.null(colors)) {
+        plot <- plot + scale_fill_manual(values = color, name = "Variable") +
+          ggnewscale::new_scale_fill() +
+          ggnewscale::new_scale_color() +
+          geom_node_tile(
+            size = 0.15,
+            data = . %>% filter(is.na(var)),
+            aes(fill = value)
+          ) +
+          scale_fill_gradientn(
+            colours = pal,
+            limits = range,
+            name = name,
+            guide = guide_colorbar(
+              frame.colour = "black",
+              ticks.colour = "black",
+              order = 2
+            )
+          )
+      }
+    }
+  }
+  }
+
+  if(is.null(fill)){
+    if (sizeNode) {
+      plot <- ggraph(List, "partition", weight = noObs) +
+        geom_node_tile(aes(fill = var), size = 0.25) +
+        geom_node_text(aes(label = ""), size = 4) +
+        scale_y_reverse() +
+        theme_void()
+      if (!is.null(colors)) {
+        plot <- plot + scale_fill_manual(values = color, name = "Variable")
+      }
+    } else {
+      plot <- ggraph(List, "partition") +
+        geom_node_tile(aes(fill = var), size = 0.25) +
+        geom_node_text(aes(label = ""), size = 4) +
+        scale_y_reverse() +
+        theme_void()
+      if (!is.null(colors)) {
+        plot <- plot + scale_fill_manual(values = color, name = "Variable")
+    }
+    }
+  }
+
   return(plot)
 }
 
