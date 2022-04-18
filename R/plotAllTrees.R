@@ -3,15 +3,16 @@
 #' @description Plots all the trees. By default, it shows the last iteration. If number of
 #' trees is greater than 200, a sample of trees from that iteration will be shown.
 #'
-#' @param treeData A list of tree attributes created by treeDatafunction.
+#' @param treeData A list of tree attributes created by exctractTreeData function.
 #' @param iter The selected iteration
 #' @param treeNo The selected tree number.
 #' @param sampleSize Sample the tree list.
 #' @param cluster LOGICAL. If TRUE, then cluster by tree structures.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
-#' @param fillBy WHich parameter to colour the terminal nodes. Either 'response' or 'mu'.
-#'
+#' @param fillBy Which parameter to colour the terminal nodes. Either 'response' or 'mu'.
+#' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
+#' remain in plot and are coloured grey.
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
 #' @importFrom gridExtra arrangeGrob
@@ -44,13 +45,29 @@ plotAllTrees <- function(treeData,
                          cluster = NULL,
                          sizeNode = TRUE,
                          pal = RColorBrewer::brewer.pal(9, "Purples"),
-                         fillBy = NULL) {
+                         fillBy = NULL,
+                         selectedVars = NULL,
+                         removeStump = FALSE
+                         ) {
 
+  if(length(selectedVars) > length(treeData$varName)){
+    message("SelectedVars is longer than number of available variables. Selecting all variables")
+    selectedVars <- c(1:length(treeData$varName))
+  }
 
   allTrees <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = cluster)
 
   suppressWarnings(
-    p <- plotAllTreesPlotFn(allTrees, sampleSize = sampleSize, sizeNode = sizeNode, pal = pal, fillBy = fillBy)
+    p <- plotAllTreesPlotFn(allTrees,
+                            sampleSize = sampleSize,
+                            sizeNode = sizeNode,
+                            pal = pal,
+                            fillBy = fillBy,
+                            name = treeData$varName,
+                            selectedVars = selectedVars,
+                            removeStump = removeStump
+                            )
+
   )
   return(p)
 }
@@ -68,6 +85,7 @@ plotAll <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
 
 # BART --------------------------------------------------------------------
+
 
 #' @export
 plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
@@ -89,7 +107,7 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
 
   # add mean response per node:
-  respNode <- apply(df, 1, function(x) {y[x$obsNode]})
+  respNode <- df$obsNode #apply(df, 1, function(x) {y[x$obsNode]})
   respNode <- lapply(respNode, mean)
   df$respNode <- unlist(respNode)
 
@@ -340,7 +358,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
   df <- treeData$structure
-  maxIter <- treeData$MCMC
+  maxIter <- treeData$nMCMC
   noObservations <- treeData$structure$noObs[1]
 
   if (is.null(iter) & is.null(treeNo)) {
@@ -363,9 +381,11 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
   # -------------------------------------------------------------------------
 
   # add mean response per node:
-  respNode <- apply(df, 1, function(x) {y[x$obsNode]})
+  respNode <- df$obsNode #apply(df, 1, function(x) {y[x$obsNode]})
   respNode <- lapply(respNode, mean)
   df$respNode <- unlist(respNode)
+
+
 
   # cluster trees
   suppressWarnings(
@@ -467,7 +487,8 @@ clusterTrees <- function(treeList) {
 #' @param sampleSize Sample the tree list.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
-#' @param fillBy WHich parameter to colour the terminal nodes. Either 'response' or 'mu'.
+#' @param fillBy Which parameter to colour the terminal nodes. Either 'response' or 'mu'.
+#' @param name Variable names
 #'
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
@@ -478,19 +499,61 @@ plotAllTreesPlotFn <- function(treeList,
                                sampleSize = NULL,
                                sizeNode = TRUE,
                                pal =  rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
-                               fillBy = NULL) {
+                               fillBy = NULL,
+                               selectedVars = NULL,
+                               removeStump = FALSE,
+                               name) {
 
 
   # plot a sample of trees
-  if (length(treeList) > 200) {
-    sampleSize <- 200
-    treeList <- sample(treeList, sampleSize, replace = FALSE)
-  } else if (!is.null(sampleSize)) {
-    treeList <- sample(treeList, sampleSize, replace = FALSE)
-  }
+  # if (length(treeList) > 200) {
+  #   sampleSize <- 200
+  #   treeList <- sample(treeList, sampleSize, replace = FALSE)
+  # } else if (!is.null(sampleSize)) {
+  #   treeList <- sample(treeList, sampleSize, replace = FALSE)
+  # }
 
   # remove stumps
-  treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
+  if(removeStump){
+    treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
+  }else{
+    # get the stump index
+    whichStump = NULL
+    for(i in 1:length(treeList)){
+      whichStump[[i]] <-  which(igraph::gsize(treeList[[i]]) == 0)
+    }
+    stumpIdx <- which(whichStump == 1)
+
+    # create new tree list
+    newTrees <- treeList[stumpIdx]
+
+    # create df of tree stumps
+    newTreesDF <- NULL
+    for(i in 1:length(newTrees)){
+      newTreesDF[[i]] <- newTrees[[i]] %>%
+        activate(nodes) %>%
+        data.frame()
+      newTreesDF[[i]]$var <- "Stump"
+    }
+
+
+    # create edge data for stumps
+    newDF_Nodes <- newDF_Edges <- NULL
+    for(i in 1:length(newTreesDF)){
+      newDF_Nodes[[i]] <- rbind(newTreesDF[[i]], newTreesDF[[i]][rep(1), ])
+      newDF_Edges[[i]] <- data.frame(from = c(1,1), to = c(1,1))
+    }
+
+    # turn into tidygraph trees
+    newTree <- NULL
+    for(i in 1:length(newDF_Nodes)){
+      newTree[[i]] <- tbl_graph(nodes = newDF_Nodes[[i]], edges = newDF_Edges[[i]])
+    }
+    # replace stumps with new stumps
+    treeList[stumpIdx] <- newTree
+
+  }
+
 
   # get limits
   if(!is.null(fillBy)){
@@ -500,17 +563,38 @@ plotAllTreesPlotFn <- function(treeList,
   } else if(fillBy == "mu"){
     lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var)) %>% pull(value))))
     nam <- 'mu'
-  }
-    }else{
+  }else{
     nam <- 'Variable'
+    }
   }
 
   # set node colours
-  nodenames <- unique(na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
-  nodenames <- sort(nodenames)
-  nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodenames)), nodenames)
+  if(!is.null(selectedVars)){
+    nodeNamesImp <- name[selectedVars]
+    nodeNamesOthers <- name[-selectedVars]
+    nodeColorsImp <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNamesImp)), nodeNamesImp)
+    nodeColorsOth <- setNames(rep('#e6e6e6', length(nodeNamesOthers)), nodeNamesOthers)
+    nodecolors <- c(nodeColorsImp, nodeColorsOth)
 
+    namedOthers <- setNames('#e6e6e6',  "Others")
+    legColours <- c(nodeColorsImp, namedOthers)
+    dfLegend <- reshape::melt(legColours) %>%
+      tibble::rownames_to_column(var = 'varName')
+    dfLegend$val <- rep(1, times = length(dfLegend$varName))
+    dfLegend$varName <- factor(dfLegend$varName, levels = names(legColours))
+    pLeg <- ggplot(dfLegend, aes(x = varName, y = val, fill = varName)) +
+      geom_bar(stat = 'identity') +
+      scale_fill_manual(values = dfLegend$value, name = 'Variable')
+  }else{
+    nodeNames <- unique(na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
+    nodeNames <- sort(nodeNames)
+    nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNames)), nodeNames)
 
+    # colour stumps grey
+    nodecolors[["Stump"]] <- '#808080'
+  }
+
+  suppressMessages(
   allPlots <- lapply(treeList,
                      plotFun,
                      n = length(treeList),
@@ -520,21 +604,42 @@ plotAllTreesPlotFn <- function(treeList,
                      range = lims,
                      name = nam,
                      fill = fillBy)
+  )
+
 
   # get legend
-  legend <- cowplot::get_legend(allPlots[[1]])
+  if(!is.null(selectedVars) & !is.null(fillBy)){
+    themeMargin <- theme(legend.box.margin = margin(100, 15, 80, 20))
+    legend1 <- cowplot::get_legend(pLeg + themeMargin)
+    legend <- cowplot::get_legend(allPlots[[1]] + themeMargin)
+    legend$grobs[[2]] <- legend1
+  }else if(!is.null(selectedVars) & is.null(fillBy)){
+    themeMargin <- theme(legend.box.margin = margin(100, 15, 80, 20))
+    legend <- cowplot::get_legend(pLeg + themeMargin)
+  }else{
+    legend <- cowplot::get_legend(allPlots[[1]])
+  }
+
+
   # remove legends from individual plots
   allPlots <- lapply(allPlots, function(x) x + theme(legend.position = "none"))
+  if(removeStump == FALSE){
+    for(i in stumpIdx){
+      allPlots[[i]]$data <- allPlots[[i]]$data[-2, ]
+    }
+  }
   n <- length(allPlots)
   nRow <- floor(sqrt(n))
   allTreesPlot <- arrangeGrob(grobs=allPlots, nrow=nRow)
 
-  cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(1, 0.11), ncol = 2)
+  cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(0.9, 0.13), ncol = 2)
+
+
 }
 
 
 
-
+# Plot function -----------------------------------------------------------
 
 plotFun <- function(List,
                     color = NULL,
