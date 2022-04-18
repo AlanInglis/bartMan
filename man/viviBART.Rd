@@ -4,43 +4,15 @@
 \alias{viviBart}
 \title{viviBart}
 \usage{
-viviBart(
-  model,
-  response,
-  data,
-  noReplications = 2,
-  type = NULL,
-  gridSize = 50,
-  nmax = 500,
-  reorder = TRUE,
-  class = 1,
-  normalized = FALSE
-)
+viviBart(treeData)
 }
 \arguments{
-\item{response}{The name of the response for the fit.}
-
-\item{data}{Data frame used for fit.}
-
-\item{noReplications}{How many time to repeat the calculation.}
-
-\item{gridSize}{The size of the grid for evaluating the predictions.}
-
-\item{nmax}{Maximum number of data rows to consider. Default is 500. Use all rows if NULL.}
-
-\item{reorder}{If TRUE (default) uses DendSer to reorder the matrix of interactions and variable importances.}
-
-\item{class}{Category for classification, a factor level, or a number indicating which factor level.}
-
-\item{normalized}{Should Friedman's H-statistic be normalized or not. Default is FALSE.}
-
-\item{fit}{A supervised machine learning model, which understands condvis2::CVpredict}
+\item{treeData}{A data frame created by extractTreeData function.}
 }
 \value{
-A list of matrices. One matrix is of interaction values with importance on the diagonal. The second
-is a matrix of their uncertainties.
+A list of dataframes of VIVI summaries.
 }
 \description{
-Creates a matrix displaying variable importance on the diagonal
- and variable interaction on the off-diagonal with the uncertainty included.
+Returns a list containing a dataframe of variable importance summaries
+and a dataframe of variable interaction summaries.
 }

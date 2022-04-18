@@ -17,6 +17,8 @@ viviBartPlot(
 )
 }
 \arguments{
+\item{matrix}{Matrices, such as that returned by viviBartMatrix, of values to be plotted.}
+
 \item{intPal}{A vector of colours to show interactions, for use with scale_fill_gradientn. Palette number has to be 2^x/2}
 
 \item{impPal}{A vector of colours to show importance, for use with scale_fill_gradientn. Palette number has to be 2^x/2}
@@ -25,15 +27,16 @@ viviBartPlot(
 
 \item{impLims}{Specifies the fit range for the color map for importance.}
 
+\item{uncIntLims}{Specifies the fit range for the color map for interaction strength uncertainties.}
+
+\item{uncImpLims}{Specifies the fit range for the color map for importance uncertainties.}
+
 \item{angle}{The angle to rotate the x-axis labels. Defaults to zero.}
 
 \item{border}{Logical. If TRUE then draw a black border around the diagonal elements.}
-
-\item{mat}{Matrices, such as that returned by viviBART, of values to be plotted.}
 }
 \value{
-A heatmap plot showing variable importance on the diagonal
-and variable interaction on the off-diagonal.
+TBD
 }
 \description{
 Plots a Heatmap showing variable importance on the diagonal
