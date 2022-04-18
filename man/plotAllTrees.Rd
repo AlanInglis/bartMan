@@ -12,11 +12,13 @@ plotAllTrees(
   cluster = NULL,
   sizeNode = TRUE,
   pal = RColorBrewer::brewer.pal(9, "Purples"),
-  fillBy = NULL
+  fillBy = NULL,
+  selectedVars = NULL,
+  removeStump = FALSE
 )
 }
 \arguments{
-\item{treeData}{A list of tree attributes created by treeDatafunction.}
+\item{treeData}{A list of tree attributes created by exctractTreeData function.}
 
 \item{iter}{The selected iteration}
 
@@ -30,7 +32,10 @@ plotAllTrees(
 
 \item{pal}{A palette to colour the terminal nodes.}
 
-\item{fillBy}{WHich parameter to colour the terminal nodes. Either 'response' or 'mu'.}
+\item{fillBy}{Which parameter to colour the terminal nodes. Either 'response' or 'mu'.}
+
+\item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
+remain in plot and are coloured grey.}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.
