@@ -1,313 +1,196 @@
 #' viviBart
 #'
-#' @description Creates a matrix displaying variable importance on the diagonal
-#'  and variable interaction on the off-diagonal with the uncertainty included.
+#' @description Returns a list containing a dataframe of variable importance summaries
+#' and a dataframe of variable interaction summaries.
 #'
-#' @param fit A supervised machine learning model, which understands condvis2::CVpredict
-#' @param data Data frame used for fit.
-#' @param response The name of the response for the fit.
-#' @param noReplications How many time to repeat the calculation.
-#' @param gridSize The size of the grid for evaluating the predictions.
-#' @param nmax Maximum number of data rows to consider. Default is 500. Use all rows if NULL.
-#' @param reorder If TRUE (default) uses DendSer to reorder the matrix of interactions and variable importances.
-#' @param class Category for classification, a factor level, or a number indicating which factor level.
-#' @param normalized Should Friedman's H-statistic be normalized or not. Default is FALSE.
-#' @return A list of matrices. One matrix is of interaction values with importance on the diagonal. The second
-#' is a matrix of their uncertainties.
+#' @param treeData A data frame created by extractTreeData function.
 #'
-#' @importFrom vivid vivi
-#' @importFrom vivid vividReorder
-#' @importFrom dplyr bind_rows
-#' @importFrom stats xtabs
-#' @import ggplot2
+#' @return A list of dataframes of VIVI summaries.
+#'
+#' @importFrom dplyr %>%
+#' @importFrom dplyr group_by
+#' @importFrom dplyr ungroup
+#' @importFrom dplyr mutate
+#' @importFrom dplyr distinct
+#' @importFrom dplyr select
+#' @importFrom dplyr rename
+#' @importFrom tibble rownames_to_column
+#' @importFrom stringr str_extract_all
+#' @importFrom stringr str_glue
+#' @importFrom purrr map_chr
 #'
 #' @export
+#'
+
+viviBart <- function(treeData){
+
+  # Vimps -------------------------------------------------------------------
+
+  # get vimps
+  vimps <- bartMan::vimpBart(treeData, type = 'prop')
+  vimpsVal <- bartMan::vimpBart(treeData, type = 'val')
+  #propVimp <- proportions(vimps, 1)
+  vImp <- colMeans(vimps)
+  vimpsVal <- colMeans(vimpsVal)
+
+  # get SE
+  vimpSD <- apply(vimps, 2, sd)
+  upperVimp  <- vImp + 1.96 * vimpSD/sqrt(treeData$nMCMC)
+  lowerVimp  <- vImp - 1.96 * vimpSD/sqrt(treeData$nMCMC)
+  SEvimp <- (upperVimp - lowerVimp) / 3.92 # SE of 95% CI
+
+  # get quantiles of proportions
+  vimp25 <- apply(vimps, 2, function(x) quantile(x, c(.25)))
+  vimp50 <- apply(vimps, 2, function(x) quantile(x, c(.50)))
+  vimp75 <- apply(vimps, 2, function(x) quantile(x, c(.75)))
+
+  vimpData <- cbind(vimpsVal, vImp, vimpSD, lowerVimp, upperVimp, SEvimp, vimp25, vimp50, vimp75)
+  vimpData <- vimpData %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column(var = "variable") %>%
+    rename(count = vimpsVal, propMean = vImp, SD = vimpSD,  lowerCI = lowerVimp, upperCI = upperVimp, SEofCI = SEvimp,
+           lowerQ = vimp25, median = vimp50, upperQ = vimp75)
 
 
-viviBart <- function(model,
-                     response,
-                     data,
-                     noReplications = 2,
-                     type = NULL,
-                     gridSize = 50,
-                     nmax = 500,
-                     reorder = TRUE,
-                     class = 1,
-                     normalized = FALSE){
+  # Vints -------------------------------------------------------------------
 
-  if(type == 'vsup'){
+  df <- treeData$structure
+  nam <- treeData$varName
 
-    viviMat <- viviBartV(model = model,
-                         respons = response,
-                         data = data,
-                         noReplications = noReplications,
-                         gridSize = gridSize,
-                         nmax = nmax,
-                         reorder = reorder,
-                         class = class,
-                         normalized = normalized)
-
-      class(viviMat) <- c("list", "vsup")
-      return(viviMat)
-
-  }else if(type == 'quant'){
-
-    viviMat <- viviBartQ(model = model,
-                         respons = response,
-                         data = data,
-                         noReplications = noReplications,
-                         gridSize = gridSize,
-                         nmax = nmax,
-                         reorder = reorder,
-                         class = class,
-                         normalized = normalized)
-
-    class(viviMat) <- c("list", "quant")
-    return(viviMat)
+  # cycle through trees and create list of Vints
+  mkTree <- function(x, pos = 1L) {
+    var <- x[pos]
+    if (is.na(var)) {
+      list(NA_character_, NULL, NULL, 1L)
+    } else {
+      node <- vector("list", 4L)
+      node[[1L]] <- var
+      node[[2L]] <- l <- Recall(x, pos + 1L)
+      node[[3L]] <- r <- Recall(x, pos + 1L + l[[4L]])
+      node[[4L]] <- 1L + l[[4L]] + r[[4L]]
+      node
+    }
   }
+
+
+  tabTree <- function(tree, sep = ":") {
+    x <- rep.int(NA_character_, tree[[4L]])
+    pos <- 1L
+    recurse <- function(subtree) {
+      var1 <- subtree[[1L]]
+      if (!is.na(var1)) {
+        for (i in 2:3) {
+          var2 <- subtree[[c(i, 1L)]]
+          if (!is.na(var2)) {
+            x[pos] <<- paste0(var1, sep, var2)
+            pos <<- pos + 1L
+            Recall(subtree[[i]])
+          }
+        }
+      }
+    }
+    recurse(tree)
+    x <- x[!is.na(x)]
+    if (length(x)) {
+      x <- factor(x)
+      setNames(tabulate(x), levels(x))
+    } else {
+      integer(0L)
+    }
+  }
+
+  f <- function(x) tabTree(mkTree(x))
+  L <- tapply(df[["var"]], df[c("treeNum", "iteration")], f, simplify = FALSE)
+
+  g <- function(l) {
+    x <- unlist(unname(l))
+    tapply(x, names(x), sum)
+  }
+
+  listVint <- apply(L, 2L, g)
+  listVint <- listVint[lengths(listVint)>0] # remove empty list element
+
+  # turn into df
+  dfVint <- as.matrix(bind_rows(listVint))
+  dfVint[is.na(dfVint)] <- 0
+
+  # get proportions
+  propMatVint <- proportions(dfVint, 1)
+  propMatVintMean <- colMeans(propMatVint)
+  propMatVintMedian <- apply(propMatVint, 2, median)
+
+  # get SE
+  vintSD <- apply(dfVint, 2, sd)
+  upperVint  <- propMatVintMean + 1.96 * vintSD/sqrt(treeData$nMCMC)
+  lowerVint  <- propMatVintMean - 1.96 * vintSD/sqrt(treeData$nMCMC)
+  SEvint <- (upperVint - lowerVint) / 3.92 # SE of 95% CI
+
+  # get quantiles of proportions
+  vint25 <- apply(propMatVint, 2, function(x) quantile(x, c(.25)))
+  vint50 <- apply(propMatVint, 2, function(x) quantile(x, c(.50)))
+  vint75 <- apply(propMatVint, 2, function(x) quantile(x, c(.75)))
+
+  # turn into df
+  propMM <- reshape::melt(propMatVintMean)
+  propMM <- tibble::rownames_to_column(propMM, "var")
+
+  countVint <- colSums(dfVint)
+  countM <- reshape::melt(countVint)
+  countM <- tibble::rownames_to_column(countM, "var")
+
+  propMM$count <- countM$value
+
+
+  # add in quantile, sd, and se columns
+  propMM$lowerQ <- vint25
+  propMM$median <- vint50
+  propMM$upperQ <- vint75
+  propMM$SEofCI <- SEvint
+  propMM$SD <- vintSD
+
+  # make symmetrical
+  propMM <- propMM %>%
+    mutate(var = map(
+      stringr::str_split(var, pattern = ":"),
+      ~ sort(.x) %>% trimws(.) %>% paste0(., collapse = ':')
+    ))
+
+  propMM$var <- as.character(propMM$var)
+
+  propFinal <- propMM %>%
+    group_by(var) %>%
+    mutate(propMean = mean(value))  %>%
+    mutate(count = sum(count)) %>%
+    mutate(SD = mean(SD)) %>%
+    mutate(lowerQ = mean(lowerQ)) %>%
+    mutate(median = mean(median)) %>%
+    mutate(upperQ = mean(upperQ)) %>%
+    mutate(SEofCI = mean(SEofCI)) %>%
+    select(var, count, propMean, SD, lowerQ, median, upperQ, SEofCI) %>%
+    ungroup %>%
+    distinct() %>%
+    arrange(-count)
+
+  # add adjustment
+  vimps <- bartMan::vimpBart(treeData, type = 'propMean')
+
+  splitN <- t(simplify2array(strsplit(as.character(propFinal[["var"]]), ":")))
+  values <- t(apply(splitN, 1, function(x){c(vimps[x[1]], vimps[x[2]])}))
+  suppressMessages(
+    res <- cbind(propFinal, values)
+  )
+  names(res) <- c('var', 'count', 'meanProp', 'SD',  'lowerQ', 'median',
+                  'upperQ', 'SEofCI', 'propVimp1', 'propVimp2')
+
+  trans <- apply(res[,c('meanProp', 'propVimp1', 'propVimp2')], 1, function(x){
+    (x[1]-x[2]*x[3])/sqrt(x[2]*x[3])
+  })
+
+  propFinal$adjusted <- trans
+
+
+  myList <- list(Vimp = vimpData, Vint = propFinal)
+
+  return(myList)
+
 }
-
-
-
-# VSUP function for viviBart ----------------------------------------------
-
-
-  viviBartV <- function(model,
-                        response,
-                        data,
-                        noReplications = 2,
-                        gridSize = 50,
-                        nmax = 500,
-                        reorder = TRUE,
-                        class = 1,
-                        normalized = FALSE){
-
-    if(noReplications < 2){
-      stop("noReplications must be > 1")
-    }
-
-    classif <- is.factor(data[[response]])
-    if(classif){
-      message("Importance works for numeric and numeric binary response only; setting importance to 1.")
-    }
-
-    # check if classification or not
-    responseIdx <- which(colnames(data) == response)
-    if(class(model) == "wbart" || class(model) == "pbart"){
-      pFun <- function(fit, data, prob=TRUE) as.numeric(condvis2::CVpredict(fit, data[,-responseIdx]))
-    } else if(class(model) == 'bart'){
-      if(is.null(model$sigma)){
-        pFun <- function(fit, data, prob=TRUE) apply(predict(fit, data[,-responseIdx]), 2, mean)
-      } else {
-        pFun <- NULL
-      }
-    } else {
-      pFun <- NULL
-    }
-
-    mat <- NULL
-    vimp = NULL
-
-    # calc uncertainty for the variable importance:
-    for(i in 1:noReplications){
-      message("Replication ", i, "...")
-      mat[[i]] <- vivid::vivi(fit = model,
-                              data = data,
-                              response = response,
-                              reorder = F,
-                              gridSize = gridSize,
-                              nmax = nmax,
-                              normalized = normalized,
-                              class = class,
-                              predictFun = pFun)
-      vimp[[i]] <- diag(mat[[i]])
-    }
-    vimps <- dplyr::bind_rows(vimp)
-    apSD <- apply(vimps, 2, sd)
-    uncVimp  <- 1.96 * apSD/sqrt(noReplications)
-
-    avgVimp <- apply(vimps, 2, mean) # average importance
-
-    # get uncertainty for interactions
-    getIntValues <- function(matrix){
-      matrix[lower.tri(matrix)] <- 0
-      diag(matrix) <- 0
-      dfInt <- as.data.frame(matrix)
-      dfInt <- dfInt[dfInt$Value != 0,] %>%
-        mutate(name = paste(Variable_1, Variable_2)) %>%
-        select(name, Value)
-      vintAll <- setNames(dfInt$Value, dfInt$name)
-      return(vintAll)
-    }
-
-    vInt <- lapply(mat, getIntValues) %>% dplyr::bind_rows()
-    apSDvint <- apply(vInt, 2, sd)
-    uncVint <- 1.96 * apSDvint/sqrt(noReplications)
-
-    avgVint <- apply(vInt, 2, mean) # average interaction
-
-
-    # Turn back into matrix ---------------------------------------------------
-
-    # 1st uncertainty matrix
-    uncMat <- read.table(text = names(uncVint))
-    names(uncMat) <- c("Var1", "Var2")
-    uncMat <- xtabs(uncVint ~ ., cbind(rbind(uncMat, setNames(rev(uncMat), names(uncMat))), uncVint = rep(uncVint, 2)))
-    diag(uncMat) <- uncVimp
-
-    # 2nd actual matrix
-    actMat <- read.table(text = names(avgVint))
-    names(actMat) <- c("Var1", "Var2")
-    actMat <- xtabs(avgVint ~ ., cbind(rbind(actMat, setNames(rev(actMat), names(actMat))), avgVint = rep(avgVint, 2)))
-    diag(actMat) <- avgVimp
-
-    # reorder actual values matrix
-    if(reorder){
-      actualVals <- vivid::vividReorder(actMat)
-    }else{
-      actualVals <- actMat
-    }
-
-    # reorder uncertainty matrix to match
-    actValsColOrder <- colnames(actualVals)
-    uncMat <- uncMat[actValsColOrder, actValsColOrder]
-
-    class(actualVals) <- c('vivid', 'matrix', 'array', 'vsup')
-    class(uncMat) <- c('vivid', 'matrix', 'array', 'vsup')
-
-    myList <- list(actualMatrix = actualVals,
-                   uncertaintyMatrix = uncMat)
-
-    return(myList)
-
-  }
-
-
-# Quantile function for viviBart ------------------------------------------
-
-  viviBartQ <- function(model,
-                        response,
-                        data,
-                        noReplications = 2,
-                        gridSize = 50,
-                        nmax = 500,
-                        reorder = TRUE,
-                        class = 1,
-                        normalized = FALSE){
-
-    if(noReplications < 2){
-      stop("noReplications must be > 1")
-    }
-
-    classif <- is.factor(data[[response]])
-    if(classif){
-      message("Importance works for numeric and numeric binary response only; setting importance to 1.")
-    }
-
-    # check if classification or not
-    responseIdx <- which(colnames(data) == response)
-    if(class(model) == "wbart" || class(model) == "pbart"){
-      pFun <- function(fit, data, prob=TRUE) as.numeric(condvis2::CVpredict(fit, data[,-responseIdx]))
-    } else if(class(model) == 'bart'){
-      if(is.null(model$sigma)){
-        pFun <- function(fit, data, prob=TRUE) apply(predict(fit, data[,-responseIdx]), 2, mean)
-      } else {
-        pFun <- NULL
-      }
-    } else {
-      pFun <- NULL
-    }
-
-    mat <- NULL
-    vimp = NULL
-
-    # calc uncertainty for the variable importance:
-    for(i in 1:noReplications){
-      message("Replication ", i, "...")
-      mat[[i]] <- vivid::vivi(fit = model,
-                              data = data,
-                              response = response,
-                              reorder = F,
-                              gridSize = gridSize,
-                              nmax = nmax,
-                              normalized = normalized,
-                              class = class,
-                              predictFun = pFun)
-      vimp[[i]] <- diag(mat[[i]])
-    }
-    vimps <- dplyr::bind_rows(vimp)
-    vimpsQuant <- apply(vimps, 2, function(x) quantile(x, c(0.05, 0.5, 0.95)))
-
-    #avgVimp <- apply(vimps, 2, mean) # average importance
-
-    # get uncertainty for interactions
-    getIntValues <- function(matrix){
-      matrix[lower.tri(matrix)] <- 0
-      diag(matrix) <- 0
-      dfInt <- as.data.frame(matrix)
-      dfInt <- dfInt[dfInt$Value != 0,] %>%
-        mutate(name = paste(Variable_1, Variable_2)) %>%
-        select(name, Value)
-      vintAll <- setNames(dfInt$Value, dfInt$name)
-      return(vintAll)
-    }
-
-    vInt <- lapply(mat, getIntValues) %>% dplyr::bind_rows()
-    vintsQuant <- apply(vInt, 2, function(x) quantile(x, c(0.05, 0.5, 0.95)))
-
-    #avgVint <- apply(vInt, 2, mean) # average interaction
-
-
-    # spereate vImp and vInt into each quantile
-    vimpQuant.05 <- vimpsQuant[1,]
-    vimpQuant.50 <- vimpsQuant[2,]
-    vimpQuant.95 <- vimpsQuant[3,]
-
-    vintQuant.05 <- vintsQuant[1,]
-    vintQuant.50 <- vintsQuant[2,]
-    vintQuant.95 <- vintsQuant[3,]
-
-
-    # Turn back into matrix ---------------------------------------------------
-
-
-    matrixTrans <- function(vintData, vimpData){
-      mat <- read.table(text = names(vintData))
-      names(mat) <- c("Var1", "Var2")
-      mat <- xtabs(vintData ~ ., cbind(rbind(mat, setNames(rev(mat), names(mat))), vintData = rep(vintData, 2)))
-      diag(mat) <- vimpData
-
-      return(mat)
-    }
-
-    matQuant.05 <- matrixTrans(vintQuant.05, vimpQuant.05)
-    matQuant.50 <- matrixTrans(vintQuant.50, vimpQuant.50)
-    matQuant.95 <- matrixTrans(vintQuant.95, vimpQuant.95)
-
-
-    # reorder median matrix
-    if(reorder){
-      matQuant.50 <- vivid::vividReorder(matQuant.50)
-      # match other matrices with new order
-      ValsColOrder <- colnames(matQuant.50)
-      matQuant.05 <- matQuant.05[ValsColOrder, ValsColOrder]
-      matQuant.95 <- matQuant.95[ValsColOrder, ValsColOrder]
-    }
-
-
-    class(matQuant.05) <- c('vivid', 'matrix', 'array', 'quant')
-    class(matQuant.50) <- c('vivid', 'matrix', 'array', 'quant')
-    class(matQuant.95) <- c('vivid', 'matrix', 'array', 'quant')
-
-    myList <- list(quant.05 = matQuant.05,
-                   quant.50 = matQuant.50,
-                   quant.95 = matQuant.95)
-
-    return(myList)
-
-  }
-
-
-
-
-
