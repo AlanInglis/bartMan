@@ -47,6 +47,12 @@
 
 extractTreeData <- function(model, data){
   trees <- extractTrees(model, data)
+
+  hideHelper <- function(df){
+    class(df) <- c("hideHelper", class(df))
+    df
+  }
+  trees$structure <- hideHelper(trees$structure)
   return(trees)
 }
 
@@ -268,7 +274,7 @@ extractTrees.bart <- function(model, data){
   # add other info
   trees$nMCMC <- as.integer(iteration)
   trees$nTree <- as.integer(treesTotal)
-  trees$nVar  <- as.integer(length(model$varcount))
+  trees$nVar  <- as.integer(length(colMeans((model$varcount))))
 
   # Get variable names
   varNames <- colnames(model$fit$data@x)
@@ -455,19 +461,19 @@ extractTrees.bartMachine <- function(model, data){
   df <- df %>%
     select(
       "var",
+      "splitValue",
+      "node",
+      "isLeaf",
+      "leafValue",
       "iteration",
       "treeNum",
-      "isStump",
-      "isLeaf",
-      "splitValue",
-      "depth",
-      "direction",
-      "leafValue",
-      "node",
-      "parentNode",
-      "treeNumID",
       "label",
       "value",
+      "depth",
+      "isStump",
+      "direction",
+      "parentNode",
+      "treeNumID",
       'from',
       "to")
 
@@ -511,7 +517,7 @@ extractTrees.bartMachine <- function(model, data){
 
   trees <- list()
   trees$structure <- df
-  trees$MCMC <- iter
+  trees$nMCMC <- iter
   trees$nTree <- model$num_trees
   trees$nVar <- model$p
   trees$varName <- colnames(model$X)
@@ -625,5 +631,26 @@ bMachineNode <- function (node_java)
     node_data$right = NA
   }
   node_data
+}
+
+
+# -------------------------------------------------------------------------
+#' print.hideHelper
+#' @description This function hides some columns from the print out
+#' but are still accessible via indexing.
+#' @export
+
+print.hideHelper <- function(x, ...) {
+  x$childLeft <- NULL
+  x$childRight <- NULL
+  x$parent <- NULL
+  x$isStump <- NULL
+  x$depthAll <- NULL
+  x$direction <- NULL
+  x$parentNode <- NULL
+  x$treeNumID <- NULL
+  x$from <- NULL
+  x$to <- NULL
+  NextMethod(x, ...)
 }
 
