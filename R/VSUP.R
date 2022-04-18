@@ -39,6 +39,7 @@ zip <- function(...) purrr::transpose(list(...))
 #' Train range for bivariate scale
 #'
 #' @importFrom scales train_continuous
+#' @importFrom purrr transpose
 #' @param new New data on which to train.
 #' @param existing Existing range
 #' @export
@@ -367,7 +368,7 @@ guide_colourfan <- function(
   title.x.position = "top",
   title.y.position = "right",
   title.theme = NULL,
-  title.hjust = NULL, ## can be deleted?
+  title.hjust = 0.5,
   title.vjust = NULL, ## can be deleted?
 
   # label
