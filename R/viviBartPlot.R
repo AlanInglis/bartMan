@@ -3,63 +3,94 @@
 #' @description Plots a Heatmap showing variable importance on the diagonal
 #' and variable interaction on the off-diagonal with uncertainty included.
 #'
-#' @param mat Matrices, such as that returned by viviBART, of values to be plotted.
+#' @param matrix Matrices, such as that returned by viviBartMatrix, of values to be plotted.
 #' @param intPal A vector of colours to show interactions, for use with scale_fill_gradientn. Palette number has to be 2^x/2
 #' @param impPal A vector of colours to show importance, for use with scale_fill_gradientn. Palette number has to be 2^x/2
 #' @param intLims Specifies the fit range for the color map for interaction strength.
 #' @param impLims Specifies the fit range for the color map for importance.
-#' @param border Logical. If TRUE then draw a black border around the diagonal elements.
+#' @param uncIntLims Specifies the fit range for the color map for interaction strength uncertainties.
+#' @param uncImpLims Specifies the fit range for the color map for importance uncertainties.
 #' @param angle The angle to rotate the x-axis labels. Defaults to zero.
+#' @param border Logical. If TRUE then draw a black border around the diagonal elements.
 #'
-#' @import ggplot2
+#' @import vivid
 #' @importFrom ggnewscale new_scale_fill
-#' @importFrom stats as.dist
 #'
-#' @return A heatmap plot showing variable importance on the diagonal
-#' and variable interaction on the off-diagonal.
+#' @return TBD
 #' @export
+#'
+#'
 
 viviBartPlot <- function(matrix,
-                          intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
-                          impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
-                          intLims = NULL,
-                          impLims = NULL,
-                          uncIntLims = NULL,
-                          uncImpLims = NULL,
-                          angle = 0,
-                          border = FALSE
-){
+                         intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
+                         impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
+                         intLims = NULL,
+                         impLims = NULL,
+                         uncIntLims = NULL,
+                         uncImpLims = NULL,
+                         angle = 0,
+                         border = FALSE){
 
-
-  if(any(class(matrix) == 'vsup')){
-    p1 <- viviBartPlotV(matrix = matrix,
-                        intPal = intPal,
-                        impPal = impPal,
-                        intLims = intLims,
-                        impLims = impLims,
-                        uncIntLims = uncIntLims,
-                        uncImpLims = uncImpLims,
-                        angle = angle,
-                        border = border)
-
-    return(p1)
-  }else if(any(class(matrix) == 'quant')){
-    p1 <- viviBartPlotQ(matrix = matrix,
-                        intPal = intPal,
-                        impPal = impPal,
-                        intLims = intLims,
-                        impLims = impLims,
-                        angle = angle,
-                        border = border)
-
-    return(p1)
-  }
+  p <- viviPlot(matrix = matrix,
+                intPal = intPal,
+                impPal = impPal,
+                intLims = intLims,
+                impLims = impLims,
+                uncIntLims = uncIntLims,
+                uncImpLims = uncImpLims,
+                angle = angle,
+                border = border)
+  return(p)
 }
 
 
-# VSUP plotting function --------------------------------------------------
+# -------------------------------------------------------------------------
 
-viviBartPlotV <- function(matrix,
+# Main function:
+viviPlot <- function(matrix,
+                     intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
+                     impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
+                     intLims = NULL,
+                     impLims = NULL,
+                     uncIntLims = NULL,
+                     uncImpLims = NULL,
+                     angle = 0,
+                     border = FALSE) {
+  UseMethod("viviPlot", matrix)
+}
+
+
+
+# -------------------------------------------------------------------------
+# Standard plot -----------------------------------------------------------
+# -------------------------------------------------------------------------
+
+viviPlot.standardMat <-function(matrix,
+                                intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
+                                impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
+                                intLims = NULL,
+                                impLims = NULL,
+                                uncIntLims = NULL,
+                                uncImpLims = NULL,
+                                angle = 0,
+                                border = FALSE){
+
+  p <- vivid::viviHeatmap(mat = matrix,
+                          intPal = intPal,
+                          impPal = impPal,
+                          intLims = intLims,
+                          impLims = impLims,
+                          angle = angle,
+                          border = border)
+  return(p)
+}
+
+
+# -------------------------------------------------------------------------
+# VSUP plot ---------------------------------------------------------------
+# -------------------------------------------------------------------------
+
+viviPlot.vsup <- function(matrix,
                           intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
                           impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
                           intLims = NULL,
@@ -125,9 +156,9 @@ viviBartPlotV <- function(matrix,
   vintBreaks <- lapply(vintBreaks, function(x){
     unname(x)
   })
-  vintBreaksLabel <- lapply(vintBreaks, function(x){
-    round(x, 2)
-  })
+  # vintBreaksLabel <- lapply(vintBreaks, function(x){
+  #   round(x, 2)
+  # })
 
 
   vimpsBreaks <- list(c(limitsImp), c(limitsImpUnc))
@@ -143,9 +174,9 @@ viviBartPlotV <- function(matrix,
   vimpsBreaks <- lapply(vimpsBreaks, function(x){
     unname(x)
   })
-  vimpsBreaksLabel <- lapply(vimpsBreaks, function(x){
-    round(x, 2)
-  })
+  # vimpsBreaksLabel <- lapply(vimpsBreaks, function(x){
+  #   round(x, 2)
+  # })
 
 
 
@@ -183,7 +214,7 @@ viviBartPlotV <- function(matrix,
       aesthetics = "fill",
       limits = vintLims,
       breaks = vintBreaks,
-      labels = vintBreaksLabel,
+      labels = vimpsBreaks,
       oob = scales::squish,
       palette = pal_vsup(
         values = intPal,
@@ -214,7 +245,7 @@ viviBartPlotV <- function(matrix,
         aesthetics = "fill",
         limits = vimpLims,
         breaks = vimpsBreaks,
-        labels = vimpsBreaksLabel,
+        labels = vimpsBreaks,
         oob = scales::squish,
         palette = pal_vsup(
           values = impPal,
@@ -241,22 +272,26 @@ viviBartPlotV <- function(matrix,
 }
 
 
-# Quant plotting function -------------------------------------------------
 
+# -------------------------------------------------------------------------
+# Quantile plot -----------------------------------------------------------
+# -------------------------------------------------------------------------
 
-viviBartPlotQ <- function(matrixList,
-                          intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
-                          impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  100)),
-                          intLims = NULL,
-                          impLims = NULL,
-                          angle = 0,
-                          border = FALSE
+viviPlot.quantiles <- function(matrixList,
+                               intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+                               impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  100)),
+                               intLims = NULL,
+                               impLims = NULL,
+                               uncIntLims = NULL,
+                               uncImpLims = NULL,
+                               angle = 0,
+                               border = FALSE
 ){
 
-  # get values
-  quant.05 <- matrixList$quant.05
-  quant.50 <- matrixList$quant.50
-  quant.95 <- matrixList$quant.95
+  # get each matirx
+  quant.05 <- matrixList$lowerQuantile
+  quant.50 <- matrixList$median
+  quant.95 <- matrixList$upperQuantile
 
   # Limits and Breaks ------------------------------------------------------------------
 
@@ -322,7 +357,7 @@ viviBartPlotQ <- function(matrixList,
   df.95 <- createDataFrame(quant.95)
 
 
-  # Crreate plots -----------------------------------------------------------
+  # Create plots -----------------------------------------------------------
 
 
   plotfun <- function(dat, lims){
@@ -383,19 +418,22 @@ viviBartPlotQ <- function(matrixList,
 
   legendFinal <- cowplot::get_legend(p3)
 
-  p1 <- p1 + ggtitle("5% quantile") + theme(legend.position = 'none')
-  p2 <- p2 + ggtitle("Median") + theme(legend.position = 'none')
-  p3 <- p3 + ggtitle("95% quantile") + theme(legend.position = 'none')
+  p1 <- p1 + ggtitle("5% quantile") + theme(legend.position = 'none', plot.title = element_text(hjust = 0.5))
+  p2 <- p2 + ggtitle("Median") + theme(legend.position = 'none', plot.title = element_text(hjust = 0.5))
+  p3 <- p3 + ggtitle("95% quantile") + theme(legend.position = 'none', plot.title = element_text(hjust = 0.5))
 
+
+  design <- c(
+    area(1,1),
+    area(1,2),
+    area(1,3),
+    area(2,2)
+  )
 
   allPlots <- cowplot::plot_grid(p1,p2,p3,
                                  NULL, legendFinal, ncol = 3, nrow = 2,
-                                 rel_heights = c(1,0.2))
-
-
+                                 rel_heights = c(1.5,0.5))
 
   return(allPlots)
 }
-
-
 

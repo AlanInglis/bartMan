@@ -9,7 +9,10 @@ plotAllTreesPlotFn(
   sampleSize = NULL,
   sizeNode = TRUE,
   pal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
-  fillBy = NULL
+  fillBy = NULL,
+  selectedVars = NULL,
+  removeStump = FALSE,
+  name
 )
 }
 \arguments{
@@ -21,7 +24,9 @@ plotAllTreesPlotFn(
 
 \item{pal}{A palette to colour the terminal nodes.}
 
-\item{fillBy}{WHich parameter to colour the terminal nodes. Either 'response' or 'mu'.}
+\item{fillBy}{Which parameter to colour the terminal nodes. Either 'response' or 'mu'.}
+
+\item{name}{Variable names}
 }
 \value{
 A list containing vectors of the indices of observations from leaf nodes.
