@@ -20,6 +20,9 @@
 
 splitDensity <- function(treeData, colBy = NULL, display = "histogram") {
 
+  if (!(display %in% c("histogram", "ridge", "density"))) {
+    stop("display must be \"histogram\", \"ridge\", or \"density\"")
+  }
 
   # get just the variable and split value
   tt <- treeData$structure %>%
@@ -46,6 +49,8 @@ splitDensity <- function(treeData, colBy = NULL, display = "histogram") {
     dPlot <- tt %>%
       ggplot(aes(x = splitValue, y = var, fill = stat(x))) +
       geom_density_ridges(aes(fill = var, alpha = 0.1)) +
+      ylab("Variable") +
+      xlab("Split value") +
       theme_bw() +
       theme(legend.position = "none")
   } else if(display == "histogram") {
@@ -59,5 +64,6 @@ splitDensity <- function(treeData, colBy = NULL, display = "histogram") {
       theme(legend.position = "none")
   }
 
-  return(dPlot)
+  suppressMessages(print(dPlot))
+  #return(dPlot)
 }
