@@ -110,7 +110,7 @@ mdsBart <- function(treeData,
                                   }),
                            .id = "dfID")
 
-  # turn response into something useable
+  # turn response into something usable
   dfRotateAll <- dfRotateAll %>%
     mutate(factResponse = ifelse(response ==  0 ,1,2))
 
