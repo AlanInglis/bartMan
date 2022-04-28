@@ -131,19 +131,26 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
   incProp$shape <- ifelse(incProp$imp > localThresholdsDF$lThres, 19, 4)
   incProp$threshold <- localThresholdsDF$lThres
 
-  # truncate difference to zero
+  # add shift
   incProp$difference <- incProp$imp - incProp$threshold
   incProp$difference[incProp$difference <=  0] <- 0
+
+  for(i in seq_along(incProp$Variable)){
+    incProp$zSc[i] <- (incProp$imp[i] - mean(incProp$imp))/sd(incProp$imp)
+  }
+
+  incProp$Variable <- factor(incProp$Variable, levels = rev(incProp$Variable))
+
 
   if(shift){
     p <- ggplot(incProp, aes(x = Variable, y = difference)) +
       geom_point(size = 3) +
-      theme_bw() + ylab('proportion included')
+      theme_bw() + ylab('proportion included') + coord_flip()
   }else{
      p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
         geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
         geom_point(aes(x = Variable, y = imp), shape = incProp$shape, size = 3) +
-        theme_bw() + ylab('proportion included')
+        theme_bw() + ylab('proportion included') + coord_flip()
   }
 
 
@@ -240,6 +247,7 @@ lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5
   # truncate difference to zero
   incProp$difference <- incProp$imp - incProp$threshold
   incProp$difference[incProp$difference <=  0] <- 0
+  incProp$Variable <- factor(incProp$Variable, levels = rev(incProp$Variable))
 
   if(shift){
     p <- ggplot(incProp, aes(x = Variable, y = difference)) +
@@ -249,7 +257,7 @@ lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5
     p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
       geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
       geom_point(aes(x = Variable, y = imp), shape = incProp$shape, size = 3) +
-      theme_bw() + ylab('proportion included')
+      theme_bw() + ylab('proportion included') + coord_flip()
   }
 
   return(p)
@@ -311,7 +319,7 @@ lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alph
   vimpName <- names(varPropAvg[varPropAvg > Cutoffs & varPropAvg > 0])
 
   vimpColNum <- sapply(1:length(vimpName), function(x){
-    which(vimpName[x] == colnames(model$varcount))
+    which(vimpName[x] == colnames(model$training_data_features_with_missing_features))
   })
 
   # get metrics
@@ -344,6 +352,7 @@ lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alph
   # truncate difference to zero
   incProp$difference <- incProp$imp - incProp$threshold
   incProp$difference[incProp$difference <=  0] <- 0
+  incProp$Variable <- factor(incProp$Variable, levels = rev(incProp$Variable))
 
   if(shift){
     p <- ggplot(incProp, aes(x = Variable, y = difference)) +
@@ -353,7 +362,8 @@ lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alph
     p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
       geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
       geom_point(aes(x = Variable, y = imp), shape = incProp$shape, size = 3) +
-      theme_bw() + ylab('proportion included')
+      theme_bw() + ylab('proportion included') + coord_flip() +
+      geom_hline(yintercept = maxCut, col = 'red')
   }
 
   return(p)
