@@ -185,7 +185,7 @@ propMM$upperQ <- vint75
 
   propFinal <- propMM %>%
     group_by(var) %>%
-    mutate(propMean = mean(value))  %>%
+    mutate(propMean = sum(value))  %>%
     mutate(countFinal = sum(count)) %>%
     select(var, countFinal, propMean, lowerQ, median, upperQ) %>%
     distinct() %>%
