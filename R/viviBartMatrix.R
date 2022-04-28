@@ -32,8 +32,8 @@ viviBartMatrix <- function(treeData, type = "standard", metric = "propMean", met
     stop("metric must be \"propMean\", \"count\", or \"adjusted\"")
   }
 
-  if (!(metricError %in% c("SD", "SEofCI"))) {
-    stop("metricError must be \"SD\" or \"SEofCI\"")
+  if (!(metricError %in% c("SD", 'SE', "SEofCI"))) {
+    stop("metricError must be \"SD\", \'SE\', or \"SEofCI\"")
   }
 
   if (!(type %in% c("standard", "vsup", "quantiles"))) {
@@ -85,18 +85,19 @@ viviBartInternal <- function(treeData){
   vimpSD <- apply(vimps, 2, sd)
   upperVimp  <- vImp + 1.96 * vimpSD/sqrt(treeData$nMCMC)
   lowerVimp  <- vImp - 1.96 * vimpSD/sqrt(treeData$nMCMC)
-  SEvimp <- (upperVimp - lowerVimp) / 3.92 # SE of 95% CI
+  SECIvimp <- (upperVimp - lowerVimp) / 3.92 # SE of 95% CI
+  SEvimp <- sapply(as.data.frame(vimps), function(x) sd(x)/sqrt(length(x)))
 
   # get quantiles of proportions
   vimp25 <- apply(vimps, 2, function(x) quantile(x, c(.25)))
   vimp50 <- apply(vimps, 2, function(x) quantile(x, c(.50)))
   vimp75 <- apply(vimps, 2, function(x) quantile(x, c(.75)))
 
-  vimpData <- cbind(vimpsVal, vImp, vimpSD, lowerVimp, upperVimp, SEvimp, vimp25, vimp50, vimp75)
+  vimpData <- cbind(vimpsVal, vImp, vimpSD, lowerVimp, upperVimp, SEvimp, SECIvimp, vimp25, vimp50, vimp75)
   vimpData <- vimpData %>%
     as.data.frame() %>%
     tibble::rownames_to_column(var = "variable") %>%
-    rename(count = vimpsVal, propMean = vImp, SD = vimpSD,  lowerCI = lowerVimp, upperCI = upperVimp, SEofCI = SEvimp,
+    rename(count = vimpsVal, propMean = vImp, SD = vimpSD,  lowerCI = lowerVimp, upperCI = upperVimp, SE = SEvimp, SEofCI = SECIvimp,
            lowerQ = vimp25, median = vimp50, upperQ = vimp75)
 
 
@@ -177,7 +178,8 @@ viviBartInternal <- function(treeData){
   vintSD <- apply(dfVint, 2, sd)
   upperVint  <- propMatVintMean + 1.96 * vintSD/sqrt(treeData$nMCMC)
   lowerVint  <- propMatVintMean - 1.96 * vintSD/sqrt(treeData$nMCMC)
-  SEvint <- (upperVint - lowerVint) / 3.92 # SE of 95% CI
+  SECIvint <- (upperVint - lowerVint) / 3.92 # SE of 95% CI
+  SEvint <- sapply(as.data.frame(propMatVint), function(x) sd(x)/sqrt(length(x)))
 
   # get quantiles of proportions
   vint25 <- apply(propMatVint, 2, function(x) quantile(x, c(.25)))
@@ -207,14 +209,15 @@ viviBartInternal <- function(treeData){
   propMM$lowerQ <- vint25
   propMM$median <- vint50
   propMM$upperQ <- vint75
-  propMM$SEofCI <- SEvint
+  propMM$SEofCI <- SECIvint
   propMM$SD <- vintSD
+  propMM$SE <- SEvint
 
   propFinal <- propMM %>%
     group_by(var) %>%
     mutate(propMean = mean(value))  %>%
     mutate(count = sum(count)) %>%
-    select(var, count, propMean, SD, lowerQ, median, upperQ, SEofCI) %>%
+    select(var, count, propMean, SD, SE, lowerQ, median, upperQ, SEofCI) %>%
     #distinct() %>%
     ungroup %>%
     arrange(-count)
@@ -227,7 +230,7 @@ viviBartInternal <- function(treeData){
   suppressMessages(
     res <- cbind(propFinal, values)
   )
-  names(res) <- c('var', 'count', 'meanProp', 'SD',  'lowerQ', 'median',
+  names(res) <- c('var', 'count', 'meanProp', 'SD',  'SE', 'lowerQ', 'median',
                   'upperQ', 'SEofCI', 'propVimp1', 'propVimp2')
 
   trans <- apply(res[,c('meanProp', 'propVimp1', 'propVimp2')], 1, function(x){
@@ -235,6 +238,8 @@ viviBartInternal <- function(treeData){
   })
 
   propFinal$adjusted <- trans
+
+  propFinal$adjusted[propFinal$adjusted <=  0] <- 0
 
 
   myList <- list(Vimp = vimpData, Vint = propFinal)
