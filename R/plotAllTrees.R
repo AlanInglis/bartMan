@@ -198,7 +198,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
   # -------------------------------------------------------------------------
 
   # add mean response per node:
-  respNode <- apply(treeData$structure, 1, function(x) {y[x$obsNode]})
+  respNode <- treeData$structure$noObs #apply(treeData$structure, 1, function(x) {y[x$obsNode]})
   respNode <- lapply(respNode, mean)
   treeData$structure$respNode <- unlist(respNode)
 
@@ -524,6 +524,7 @@ plotAllTreesPlotFn <- function(treeList,
     }
     stumpIdx <- which(whichStump == 1)
 
+    if(length(stumpIdx >=1)){
     # create new tree list
     newTrees <- treeList[stumpIdx]
 
@@ -534,6 +535,7 @@ plotAllTreesPlotFn <- function(treeList,
         activate(nodes) %>%
         data.frame()
       newTreesDF[[i]]$var <- "Stump"
+
     }
 
 
@@ -551,7 +553,7 @@ plotAllTreesPlotFn <- function(treeList,
     }
     # replace stumps with new stumps
     treeList[stumpIdx] <- newTree
-
+    }
   }
 
 
@@ -561,12 +563,13 @@ plotAllTreesPlotFn <- function(treeList,
     lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode))))
     nam <- 'avg \nresponse'
   } else if(fillBy == "mu"){
-    lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var)) %>% pull(value))))
+    lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))))
     nam <- 'mu'
+  }
   }else{
     nam <- 'Variable'
     }
-  }
+
 
   # set node colours
   if(!is.null(selectedVars)){
@@ -585,13 +588,28 @@ plotAllTreesPlotFn <- function(treeList,
     pLeg <- ggplot(dfLegend, aes(x = varName, y = val, fill = varName)) +
       geom_bar(stat = 'identity') +
       scale_fill_manual(values = dfLegend$value, name = 'Variable')
+    if(length(stumpIdx) >=  1){
+      nodecolors[["Stump"]] <- '#e6e6e6'
+    }
   }else{
     nodeNames <- unique(na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
     nodeNames <- sort(nodeNames)
     nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNames)), nodeNames)
 
     # colour stumps grey
-    nodecolors[["Stump"]] <- '#808080'
+    if(length(stumpIdx) >=  1){
+      if(is.null(fillBy)){
+        nodecolors[["Stump"]] <- '#808080'
+      }else if(fillBy == 'response'){
+        nodecolors[["Stump"]] <- min(pal)
+      }else if(fillBy == 'mu'){
+        stumpVal <- lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))
+        sv  <- as.data.frame(stumpVal[stumpIdx])
+        cdfLims <- ecdf(lims)
+        cdfVal <- cdfLims(sv[1,1])
+        nodecolors[["Stump"]] <-  pal[abs(length(pal) * cdfVal)]
+      }
+    }
   }
 
   suppressMessages(
