@@ -10,10 +10,10 @@
 #'
 
 #' @import ggplot2
+#' @import tidytreatment
 #' @importFrom patchwork area
 #' @importFrom patchwork plot_layout
 #' @importFrom tidybayes residual_draws
-#' @importFrom tidytreatment variance_draws
 #' @importFrom tidybayes point_interval
 #' @importFrom tidybayes geom_pointinterval
 #' @importFrom dplyr %>%
@@ -23,7 +23,7 @@
 #' @importFrom dplyr tibble
 #' @importFrom dplyr first
 #' @importFrom tibble as_tibble
-#' @importFrom  bartMachine investigate_var_importance
+#' @importFrom bartMachine investigate_var_importance
 #' @export
 
 

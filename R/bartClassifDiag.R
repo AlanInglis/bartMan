@@ -1,4 +1,4 @@
-#' bartClassDiag
+#' bartClassifDiag
 #'
 #' @description Displays a selection of diagnostic plots for a BART model.
 #'
@@ -22,13 +22,16 @@
 #'
 #' @export
 
-bartClassDiag <- function(model, data, response, threshold = 'Youden', pNorm = FALSE){
+bartClassifDiag <- function(model, data, response, threshold = 'Youden', pNorm = FALSE){
 
   responseVals <- response
 
 
   if(class(model) == "bartMachine"){
     yhatTrain <- model$y_hat_train
+    if(model$pred_type == 'classification'){
+      yhatTrain <- as.integer(yhatTrain)-1
+    }
   }else{
     yhatTrain <- colMeans(model$yhat.train)
   }
@@ -267,11 +270,19 @@ confMat <- function(model, data, response){
 
   respIdx <- which(sapply(data, identical, y = response))
   pred <- round(as.numeric(condvis2::CVpredict(model, data[, -respIdx])), 0)
+
   if(class(model) == 'pbart' || class(model) == 'bart'){
     pred <-  ifelse(pred == 2, 1, 0)
   }
+
   pred <- as.factor(pred)
-  response <- as.factor(response)
+  if(class(model) == 'bartMachine'){
+    response <- as.numeric(response)
+    response <-  ifelse(response == 2, 1, 0)
+    pred <-  ifelse(pred == 2, 1, 0)
+  }else{
+    response <- as.factor(response)
+  }
 
 
   tab <- table(pred, response)
