@@ -108,7 +108,9 @@ vimpPlot <- function(treeData, type = "prop", plotType = "barplot", metric = "me
       dfvimp <- reshape::melt(vimp)
     )
 
-    p <- ggplot(dfvimp, aes(reorder(variable, value), value)) +
+    pal <- rev(colorRampPalette(RColorBrewer::brewer.pal(9,name = 'Blues'))(10))
+
+     p <- ggplot(dfvimp, aes(reorder(variable, value), value)) +
                # aes(x = variable, y = value)) +
       lvplot::geom_lv(aes(fill = ..LV..),
         conf = 0.5,
@@ -117,7 +119,8 @@ vimpPlot <- function(treeData, type = "prop", plotType = "barplot", metric = "me
         varwidth = TRUE
       ) +
       # geom_jitter(width = 0.2, alpha = 0.08) +
-      scale_fill_brewer(palette = "Blues", direction = -1) +
+       scale_fill_manual(values = pal) +
+      #scale_fill_brewer(palette = "Blues", direction = -1) +
       theme_bw() +
       theme(legend.position = "none")
   }
