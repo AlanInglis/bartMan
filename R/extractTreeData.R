@@ -281,7 +281,7 @@ extractTrees.bart <- function(model, data){
 
   # set up data frame
   trees$structure$node <- 1:(nrow(trees$structure))
-  #trees$structure$value <- round(trees$structure$value, 4)
+  trees$structure$value <- round(trees$structure$value, 4)
   trees$structure <- transform(trees$structure, isLeaf = ifelse(var < 0, TRUE, FALSE))
   trees$structure <- transform(trees$structure, leafValue = ifelse(isLeaf == TRUE, value, NA_integer_))
   trees$structure <- transform(trees$structure, splitValue = ifelse(isLeaf == FALSE, value, NA_integer_))
