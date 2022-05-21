@@ -3,7 +3,6 @@
 #' @description A plot of tree depth over iterations.
 #'
 #' @param treeData A list of tree attributes created using the extractTreeData function.
-#' @param burnIn Selected burn in value.
 #'
 #' @return A plot of average tree depths over iteration
 #'
@@ -16,7 +15,7 @@
 #' @importFrom tibble as_tibble
 #' @export
 
-treeDepth <- function(treeData, burnIn) {
+treeDepth <- function(treeData) {
   maxIter <- max(treeData$structure$iteration)
 
   newTrees <- treeData$structure %>%
@@ -30,17 +29,25 @@ treeDepth <- function(treeData, burnIn) {
 
   ylimMax <- max(newTrees$avgDepth)
 
-  p <- ggplot(newTrees[1:burnIn, ], aes(iteration, avgDepth)) +
-    geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
-    geom_point(alpha = 0.5) +
-    geom_line(alpha = 0.5) +
-    #geom_smooth(formula = y ~ x, method = "loess", colour = "red", se = F) +
-    geom_point(data = newTrees[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-    geom_line(data = newTrees[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-    #geom_smooth(formula = y ~ x, data = newTrees[burnIn:maxIter, ], color = "black", method = "loess", se = F) +
+  p<- ggplot(newTrees, aes(iteration, avgDepth)) +
+    geom_point(alpha = 0.5, colour = 'blue') +
+    geom_line(alpha = 0.5, colour = 'blue') +
     theme_bw() +
     xlab("Iteration") +
     ylab("Average Tree Depth")
+
+
+  # p <- ggplot(newTrees[1:burnIn, ], aes(iteration, avgDepth)) +
+  #   geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
+  #   geom_point(alpha = 0.5) +
+  #   geom_line(alpha = 0.5) +
+  #   #geom_smooth(formula = y ~ x, method = "loess", colour = "red", se = F) +
+  #   geom_point(data = newTrees[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
+  #   geom_line(data = newTrees[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
+  #   #geom_smooth(formula = y ~ x, data = newTrees[burnIn:maxIter, ], color = "black", method = "loess", se = F) +
+  #   theme_bw() +
+  #   xlab("Iteration") +
+  #   ylab("Average Tree Depth")
 
 
   return(p)

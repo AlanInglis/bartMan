@@ -1,12 +1,11 @@
 #' acceptRate
 #'
-#' @description Plots the acceptence rate of trees from a BART model.
+#' @description Plots the acceptance rate of trees from a BART model.
 #'
 #' @param treeData A data frame created by treeData function.
-#' @param burnIn Numerical value of the burn-in.
 #'  Displays a division on the plot to separate prior and post burn-in iterations.
 #'
-#' @return A plot of acceptence rate.
+#' @return A plot of acceptance rate.
 #'
 #' @importFrom dplyr filter
 #' @importFrom dplyr %>%
@@ -24,7 +23,7 @@ acceptRate <- function(treeData, burnIn = 0) {
 
   maxIter <- max(df$iteration)
 
-  acceptence <- df %>%
+  acceptance <- df %>%
     filter(!is.na(var)) %>%
     group_by(iteration, treeNum) %>%
     summarise(values = paste0(sort(unique(label)), collapse = ",")) %>%
@@ -34,15 +33,21 @@ acceptRate <- function(treeData, burnIn = 0) {
     group_by(iteration) %>%
     summarise(percent_change = mean(changed))
 
-  p <- ggplot(acceptence[1:burnIn, ], aes(iteration, percent_change)) +
-    geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
-    geom_point(alpha = 0.5) +
-    geom_smooth(formula = y ~ x, method = "lm", colour = "red", se = F) +
-    geom_point(data = acceptence[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-    geom_smooth(formula = y ~ x, data = acceptence[burnIn:maxIter, ], method = "lm", colour = "black", se = F) +
+  p <- ggplot(acceptance, aes(x = iteration, y = percent_change)) +
+    geom_point(alpha = 0.5, colour = 'blue') +
     theme_bw() +
     xlab("Iteration") +
     ylab("% Acceptence Rate of Trees")
+
+  # p <- ggplot(acceptence[1:burnIn, ], aes(iteration, percent_change)) +
+  #   geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
+  #   geom_point(alpha = 0.5) +
+  #   geom_smooth(formula = y ~ x, method = "lm", colour = "red", se = F) +
+  #   geom_point(data = acceptence[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
+  #   geom_smooth(formula = y ~ x, data = acceptence[burnIn:maxIter, ], method = "lm", colour = "black", se = F) +
+  #   theme_bw() +
+  #   xlab("Iteration") +
+  #   ylab("% Acceptence Rate of Trees")
 
   return(p)
 }

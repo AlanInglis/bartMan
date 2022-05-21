@@ -3,7 +3,6 @@
 #' @description A plot of number of nodes over iterations.
 #'
 #' @param treeData A list of tree attributes created using the extractTreeData function.
-#' @param burnIn Selected burn in value.
 #'
 #' @return A plot of tree number of nodes over iterations.
 #'
@@ -14,7 +13,7 @@
 #' @export
 
 
-treeNodes <- function(treeData, burnIn) {
+treeNodes <- function(treeData) {
   df <- treeData$structure
   maxIter <- max(df$iteration)
 
@@ -24,17 +23,24 @@ treeNodes <- function(treeData, burnIn) {
     group_by(iteration) %>%
     summarize(new = mean(count))
 
-  p <- ggplot(df[1:burnIn, ], aes(iteration, new)) +
-    geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
-    geom_point(alpha = 0.5) +
-    geom_line(alpha = 0.5) +
-    #geom_smooth(formula = y ~ x, method = "loess", colour = "red", se = F) +
-    geom_point(data = df[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-    geom_line(data = df[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-    #geom_smooth(formula = y ~ x, data = df[burnIn:maxIter, ], color = "black", method = "loess", se = F) +
+  p <- ggplot(df, aes(iteration, new)) +
+    geom_point(alpha = 0.5, colour = 'blue') +
+    geom_line(alpha = 0.5, colour = 'blue') +
     theme_bw() +
     xlab("Iteration") +
     ylab("Average Tree Nodes")
+
+  # p <- ggplot(df[1:burnIn, ], aes(iteration, new)) +
+  #   geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
+  #   geom_point(alpha = 0.5) +
+  #   geom_line(alpha = 0.5) +
+  #   #geom_smooth(formula = y ~ x, method = "loess", colour = "red", se = F) +
+  #   geom_point(data = df[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
+  #   geom_line(data = df[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
+  #   #geom_smooth(formula = y ~ x, data = df[burnIn:maxIter, ], color = "black", method = "loess", se = F) +
+  #   theme_bw() +
+  #   xlab("Iteration") +
+  #   ylab("Average Tree Nodes")
 
   return(p)
 }
