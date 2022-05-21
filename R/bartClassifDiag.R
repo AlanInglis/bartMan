@@ -182,6 +182,7 @@ classFit <- function(data, threshold){
     scale_color_manual(values = c("red",  "blue")) +
     xlab('Predicted probability') +
     ylab('') +
+    xlim(0, 1) +
     ggtitle('Fitted values') +
     #xlim(0,1) +
     theme_bw() +
@@ -201,6 +202,7 @@ classHist <- function(data, threshold){
     geom_histogram(bins = 50, color = "black", alpha = 0.5) +
     ylab('') +
     xlab('Predicted probability') +
+    expand_limits(x = 1) +
     ggtitle("Histogram") +
     geom_vline(xintercept = threshold, col = 'black') +
     scale_fill_manual(values = c("low" = 'red',
@@ -253,6 +255,7 @@ bartVimpClass <- function(model){
     theme_bw() +
     xlab("Variable") +
     ylab("Importance") +
+    ggtitle('VImp')
     theme(
       axis.title.y = element_text(angle = 90, vjust = 0.5),
       legend.key.size = unit(0.5, "cm")
@@ -281,12 +284,14 @@ confMat <- function(model, data, response){
     response <-  ifelse(response == 2, 1, 0)
     pred <-  ifelse(pred == 2, 1, 0)
   }else{
-    response <- as.factor(response)
+    response <- as.numeric(as.factor(response))
+    response <-  ifelse(response == 2, 1, 0)
   }
 
 
   tab <- table(pred, response)
   acc <- 100 - (mean(pred != response) * 100) # accuracy
+  acc <- round(acc, 2)
 
 
   confMatPlot <- function(mat){
