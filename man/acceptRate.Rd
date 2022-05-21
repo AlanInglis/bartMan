@@ -7,14 +7,12 @@
 acceptRate(treeData, burnIn = 0)
 }
 \arguments{
-\item{treeData}{A data frame created by treeData function.}
-
-\item{burnIn}{Numerical value of the burn-in.
+\item{treeData}{A data frame created by treeData function.
 Displays a division on the plot to separate prior and post burn-in iterations.}
 }
 \value{
-A plot of acceptence rate.
+A plot of acceptance rate.
 }
 \description{
-Plots the acceptence rate of trees from a BART model.
+Plots the acceptance rate of trees from a BART model.
 }

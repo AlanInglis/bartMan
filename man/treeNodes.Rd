@@ -4,12 +4,10 @@
 \alias{treeNodes}
 \title{treeNodes}
 \usage{
-treeNodes(treeData, burnIn)
+treeNodes(treeData)
 }
 \arguments{
 \item{treeData}{A list of tree attributes created using the extractTreeData function.}
-
-\item{burnIn}{Selected burn in value.}
 }
 \value{
 A plot of tree number of nodes over iterations.

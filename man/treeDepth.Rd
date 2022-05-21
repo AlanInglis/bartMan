@@ -4,12 +4,10 @@
 \alias{treeDepth}
 \title{treeDepth}
 \usage{
-treeDepth(treeData, burnIn)
+treeDepth(treeData)
 }
 \arguments{
 \item{treeData}{A list of tree attributes created using the extractTreeData function.}
-
-\item{burnIn}{Selected burn in value.}
 }
 \value{
 A plot of average tree depths over iteration
