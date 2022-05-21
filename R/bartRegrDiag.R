@@ -92,11 +92,23 @@ bartTrace <- function(model, burnIn = 0) {
   }
 
 
+  maxIter <- max(varDraws$.draw)
   # filter values
-  p <- varDraws %>%
-    filter(.draw > burnIn) %>%
-    ggplot(aes(x = .draw, y = sigma)) +
-    geom_line(color = "blue") +
+  # p <- varDraws %>%
+  #   #filter(.draw > burnIn) %>%
+  #   ggplot(aes(x = .draw, y = sigma)) +
+  #   geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
+  #   geom_line(color = "blue") +
+  #   theme_bw() +
+  #   xlab("Iteration") +
+  #   ylab("Sigma") +
+  #   ggtitle("Trace plot of model variance")
+
+
+  p <- ggplot(varDraws[1:burnIn, ], aes(x = .draw, y = sigma)) +
+    geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
+    geom_line(alpha = 0.5) +
+    geom_line(data = varDraws[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
     theme_bw() +
     xlab("Iteration") +
     ylab("Sigma") +
