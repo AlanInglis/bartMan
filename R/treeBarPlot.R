@@ -39,12 +39,12 @@ treeBarPlot <- function(treeData,
                         topTrees = NULL){
 
 
-  treeList <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = FALSE)
+  treeList <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = NULL)
 
   # remove stumps
   treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
 
-  # get the frequency off similar trees:
+  # get the frequency of similar trees:
   freqs <- map(treeList, function(x){
     x %>%
       pull(var) %>%
@@ -69,15 +69,20 @@ treeBarPlot <- function(treeData,
     freqDf <- freqDf[1:topTrees,]
   }
 
-  ids <- freqs %>% slice(1) %>% pull(ids) # remove duplicates
-  freqs <- freqs %>% pull(val) # get frequencies
+  lengthFreq <- length(freqDf$value)
+  ids <- freqDf$ids
+  #ids <- freqs %>% slice(1) %>% pull(ids) # remove duplicates
+  freqs <- freqs[ids,] %>% pull(val) # get frequencies
 
+
+  treeList <- treeList[ids]
   treeListNew <- purrr::imap(treeList, ~.x %>%
                                mutate(frequency = freqs[.y]) %>%
                                select(var, frequency))
 
-  # return new list of trees
-  treeList <- treeListNew[sort(ids)]
+  # # return new list of trees
+  # treeList <- treeListNew[sort(ids)]
+    treeList <- treeListNew
 
   # add plot name as number
   for(i in 1:(length(treeList))){
@@ -87,24 +92,22 @@ treeBarPlot <- function(treeData,
   }
 
 
-# Create barplot of frequency ---------------------------------------------
-  names <- freqDf$value
+  # Create barplot of frequency ---------------------------------------------
+  names <- factor(freqDf$value, levels = freqDf$value)
+
   bp <- freqDf %>%
     ggplot() +
-    geom_bar(aes(x = value, y = frequency, fill = frequency), stat = "identity") +
-    scale_x_discrete(limits = names) +
+    geom_bar(aes(x = value, y = frequency), fill = 'steelblue', stat = "identity") +
+    scale_x_discrete(limits = rev(levels(names))) +
     ggtitle("") +
     ylab("Count") +
     xlab("") +
     theme_bw() +
-    theme(axis.title.x=element_blank(),
-          axis.text.x=element_blank(),
-          axis.ticks.x=element_blank(),
-          legend.position = "none")
+    theme(legend.position = "none") +
+    coord_flip()
 
 
-
-# ggraph plotting funtion -------------------------------------------------
+  # ggraph plotting funtion -------------------------------------------------
 
 
   # set node colours
@@ -142,19 +145,27 @@ treeBarPlot <- function(treeData,
     allPlots <- allPlots[1:topTrees]
   }
 
-# Create final barplot ----------------------------------------------------
-
-
-  width <- 1 # set default width of bars
+  # Create final barplot ----------------------------------------------------
+  width = 1
   p_axis <- ggplot(freqDf) +
-    geom_blank(aes(x = value)) +
-    purrr::map2(allPlots, seq_along(allPlots), ~ annotation_custom(ggplotGrob(.x),  .y - width / 2, xmax = .y + width / 2)) +
+    geom_blank(aes(y = value)) +
+    purrr::map2(allPlots,
+                rev(seq_along(allPlots)),
+                ~ annotation_custom(ggplotGrob(.x),
+                                    ymin = .y - width / 2,
+                                    ymax = .y + width / 2,
+                                    )) +
     theme_void()
 
-  bpAxis <- bp / p_axis + plot_layout(heights = c(4, 1))
-  bpFinal <- cowplot::plot_grid(bpAxis, legend, rel_heights = c(1, .1), ncol = 1)
+  bp1 <- bp + theme(axis.text.y = element_blank())
+  ppp <- p_axis + theme(aspect.ratio = 6)
+  px <- ppp|bp1
+
+  bpFinal <- cowplot::plot_grid(px, legend, rel_heights = c(1, .1), ncol = 1)
 
   return(bpFinal)
 
 }
+
+
 
