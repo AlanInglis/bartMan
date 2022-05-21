@@ -51,6 +51,7 @@ mdsBart <- function(treeData,
   iter <- treeData$nMCMC
 
   # get all rotation matrices
+  message('Getting proximites...')
   rotationMatrix <- list()
   for(i in 1:iter){
     rotationMatrix[[i]] <- bartMan::proximityMatrix(df,
@@ -61,6 +62,7 @@ mdsBart <- function(treeData,
   }
 
   # get all MDS fits
+  message('Getting MDS...')
   fitRot <- list()
   suppressWarnings(
     for(i in 1:length(rotationMatrix)){
@@ -69,6 +71,7 @@ mdsBart <- function(treeData,
   )
 
   # perform procrustes on all
+  message('performing procrustes...')
   allProc <- list()
   suppressWarnings(
     for(i in 1:length(fitRot)){
@@ -111,8 +114,13 @@ mdsBart <- function(treeData,
                            .id = "dfID")
 
   # turn response into something usable
+  dfRotateAll$response <- as.numeric(as.factor(dfRotateAll$response))
+  if(max(dfRotateAll$response) < 2){
   dfRotateAll <- dfRotateAll %>%
     mutate(factResponse = ifelse(response ==  0 ,1,2))
+  }else{
+    dfRotateAll$factResponse <- dfRotateAll$response
+  }
 
   if(type == 'mean'){
 
