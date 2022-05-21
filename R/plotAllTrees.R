@@ -561,10 +561,10 @@ plotAllTreesPlotFn <- function(treeList,
   if(!is.null(fillBy)){
   if(fillBy == 'response'){
     lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode))))
-    nam <- 'avg \nresponse'
+    nam <- 'Mean \nResponse'
   } else if(fillBy == "mu"){
     lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))))
-    nam <- 'mu'
+    nam <- 'Mu'
   }
   }else{
     nam <- 'Variable'
