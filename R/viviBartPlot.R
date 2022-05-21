@@ -149,16 +149,25 @@ viviPlot.vsup <- function(matrix,
   vintLims[[2]][1] <- vintLims[[2]][1] - 0.001
   vintLims[[2]][2] <- vintLims[[2]][2] + 0.001
 
-  vintBreaks <- lapply(vintBreaks, function(x){
-    quantile(x, probs = c(0, 0.25, 0.5, 0.75, 1))
-  }
-  )
-  vintBreaks <- lapply(vintBreaks, function(x){
-    unname(x)
-  })
-  # vintBreaksLabel <- lapply(vintBreaks, function(x){
-  #   round(x, 2)
+  # vintBreaks <- lapply(vintBreaks, function(x){
+  #   quantile(x, probs = c(0, 0.25, 0.5, 0.75, 1))
+  # }
+  # )
+  # vintBreaks <- lapply(vintBreaks, function(x){
+  #   unname(x)
   # })
+
+  vintBreaks[[1]] <- seq(vintBreaks[[1]][1], vintBreaks[[1]][2], length.out = 5)
+  vintBreaks[[2]] <- seq(vintBreaks[[2]][1], vintBreaks[[2]][2], length.out = 4)
+
+
+  vintBreaksLabel <- vintBreaks
+  vintBreaksLabel[[1]] <- round(vintBreaksLabel[[1]], 3)
+  vintBreaksLabel[[2]] <- round(vintBreaksLabel[[2]], 5)
+
+  vintBreaksLabel <- lapply(vintBreaks, function(x){
+    round(x, 4)
+  })
 
 
   vimpsBreaks <- list(c(limitsImp), c(limitsImpUnc))
@@ -168,15 +177,23 @@ viviPlot.vsup <- function(matrix,
   vimpLims[[2]][1] <- vimpLims[[2]][1] - 0.001
   vimpLims[[2]][2] <- vimpLims[[2]][2] + 0.001
 
-  vimpsBreaks <- lapply(vimpsBreaks, function(x){
-    quantile(x, probs = c(0, 0.25, 0.5, 0.75, 1))
-  })
-  vimpsBreaks <- lapply(vimpsBreaks, function(x){
-    unname(x)
-  })
-  # vimpsBreaksLabel <- lapply(vimpsBreaks, function(x){
-  #   round(x, 2)
+  # vimpsBreaks <- lapply(vimpsBreaks, function(x){
+  #   quantile(x, probs = c(0, 0.25, 0.5, 0.75, 1))
   # })
+  # vimpsBreaks <- lapply(vimpsBreaks, function(x){
+  #   unname(x)
+  # })
+
+  vimpsBreaks[[1]] <- seq(vimpsBreaks[[1]][1], vimpsBreaks[[1]][2], length.out = 5)
+  vimpsBreaks[[2]] <- seq(vimpsBreaks[[2]][1], vimpsBreaks[[2]][2], length.out = 4)
+
+  vimpBreaksLabel <- vimpsBreaks
+  vimpBreaksLabel[[1]] <- round(vimpBreaksLabel[[1]], 3)
+  vimpBreaksLabel[[2]] <- round(vimpBreaksLabel[[2]], 5)
+
+  vimpBreaksLabel <- lapply(vimpsBreaks, function(x){
+    round(x, 4)
+  })
 
 
 
@@ -201,7 +218,6 @@ viviPlot.vsup <- function(matrix,
   dfInt$Variable_2 <- factor(dfInt$Variable_2, levels = nam)
 
 
-
   # create plot for Vint ----------------------------------------------------
 
   pInt <- ggplot(dfInt) +
@@ -214,7 +230,7 @@ viviPlot.vsup <- function(matrix,
       aesthetics = "fill",
       limits = vintLims,
       breaks = vintBreaks,
-      labels = vimpsBreaks,
+      labels = vintBreaksLabel,
       oob = scales::squish,
       palette = pal_vsup(
         values = intPal,
@@ -226,12 +242,7 @@ viviPlot.vsup <- function(matrix,
       ),
       guide = "colorfan"
     ) +
-    theme_bw() +
-    theme(
-      legend.title.align = 0.5,
-      legend.key.size = grid::unit(0.8, "cm"),
-      plot.margin = ggplot2::margin(5.5, 20, 5.5, 5.5)
-    )
+    theme_bw()
 
   # create plot for Vimp ----------------------------------------------------
 
@@ -245,7 +256,7 @@ viviPlot.vsup <- function(matrix,
         aesthetics = "fill",
         limits = vimpLims,
         breaks = vimpsBreaks,
-        labels = vimpsBreaks,
+        labels = vimpBreaksLabel,
         oob = scales::squish,
         palette = pal_vsup(
           values = impPal,
@@ -265,7 +276,7 @@ viviPlot.vsup <- function(matrix,
         panel.grid.minor = element_blank()
       ) +
       theme(axis.text = element_text(size = 11)) +
-      theme(axis.text.x = element_text(angle = angle, hjust = 0)) +
+      theme(axis.text.x = element_text(angle = angle)) +
       theme(aspect.ratio = 1)
   )
   return(newPlt)
