@@ -521,20 +521,30 @@ guide_gengrob.colourfan <- function(guide, theme) {
   grob.fan <- colourfan_grob(guide$fan$colour, nrow = guide$nbin, ncol = guide$nbin)
 
   # make ticks and labels
-  tick.x.pos <- rescale(
-    guide$ticks1$value,
-    c(0.5, guide$nbin - 0.5),
-    guide$fan.x[c(1, length(guide$fan.x))]
-  ) / guide$nbin
+  # tick.x.pos <- rescale(
+  #   guide$ticks1$value,
+  #   c(0.5, guide$nbin - 0.5),
+  #   guide$fan.x[c(1, length(guide$fan.x))]
+  # ) / guide$nbin
 
-  tick.y.pos <- rescale(
-    guide$ticks2$value,
-    c(guide$nbin - 0.5, 0.5),
-    guide$fan.y[c(1, length(guide$fan.y))]
-  ) / guide$nbin
+  # tick.y.pos <- rescale(
+  #   guide$ticks2$value,
+  #   c(guide$nbin - 0.5, 0.5),
+  #   guide$fan.y[c(1, length(guide$fan.y))]
+  #   #guide$fan.y[c(15, length(guide$fan.y))]
+  #   #guide$fan.y[c(26, length(guide$fan.y))]
+  # ) / (guide$nbin)
+
+  tick.x.pos <- seq(0,1, length.out = 5)
+  a <- c(0, .25, .5, .75)
+  a <- a + 0.125
+  tick.y.pos <- a
+
 
   label.x.pos <- transform_radial(tibble(x = tick.x.pos, y = 1), yoff = 0.04)
-  label.y.pos <- transform_radial(tibble(x = 1, y = tick.y.pos), xoff = 0.04)
+  label.y.pos <- transform_radial(tibble(x = 1, y = tick.y.pos),
+                                 # yoff = 0,
+                                  xoff = 0.04)
 
   # get the label theme
   label.theme <- guide$label.theme %||% calc_element("legend.text", theme)
@@ -659,7 +669,7 @@ guide_gengrob.colourfan <- function(guide, theme) {
     title.y.position <- "none"
   } else {
     title.y.pos <- transform_radial(
-      tibble(x = 1, y = 0.5), xoff = 0.3
+      tibble(x = 1, y = 0.5), xoff = 0.45
     )
 
     grob.title.y <- element_grob(
