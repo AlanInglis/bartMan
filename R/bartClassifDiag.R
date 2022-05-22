@@ -246,20 +246,42 @@ bartVimpClass <- function(model){
   p <- vImp %>%
     arrange(imp) %>%
     mutate(Variable = factor(Variable, unique(Variable))) %>%
-    ggplot() +
-    aes(x = Variable, y = vimpMedian) +
-    geom_bar(aes(x = Variable, y = imp), stat = "identity", fill = "steelblue", col = "black") +
-    geom_segment(aes(x = Variable, xend = Variable, y = lowerQ, yend = upperQ), color = "black") +
-    theme_light() +
+    ggplot(aes(x = Variable, y = imp)) +
+    ggforce::geom_link(aes(
+      x = Variable, xend = Variable, yend = upperQ,
+      col = Variable, alpha = rev(stat(index))
+    ),
+    size = 2, n = 1000
+    ) +
+    ggforce::geom_link(aes(
+      x = Variable, xend = Variable, yend = lowerQ,
+      col = Variable, alpha = rev(stat(index))
+    ),
+    size = 2, n = 1000
+    ) +
+    geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
     coord_flip() +
     theme_bw() +
-    xlab("Variable") +
-    ylab("Importance") +
-    ggtitle('VImp')
-    theme(
-      axis.title.y = element_text(angle = 90, vjust = 0.5),
-      legend.key.size = unit(0.5, "cm")
-    )
+    labs(x = "Variable", y = "Importance") +
+    theme(legend.position = "none")
+
+  # p <- vImp %>%
+  #   arrange(imp) %>%
+  #   mutate(Variable = factor(Variable, unique(Variable))) %>%
+  #   ggplot() +
+  #   aes(x = Variable, y = vimpMedian) +
+  #   geom_bar(aes(x = Variable, y = imp), stat = "identity", fill = "steelblue", col = "black") +
+  #   geom_segment(aes(x = Variable, xend = Variable, y = lowerQ, yend = upperQ), color = "black") +
+  #   theme_light() +
+  #   coord_flip() +
+  #   theme_bw() +
+  #   xlab("Variable") +
+  #   ylab("Importance") +
+  #   ggtitle('VImp')
+  #   theme(
+  #     axis.title.y = element_text(angle = 90, vjust = 0.5),
+  #     legend.key.size = unit(0.5, "cm")
+  #   )
 
   return(p)
 }
