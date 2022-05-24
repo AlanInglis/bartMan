@@ -165,9 +165,9 @@ viviPlot.vsup <- function(matrix,
   vintBreaksLabel[[1]] <- round(vintBreaksLabel[[1]], 3)
   vintBreaksLabel[[2]] <- round(vintBreaksLabel[[2]], 5)
 
-  vintBreaksLabel <- lapply(vintBreaks, function(x){
-    round(x, 4)
-  })
+  # vintBreaksLabel <- lapply(vintBreaks, function(x){
+  #   round(x, 4)
+  # })
 
 
   vimpsBreaks <- list(c(limitsImp), c(limitsImpUnc))
@@ -191,9 +191,9 @@ viviPlot.vsup <- function(matrix,
   vimpBreaksLabel[[1]] <- round(vimpBreaksLabel[[1]], 3)
   vimpBreaksLabel[[2]] <- round(vimpBreaksLabel[[2]], 5)
 
-  vimpBreaksLabel <- lapply(vimpsBreaks, function(x){
-    round(x, 4)
-  })
+  # vimpBreaksLabel <- lapply(vimpsBreaks, function(x){
+  #   round(x, 4)
+  # })
 
 
 
@@ -279,6 +279,7 @@ viviPlot.vsup <- function(matrix,
       theme(axis.text.x = element_text(angle = angle)) +
       theme(aspect.ratio = 1)
   )
+
   return(newPlt)
 }
 
