@@ -8,6 +8,7 @@
 #' @param threshold A dashed line on some plots to indicate a chosen threshold value.
 #' by default the Youden index is shown.
 #' @param pNorm apply pnorm to the y-hat data
+#' @param showInterval LOGICAL if TRUE then show 5\% and 95\% quantile intervals.
 #'
 #' @return A selection of diagnostic plots
 #'
@@ -22,7 +23,12 @@
 #'
 #' @export
 
-bartClassifDiag <- function(model, data, response, threshold = 'Youden', pNorm = FALSE){
+bartClassifDiag <- function(model,
+                            data,
+                            response,
+                            threshold = 'Youden',
+                            pNorm = FALSE,
+                            showInterval = FALSE){
 
   responseVals <- response
 
@@ -101,9 +107,15 @@ bartClassifDiag <- function(model, data, response, threshold = 'Youden', pNorm =
 
 
   # -------------------------------------------------------------------------
-
-  ROC <- bartROC(dfROC, threshold = threshold, label = aucLab)
-  PrecRec <- bartPrecRec(dfPR, label = aucprLab)
+  if(showInterval){
+    ROC <- rocCI(model = model, response = response, data = data)
+    PrecRec <- prCI(model = model, response = response, data = data)
+  }else{
+    ROC <- bartROC(dfROC, threshold = threshold, label = aucLab)
+    PrecRec <- bartPrecRec(dfPR, label = aucprLab)
+  }
+  #ROC <- bartROC(dfROC, threshold = threshold, label = aucLab)
+  #PrecRec <- bartPrecRec(dfPR, label = aucprLab)
   classF <- classFit(dfFitClassBart, threshold = threshold)
   histogram <- classHist(dfHist, threshold = threshold)
   vimp <- bartVimpClass(model)
@@ -263,25 +275,8 @@ bartVimpClass <- function(model){
     coord_flip() +
     theme_bw() +
     labs(x = "Variable", y = "Importance") +
+    ggtitle('VImp') +
     theme(legend.position = "none")
-
-  # p <- vImp %>%
-  #   arrange(imp) %>%
-  #   mutate(Variable = factor(Variable, unique(Variable))) %>%
-  #   ggplot() +
-  #   aes(x = Variable, y = vimpMedian) +
-  #   geom_bar(aes(x = Variable, y = imp), stat = "identity", fill = "steelblue", col = "black") +
-  #   geom_segment(aes(x = Variable, xend = Variable, y = lowerQ, yend = upperQ), color = "black") +
-  #   theme_light() +
-  #   coord_flip() +
-  #   theme_bw() +
-  #   xlab("Variable") +
-  #   ylab("Importance") +
-  #   ggtitle('VImp')
-  #   theme(
-  #     axis.title.y = element_text(angle = 90, vjust = 0.5),
-  #     legend.key.size = unit(0.5, "cm")
-  #   )
 
   return(p)
 }
@@ -331,6 +326,237 @@ confMat <- function(model, data, response){
     return(p)
   }
   confMatPlot(cfm)
+}
+
+
+# ROC with CI -------------------------------------------------------------
+
+rocCI <- function(model, response, data){
+
+  # get model info
+  if(class(model) == 'pbart' | class(model) == 'wbart'){
+
+    modelTrees <- model$treedraws$trees
+    modelInfo <- unlist(strsplit(modelTrees, " "))[1:3]
+    modelInfo <- gsub("(^\\d+)([\a-zA-Z0-9]*)", "\\1", modelInfo)
+    nMCMC <- as.integer(modelInfo[1])
+    nTree <- as.integer(modelInfo[2])
+    nVar <- as.integer(modelInfo[3])
+    burnIn <- length(model$sigma) - nMCMC
+    varNames <- names(model$varcount.mean)
+
+  }else if(class(model) == 'bart'){
+
+    nTree <- model$call$ntree
+    nMCMC  <- model$call$ndpost
+    nVar  <- as.integer(length(colMeans((model$varcount))))
+    varNames <- colnames(model$fit$data@x)
+    burnIn <-  model$call$nskip
+
+  }else if(class(model) == 'bartMachine'){
+    nTree <-  model$num_trees
+    nMCMC <-  model$num_iterations_after_burn_in
+    nVar  <- model$p
+    varNames <- colnames(model$X)
+    burnIn <-  model$num_burn_in
+  }
+
+  # get yhats
+  responseIdx <- which(!(names(data) %in% varNames))
+  if(class(model) == 'bartMachine'){
+    yhatTrain = bartMachine::bart_machine_get_posterior(model, data[, -responseIdx])$y_hat_posterior_samples
+  }else{
+    yhatTrain = model$yhat.train
+  }
+
+  # small set up
+  pred = NULL
+  perfTF = NULL
+  dfROC = NULL
+  noIter = nMCMC
+
+
+  # get roc predicitons
+  for(i in 1:noIter){
+    if(class(model) == 'bartMachine'){
+      pred[[i]] <- ROCR::prediction(yhatTrain[,i], response)
+    }else{
+      pred[[i]] <- ROCR::prediction(yhatTrain[i,], response)
+    }
+    perfTF[[i]] <- ROCR::performance(pred[[i]], "tpr", "fpr")
+    dfROC[[i]] <- data.frame(fpr = perfTF[[i]]@x.values[[1]],
+                             tpr = perfTF[[i]]@y.values[[1]])
+    dfROC[[i]]$n <- c(1:nrow(dfROC[[i]]))
+  }
+
+  # put together in single df
+  newDF <- lapply(seq_along(dfROC),
+                  function(x) {
+                    dfROC[[x]] <- dfROC[[x]] %>%
+                      mutate(id1 = 1:n(), id2 = x)
+                  }) %>%
+    bind_rows() %>%
+    arrange(id1, id2) %>%
+    select(-id1, -id2) %>%
+    as.data.frame()
+
+
+  # split into lists and remove var n
+  dfList <- split(newDF, newDF$n)
+  for(i in 1:length(dfList)){
+    dfList[[i]]$n <- NULL
+  }
+
+  # get quantiles
+  lo <- lapply(dfList, function(x) apply(x, 2, function(x) quantile(x, c(.05))))
+  hi <- lapply(dfList, function(x) apply(x, 2, function(x) quantile(x, c(.95))))
+  lowQROC <- bind_rows(lo)
+  hiQROC <- bind_rows(hi)
+
+  # get median
+  me <-  lapply(dfList, function(x) apply(x, 2, function(x) median(x)))
+  medianDF <- bind_rows(me)
+
+  # unify into single df
+  joinDF <- data.frame(
+    tpr = medianDF$tpr,
+    fpr = medianDF$fpr,
+    hiTPR = hiQROC$tpr,
+    hiFPR = hiQROC$fpr,
+    lowTPR = lowQROC$tpr,
+    lowFPR = lowQROC$fpr
+  )
+
+  # plot
+  p <- ggplot(joinDF, aes(x = fpr, y = tpr)) +
+    geom_line() +
+    geom_ribbon(aes(xmax = hiFPR, xmin = lowFPR,  ymax = hiTPR, ymin = lowTPR), fill="steelblue", alpha=.5) +
+    xlab('False positive rate') +
+    ylab('True positive rate') +
+    ggtitle('ROC') +
+    theme_bw()
+
+  return(p)
+}
+
+
+prCI <- function(model, response, data){
+
+  # get model info
+  if(class(model) == 'pbart' | class(model) == 'wbart'){
+
+    modelTrees <- model$treedraws$trees
+    modelInfo <- unlist(strsplit(modelTrees, " "))[1:3]
+    modelInfo <- gsub("(^\\d+)([\a-zA-Z0-9]*)", "\\1", modelInfo)
+    nMCMC <- as.integer(modelInfo[1])
+    nTree <- as.integer(modelInfo[2])
+    nVar <- as.integer(modelInfo[3])
+    burnIn <- length(model$sigma) - nMCMC
+    varNames <- names(model$varcount.mean)
+
+  }else if(class(model) == 'bart'){
+
+    nTree <- model$call$ntree
+    nMCMC  <- model$call$ndpost
+    nVar  <- as.integer(length(colMeans((model$varcount))))
+    varNames <- colnames(model$fit$data@x)
+    burnIn <-  model$call$nskip
+
+  }else if(class(model) == 'bartMachine'){
+    nTree <-  model$num_trees
+    nMCMC <-  model$num_iterations_after_burn_in
+    nVar  <- model$p
+    varNames <- colnames(model$X)
+    burnIn <-  model$num_burn_in
+  }
+
+  # get yhats
+  responseIdx <- which(!(names(data) %in% varNames))
+  if(class(model) == 'bartMachine'){
+    yhatTrain = bartMachine::bart_machine_get_posterior(model, data[, -responseIdx])$y_hat_posterior_samples
+  }else{
+    yhatTrain = model$yhat.train
+  }
+
+  # small set up
+  pred = NULL
+  predPR = NULL
+  dfPR = NULL
+  noIter = nMCMC
+
+  # get roc predicitons
+  for(i in 1:noIter){
+    if(class(model) == 'bartMachine'){
+      pred[[i]] <- ROCR::prediction(yhatTrain[,i], response)
+    }else{
+      pred[[i]] <- ROCR::prediction(yhatTrain[i,], response)
+    }
+    predPR[[i]] <- ROCR::performance(pred[[i]], "prec", "rec")
+    dfPR[[i]] <- data.frame(prec = predPR[[i]]@x.values[[1]],
+                            rec  = predPR[[i]]@y.values[[1]])
+    dfPR[[i]]$n <- c(1:nrow(dfPR[[i]]))
+  }
+
+  # remove NaN
+  dfPR <- lapply(dfPR, function(dat) {
+    dat[] <- lapply(dat, function(x) replace(x, is.nan(x), 0))
+  })
+
+  # put together in single df
+  newDF <- lapply(seq_along(dfPR),
+                  function(x) {
+                    dfPR[[x]] <- dfPR[[x]] %>%
+                      mutate(id1 = 1:n(), id2 = x)
+                  }) %>%
+    bind_rows() %>%
+    arrange(id1, id2) %>%
+    select(-id1, -id2) %>%
+    as.data.frame()
+
+
+  # split into lists and remove var n
+  dfList <- split(newDF, newDF$n)
+  for(i in 1:length(dfList)){
+    dfList[[i]]$n <- NULL
+  }
+
+  # get quantiles
+  lo <- lapply(dfList, function(x) apply(x, 2, function(x) quantile(x, c(.05), na.rm = T)))
+  hi <- lapply(dfList, function(x) apply(x, 2, function(x) quantile(x, c(.95), na.rm = T)))
+  lowQROC <- bind_rows(lo)
+  hiQROC <- bind_rows(hi)
+
+
+  # get median
+  me <-  lapply(dfList, function(x) apply(x, 2, function(x) median(x)))
+  medianDF <- bind_rows(me)
+
+
+  # unify into single df
+  joinDF <- data.frame(
+    prec = medianDF$prec,
+    rec = medianDF$rec,
+    hiprec = hiQROC$prec,
+    hirec = hiQROC$rec,
+    lowprec = lowQROC$prec,
+    lowrec = lowQROC$rec
+  )
+
+  joinDF <- joinDF[-1,]
+
+  # plot
+  p <- ggplot(joinDF, aes(x = rec, y = prec)) +
+    geom_line() +
+    geom_ribbon(aes(xmax = hirec, xmin = lowrec, ymax = hiprec, ymin = lowprec),
+                fill="steelblue", alpha=.5) +
+    scale_x_continuous(limits = c(min(joinDF$rec), 1)) +
+    xlab("Recall") +
+    ylab("Precision") +
+    ggtitle("Precision-Recall") +
+    theme_bw()
+
+  return(p)
+
 }
 
 
