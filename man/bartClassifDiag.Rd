@@ -4,7 +4,14 @@
 \alias{bartClassifDiag}
 \title{bartClassifDiag}
 \usage{
-bartClassifDiag(model, data, response, threshold = "Youden", pNorm = FALSE)
+bartClassifDiag(
+  model,
+  data,
+  response,
+  threshold = "Youden",
+  pNorm = FALSE,
+  showInterval = FALSE
+)
 }
 \arguments{
 \item{model}{a model created from either the BART, dbarts, or bartMachine package.}
@@ -17,6 +24,8 @@ bartClassifDiag(model, data, response, threshold = "Youden", pNorm = FALSE)
 by default the Youden index is shown.}
 
 \item{pNorm}{apply pnorm to the y-hat data}
+
+\item{showInterval}{LOGICAL if TRUE then show 5\% and 95\% quantile intervals.}
 }
 \value{
 A selection of diagnostic plots
