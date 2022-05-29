@@ -71,7 +71,7 @@ mdsBart <- function(treeData,
   )
 
   # perform procrustes on all
-  message('performing procrustes...')
+  message('Performing procrustes...')
   allProc <- list()
   suppressWarnings(
     for(i in 1:length(fitRot)){
