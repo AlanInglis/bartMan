@@ -3,7 +3,7 @@
 #' @description Returns a matrix or list of matrices. If type = 'standard' a
 #' matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
 #' One with the actual values and another matrix of uncertainty values.
-#' If type = 'quantiles, three matrices are returned. One for the 25%, 50%, and 75% quantiles.
+#' If type = 'quantiles', three matrices are returned. One for the 25%, 50%, and 75% quantiles.
 #'
 #'  @param treeData A data frame created by extractTreeData function.
 #'  @param type Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'
@@ -101,7 +101,8 @@ viviBartInternal <- function(treeData){
            lowerQ = vimp25, median = vimp50, upperQ = vimp75)
 
 
-  # Vints -------------------------------------------------------------------
+# VInts -------------------------------------------------------------------
+
 
   df <- treeData$structure
   nam <- treeData$varName
@@ -165,85 +166,79 @@ viviBartInternal <- function(treeData){
   dfVint[is.na(dfVint)] <- 0
 
 
-  # get SE
-  # vintSD <- apply(dfVint, 2, sd)
-  # uncVint  <- 1.96 * vintSD/sqrt(treeData$nMCMC)
-  #
+  # create a matirx of all possible combinations
+  nam <- treeData$varName
+  namDF <- expand.grid(nam, nam)
+
+  newName <- NULL
+  for(i in 1:length(namDF$Var1)){
+    newName[i] <- paste0(namDF$Var2[i], ":", namDF$Var1[i])
+  }
+
+  allCombMat <- matrix(NA, nrow = treeData$nMCMC, ncol = length(newName))
+  colnames(allCombMat) <- newName
+
+  # join actual values into matirx of all combinations
+  oIdx <- match(colnames(dfVint), colnames(allCombMat))
+
+  allCombMat[ ,oIdx] <- dfVint
+  allCombMat[is.na(allCombMat)] <- 0
+  dfVint <- allCombMat
+
   # get proportions
   propMatVint <- proportions(dfVint, 1)
-  propMatVintMean <- colMeans(propMatVint)
-  propMatVintMedian <- apply(propMatVint, 2, median)
-
-  # get SE
-  vintSD <- apply(dfVint, 2, sd)
-  upperVint  <- propMatVintMean + 1.96 * vintSD/sqrt(treeData$nMCMC)
-  lowerVint  <- propMatVintMean - 1.96 * vintSD/sqrt(treeData$nMCMC)
-  SECIvint <- (upperVint - lowerVint) / 3.92 # SE of 95% CI
-  SEvint <- sapply(as.data.frame(propMatVint), function(x) sd(x)/sqrt(length(x)))
-
-  # get quantiles of proportions
-  vint25 <- apply(propMatVint, 2, function(x) quantile(x, c(.25)))
-  vint50 <- apply(propMatVint, 2, function(x) quantile(x, c(.50)))
-  vint75 <- apply(propMatVint, 2, function(x) quantile(x, c(.75)))
 
   # turn into df
-  propMM <- reshape::melt(propMatVintMean)
-  propMM <- tibble::rownames_to_column(propMM, "var")
+  dfProps <- reshape2::melt(propMatVint)
+  colnames(dfProps) <- c("iteration", "var", "props")
 
-  countVint <- colSums(dfVint)
-  countM <- reshape::melt(countVint)
-  countM <- tibble::rownames_to_column(countM, "var")
-
-  propMM$count <- countM$value
+  # add counts
+  countM <- reshape2::melt(dfVint)
+  colnames(countM) <- c("iteration", "var", "count")
+  dfProps$count <- countM$count
 
   # make symmetrical interactions (ie x1:x2 == x2:x1)
+  dfFinal <- dfProps %>%
+    mutate(
+      var = str_extract_all(var, "\\d+"),
+      var = map_chr(var, ~ str_glue("x{sort(.x)[[1]]}:x{sort(.x)[[2]]}"))
+    )
 
-  ##NOTE MAYBE DELETE NOW BECAUSE TAKING CARE OF LATER
-  # propMM <- propMM %>%
-  #   mutate(
-  #     var = str_extract_all(var, "\\d+"),
-  #     var = map_chr(var, ~ str_glue("x{sort(.x)[[1]]}:x{sort(.x)[[2]]}"))
-  #   )
 
-  # add in quantile, sd, and se columns
-  propMM$lowerQ <- vint25
-  propMM$median <- vint50
-  propMM$upperQ <- vint75
-  propMM$SEofCI <- SECIvint
-  propMM$SD <- vintSD
-  propMM$SE <- SEvint
-
-  propFinal <- propMM %>%
+  dfFinal <- dfFinal %>%
     group_by(var) %>%
-    mutate(propMean = mean(value))  %>%
-    mutate(count = sum(count)) %>%
-    select(var, count, propMean, SD, SE, lowerQ, median, upperQ, SEofCI) %>%
-    #distinct() %>%
-    ungroup %>%
-    arrange(-count)
+    mutate(count = sum(count),
+           propMean = mean(props),
+           SD = sd(props),
+           Q25 = quantile(props, c(.25)),
+           Q50 = quantile(props, c(.50)),
+           Q75 = quantile(props, c(.75)),
+           SE =  sd(props)/sqrt(treeData$nMCMC)) %>%
+    select(-iteration, - props) %>%
+    distinct() %>%
+    ungroup()
+
 
   # add adjustment
   vimpsAdj <- bartMan::vimpBart(treeData, type = 'propMean')
 
-  splitN <- t(simplify2array(strsplit(as.character(propFinal[["var"]]), ":")))
+  splitN <- t(simplify2array(strsplit(as.character(dfFinal[["var"]]), ":")))
   values <- t(apply(splitN, 1, function(x){c(vimpsAdj[x[1]], vimpsAdj[x[2]])}))
   suppressMessages(
-    res <- cbind(propFinal, values)
+    res <- cbind(dfFinal, values)
   )
-  names(res) <- c('var', 'count', 'meanProp', 'SD',  'SE', 'lowerQ', 'median',
-                  'upperQ', 'SEofCI', 'propVimp1', 'propVimp2')
+  names(res) <- c('var', 'count', 'propMean', 'SD',  'lowerQ', 'median',
+                  'upperQ', 'SE', 'propVimp1', 'propVimp2')
 
-  trans <- apply(res[,c('meanProp', 'propVimp1', 'propVimp2')], 1, function(x){
+  trans <- apply(res[,c('propMean', 'propVimp1', 'propVimp2')], 1, function(x){
     (x[1]-x[2]*x[3])/sqrt(x[2]*x[3])
   })
 
-  propFinal$adjusted <- trans
+  dfFinal$adjusted <- trans
 
-  propFinal$adjusted[propFinal$adjusted <=  0] <- 0
+  dfFinal$adjusted[dfFinal$adjusted <=  0] <- 0
 
-
-  myList <- list(Vimp = vimpData, Vint = propFinal)
-
+  myList <- list(Vimp = vimpData, Vint = dfFinal)
 
   return(myList)
 
