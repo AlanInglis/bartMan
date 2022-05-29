@@ -114,8 +114,6 @@ bartClassifDiag <- function(model,
     ROC <- bartROC(dfROC, threshold = threshold, label = aucLab)
     PrecRec <- bartPrecRec(dfPR, label = aucprLab)
   }
-  #ROC <- bartROC(dfROC, threshold = threshold, label = aucLab)
-  #PrecRec <- bartPrecRec(dfPR, label = aucprLab)
   classF <- classFit(dfFitClassBart, threshold = threshold)
   histogram <- classHist(dfHist, threshold = threshold)
   vimp <- bartVimpClass(model)
@@ -133,6 +131,7 @@ bartClassifDiag <- function(model,
   diagPlot <- ROC + PrecRec + classF + histogram + cM + vimp + plot_layout(design = design)
 
   return(diagPlot)
+
 
 
 }
@@ -190,7 +189,7 @@ classFit <- function(data, threshold){
                         col = factor(class))
   ) +
     #geom_point(alpha = 0.2) +
-    geom_jitter(height = 0.2, size = 1, alpha = 0.2) +
+    geom_jitter(height = 0.2, size = 1, alpha = 0.2,  na.rm=TRUE) +
     scale_color_manual(values = c("red",  "blue")) +
     xlab('Predicted probability') +
     ylab('') +
@@ -298,8 +297,8 @@ confMat <- function(model, data, response){
   pred <- as.factor(pred)
   if(class(model) == 'bartMachine'){
     response <- as.numeric(response)
-    response <-  ifelse(response == 2, 1, 0)
-    pred <-  ifelse(pred == 2, 1, 0)
+    #response <-  ifelse(response == 2, 1, 0)
+    #pred <-  ifelse(pred == 2, 1, 0)
   }else{
     response <- as.numeric(as.factor(response))
     response <-  ifelse(response == 2, 1, 0)
@@ -315,7 +314,7 @@ confMat <- function(model, data, response){
     mytitle <- paste("Accuracy: ", acc, "%")
 
     p <- ggplot(data = as.data.frame(tab), aes(x = response, y = pred)) +
-      geom_tile(aes(fill = log(Freq)), colour = "white") +
+      geom_tile(aes(fill = Freq)) +
       scale_fill_gradient(low = "white", high = "steelblue") +
       geom_text(aes(x = response, y = pred, label = Freq)) +
       ylab('Prediciton') +
@@ -430,7 +429,8 @@ rocCI <- function(model, response, data){
   # plot
   p <- ggplot(joinDF, aes(x = fpr, y = tpr)) +
     geom_line() +
-    geom_ribbon(aes(xmax = hiFPR, xmin = lowFPR,  ymax = hiTPR, ymin = lowTPR), fill="steelblue", alpha=.5) +
+    geom_ribbon(aes(ymax = hiTPR, ymin = lowTPR),
+                fill="steelblue", alpha=.5) +
     xlab('False positive rate') +
     ylab('True positive rate') +
     ggtitle('ROC') +
@@ -492,15 +492,15 @@ prCI <- function(model, response, data){
       pred[[i]] <- ROCR::prediction(yhatTrain[i,], response)
     }
     predPR[[i]] <- ROCR::performance(pred[[i]], "prec", "rec")
-    dfPR[[i]] <- data.frame(prec = predPR[[i]]@x.values[[1]],
-                            rec  = predPR[[i]]@y.values[[1]])
+    dfPR[[i]] <- data.frame(rec = predPR[[i]]@x.values[[1]],
+                            prec  = predPR[[i]]@y.values[[1]])
     dfPR[[i]]$n <- c(1:nrow(dfPR[[i]]))
   }
 
   # remove NaN
-  dfPR <- lapply(dfPR, function(dat) {
-    dat[] <- lapply(dat, function(x) replace(x, is.nan(x), 0))
-  })
+  # dfPR <- lapply(dfPR, function(dat) {
+  #   dat[] <- lapply(dat, function(x) replace(x, is.nan(x), 0))
+  # })
 
   # put together in single df
   newDF <- lapply(seq_along(dfPR),
@@ -513,6 +513,8 @@ prCI <- function(model, response, data){
     select(-id1, -id2) %>%
     as.data.frame()
 
+  # remove NaN
+  newDF <- newDF[(nMCMC+1):(length(newDF[,1])),]
 
   # split into lists and remove var n
   dfList <- split(newDF, newDF$n)
@@ -542,18 +544,19 @@ prCI <- function(model, response, data){
     lowrec = lowQROC$rec
   )
 
-  joinDF <- joinDF[-1,]
+  #joinDF <- joinDF[-1,]
 
   # plot
   p <- ggplot(joinDF, aes(x = rec, y = prec)) +
     geom_line() +
-    geom_ribbon(aes(xmax = hirec, xmin = lowrec, ymax = hiprec, ymin = lowprec),
+    geom_ribbon(aes(ymax = hiprec, ymin = lowprec),
                 fill="steelblue", alpha=.5) +
-    scale_x_continuous(limits = c(min(joinDF$rec), 1)) +
+    scale_x_continuous(limits = c(min(joinDF$rec), max(joinDF$rec))) +
     xlab("Recall") +
     ylab("Precision") +
     ggtitle("Precision-Recall") +
     theme_bw()
+
 
   return(p)
 
