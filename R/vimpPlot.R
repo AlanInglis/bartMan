@@ -116,7 +116,8 @@ vimpPlot <- function(treeData, type = "prop", plotType = "barplot", metric = "me
         conf = 0.5,
         outlier.colour = "blue",
         outlier.shape = 5,
-        varwidth = TRUE
+        varwidth = TRUE,
+        col = 'black'
       ) +
       # geom_jitter(width = 0.2, alpha = 0.08) +
        scale_fill_manual(values = pal) +
