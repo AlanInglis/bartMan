@@ -20,7 +20,7 @@ and variable interaction on the off-diagonal.
 Returns a matrix or list of matrices. If type = 'standard' a
 matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
 One with the actual values and another matrix of uncertainty values.
-If type = 'quantiles, three matrices are returned. One for the 25%, 50%, and 75% quantiles.
+If type = 'quantiles', three matrices are returned. One for the 25%, 50%, and 75% quantiles.
 
  @param treeData A data frame created by extractTreeData function.
  @param type Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'
