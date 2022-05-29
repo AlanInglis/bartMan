@@ -35,6 +35,8 @@ acceptRate <- function(treeData, burnIn = 0) {
 
   p <- ggplot(acceptance, aes(x = iteration, y = percent_change)) +
     geom_point(alpha = 0.5, colour = 'blue') +
+    geom_smooth(formula = y ~ x, data = acceptance,
+                method = "lm", colour = "black", se = F) +
     theme_bw() +
     xlab("Iteration") +
     ylab("% Acceptence Rate of Trees")
