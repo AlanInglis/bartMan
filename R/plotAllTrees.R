@@ -561,9 +561,12 @@ plotAllTreesPlotFn <- function(treeList,
   if(!is.null(fillBy)){
   if(fillBy == 'response'){
     lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode))))
+    lims <- labeling::rpretty(lims[1], lims[2])
+    lims <- c(min(lims), max(lims))
     nam <- 'Mean \nResponse'
   } else if(fillBy == "mu"){
     lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))))
+    lims <- c(-max(abs(lims)), max(abs(lims)))
     nam <- 'Mu'
   }
   }else{
@@ -603,11 +606,12 @@ plotAllTreesPlotFn <- function(treeList,
       }else if(fillBy == 'response'){
         nodecolors[["Stump"]] <- min(pal)
       }else if(fillBy == 'mu'){
-        stumpVal <- lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))
-        sv  <- as.data.frame(stumpVal[stumpIdx])
-        cdfLims <- ecdf(lims)
-        cdfVal <- cdfLims(sv[1,1])
-        nodecolors[["Stump"]] <-  pal[abs(length(pal) * cdfVal)]
+        # stumpVal <- lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))
+        # sv  <- as.data.frame(stumpVal[stumpIdx])
+        # cdfLims <- ecdf(lims)
+        # cdfVal <- cdfLims(sv[1,1])
+        # nodecolors[["Stump"]] <-  pal[abs(length(pal) * cdfVal)]
+        nodecolors[["Stump"]] <- pal[ceiling(length(pal)/2)]
       }
     }
   }
