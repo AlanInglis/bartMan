@@ -4,12 +4,14 @@
 \alias{permBART}
 \title{permBART}
 \usage{
-permBART(model, data, numTreesPerm = NULL, plotType = "barplot")
+permBART(model, data, response, numTreesPerm = NULL, plotType = "barplot")
 }
 \arguments{
 \item{model}{Model created from either the BART, dbarts or bartMachine packages.}
 
 \item{data}{A data frame containing variables in the model.}
+
+\item{response}{The name of the response for the fit.}
 
 \item{numTreesPerm}{The number of trees to be used in the null model.
 As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important

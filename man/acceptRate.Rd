@@ -4,7 +4,7 @@
 \alias{acceptRate}
 \title{acceptRate}
 \usage{
-acceptRate(treeData, burnIn = 0)
+acceptRate(treeData)
 }
 \arguments{
 \item{treeData}{A data frame created by treeData function.
