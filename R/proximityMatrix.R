@@ -33,19 +33,25 @@ proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = T
     treeTotal <- treeNumber*iterNumber
   }
 
-  data <- data[nRows, ]
+  #data <- data[nRows, ]
   # get observations in each node
+
+  # dfObs <- treeData$structure %>%
+  #   select(var, splitValue, iteration, treeNum, value, noObs) %>%
+  #   group_by(iteration, treeNum) %>%
+  #   mutate(obsList = evalNode(dat, var, splitValue))
+  #
+  # obsIndex <- lapply(dfObs$obsList, function(x) {
+  #   lapply(x, row.names)
+  # })
+  #
+  # whichObs <- lapply(obsIndex, rapply, f = c)
+  # whichObs <- lapply(whichObs, as.numeric)
+
+
   dfObs <- treeData$structure %>%
-    select(var, splitValue, iteration, treeNum, value, noObs) %>%
-    group_by(iteration, treeNum) %>%
-    mutate(obsList = evalNode(data, var, splitValue))
-
-  obsIndex <- lapply(dfObs$obsList, function(x) {
-    lapply(x, row.names)
-  })
-
-  whichObs <- lapply(obsIndex, rapply, f = c)
-  whichObs <- lapply(whichObs, as.numeric)
+       select(var, splitValue, iteration, treeNum, value, noObs)
+  whichObs <- treeData$structure$obsNode
 
   # get all indicies
   idxLength <- length(whichObs)

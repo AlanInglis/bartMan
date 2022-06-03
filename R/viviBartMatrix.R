@@ -198,11 +198,16 @@ viviBartInternal <- function(treeData){
   dfProps$count <- countM$count
 
   # make symmetrical interactions (ie x1:x2 == x2:x1)
+  # dfFinal <- dfProps %>%
+  #   mutate(
+  #     var = str_extract_all(var, "\\d+"),
+  #     var = map_chr(var, ~ str_glue("x{sort(.x)[[1]]}:x{sort(.x)[[2]]}"))
+  #   )
   dfFinal <- dfProps %>%
-    mutate(
-      var = str_extract_all(var, "\\d+"),
-      var = map_chr(var, ~ str_glue("x{sort(.x)[[1]]}:x{sort(.x)[[2]]}"))
-    )
+    mutate(var = map(
+      stringr::str_split(var, pattern = ":"),
+      ~ sort(.x) %>% trimws(.) %>% paste0(., collapse = ':')
+    ))
 
 
   dfFinal <- dfFinal %>%
@@ -237,6 +242,8 @@ viviBartInternal <- function(treeData){
   dfFinal$adjusted <- trans
 
   dfFinal$adjusted[dfFinal$adjusted <=  0] <- 0
+  names(dfFinal) <- c('var', 'count', 'propMean', 'SD',  'lowerQ', 'median',
+                  'upperQ', 'SE', 'adjusted')
 
   myList <- list(Vimp = vimpData, Vint = dfFinal)
 
@@ -277,6 +284,8 @@ viviBartStd <- function(treeData, data, reorder = TRUE, metric = "propMean"){
   if(reorder){
     mat <- vivid::vividReorder(mat)
   }
+
+  mat[is.nan(mat)] <- 0
 
   class(mat) <- c('vivid', 'matrix', 'array', 'standardMat')
 

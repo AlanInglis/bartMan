@@ -26,7 +26,8 @@
 #' @export
 #'
 
-mdsBart <- function(treeData,
+mdsBart <- function(
+                    treeData,
                     data,
                     target,
                     type = "mean",
@@ -44,7 +45,12 @@ mdsBart <- function(treeData,
   # remove stumps
   whichStumps <- which(treeData$structure$isLeaf == TRUE & treeData$structure$node == 1)
   df <- NULL
-  df$structure <- treeData$structure[-whichStumps,]
+  if(length(whichStumps > 0)){
+    df$structure <- treeData$structure[-whichStumps,]
+  }else{
+    df$structure <- treeData$structure
+  }
+
 
   # set target matrix
   targetFit <- cmdscale(1 - target, eig = TRUE, k = 2)

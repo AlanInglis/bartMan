@@ -6,6 +6,7 @@
 #'
 #' @param model Model created from either the BART, dbarts or bartMachine packages.
 #' @param data A data frame containing variables in the model.
+#' @param response The name of the response for the fit.
 #' @param numTreesPerm The number of trees to be used in the null model.
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 #' variables to used in the model. If NULL, then the number of trees from the true model is used.
@@ -25,11 +26,12 @@
 #' @export
 
 
-permBART <- function(model, data, numTreesPerm = NULL, plotType = 'barplot') {
+permBART <- function(model, data, response, numTreesPerm = NULL, plotType = 'barplot') {
 
   vimp <- perBart(
     model = model,
     data = data,
+    response = response,
     numTreesPerm = numTreesPerm
   )
 
@@ -44,7 +46,7 @@ permBART <- function(model, data, numTreesPerm = NULL, plotType = 'barplot') {
 # -------------------------------------------------------------------------
 
 # Main function:
-perBart <- function(model, data, numTreesPerm = NULL) {
+perBart <- function(model, data, response, numTreesPerm = NULL) {
   UseMethod("perBart")
 }
 
@@ -53,7 +55,7 @@ perBart <- function(model, data, numTreesPerm = NULL) {
 # BART --------------------------------------------------------------------
 
 
-perBart.wbart <- function(model, data, numTreesPerm = NULL) {
+perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
   # get model info
   modelTrees <- model$treedraws$trees
@@ -70,7 +72,7 @@ perBart.wbart <- function(model, data, numTreesPerm = NULL) {
   varPropAvg <- proportions(varProp, 1)
 
   # null model info
-  responseIdx <- which(!(names(data) %in% colnames(model$varprob)))
+  responseIdx <- which((names(data) %in% response))
   if(is.null(numTreesPerm)){
     numTreesPerm <- nTree
   }
@@ -103,7 +105,7 @@ perBart.wbart <- function(model, data, numTreesPerm = NULL) {
 
 # dbarts ------------------------------------------------------------------
 
-perBart.bart <-  function(model, data, numTreesPerm = NULL) {
+perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
 
   # get some information
   nTree <- model$call$ntree
@@ -117,7 +119,7 @@ perBart.bart <-  function(model, data, numTreesPerm = NULL) {
   varPropAvg <- proportions(varProp, 1)
 
   # null model info
-  responseIdx <- which(!(names(data) %in% colnames(model$varcount)))
+  responseIdx <- which((names(data) %in% response))
   if(is.null(numTreesPerm)){
     numTreesPerm <- nTree
   }
@@ -155,7 +157,7 @@ perBart.bart <-  function(model, data, numTreesPerm = NULL) {
 
 # bartMachine -------------------------------------------------------------
 
-perBart.bartMachine <- function(model, data, numTreesPerm = NULL){
+perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
 
   # get some information
   nTree <-  model$num_trees
@@ -169,7 +171,7 @@ perBart.bartMachine <- function(model, data, numTreesPerm = NULL){
   varPropAvg <- proportions(varProp, 1)
 
   # null model info
-  responseIdx <- which(!(names(data) %in% varNames))
+  responseIdx <- which((names(data) %in% response))
   if(is.null(numTreesPerm)){
     numTreesPerm <- nTree
   }
