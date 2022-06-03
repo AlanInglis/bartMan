@@ -516,6 +516,7 @@ plotAllTreesPlotFn <- function(treeList,
   # remove stumps
   if(removeStump){
     treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
+    stumpIdx <- NULL
   }else{
     # get the stump index
     whichStump = NULL
