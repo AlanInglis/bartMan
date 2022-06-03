@@ -233,9 +233,12 @@ extractTrees.wbart <- function(model, data){
 
   # get which observations
 
+  dat <- BART::bartModelMatrix(data)
+  dat <- as.data.frame(dat)
+
   dfObs <-  trees$structure %>%
     group_by(iteration, treeNum) %>%
-    mutate(obsList = evalNode(data, var, splitValue))
+    mutate(obsList = evalNode(dat, var, splitValue))
 
   obsIndex <- lapply(dfObs$obsList, function(x) {
     lapply(x, row.names)
@@ -371,7 +374,7 @@ extractTrees.bart <- function(model, data){
 
 extractTrees.bartMachine <- function(model, data){
   # Get variable names
-  varNames <- colnames(model$X)
+  varNames <- model$training_data_features
 
   # Get No of iterations after burn in
   iter <- model$num_iterations_after_burn_in
@@ -490,7 +493,10 @@ extractTrees.bartMachine <- function(model, data){
 
   # get which observations
 
-  dat <- as.data.frame(model$X)
+  #dat <- as.data.frame(model$X)
+  dat <- model$model_matrix_training_data
+  dat <- as.data.frame(dat)
+  dat <- dat[,-(length(dat))]
 
   dfObs <-  df %>%
     group_by(iteration, treeNum) %>%
@@ -520,7 +526,7 @@ extractTrees.bartMachine <- function(model, data){
   trees$nMCMC <- iter
   trees$nTree <- model$num_trees
   trees$nVar <- model$p
-  trees$varName <- colnames(model$X)
+  trees$varName <- model$training_data_features
 
 
   class(trees) <- c("bartMach", "list")
