@@ -18,7 +18,7 @@
 #'
 #' @export
 
-acceptRate <- function(treeData, burnIn = 0) {
+acceptRate <- function(treeData) {
   df <- treeData$structure
 
   maxIter <- max(df$iteration)
@@ -41,15 +41,6 @@ acceptRate <- function(treeData, burnIn = 0) {
     xlab("Iteration") +
     ylab("% Acceptence Rate of Trees")
 
-  # p <- ggplot(acceptence[1:burnIn, ], aes(iteration, percent_change)) +
-  #   geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
-  #   geom_point(alpha = 0.5) +
-  #   geom_smooth(formula = y ~ x, method = "lm", colour = "red", se = F) +
-  #   geom_point(data = acceptence[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-  #   geom_smooth(formula = y ~ x, data = acceptence[burnIn:maxIter, ], method = "lm", colour = "black", se = F) +
-  #   theme_bw() +
-  #   xlab("Iteration") +
-  #   ylab("% Acceptence Rate of Trees")
 
   return(p)
 }
