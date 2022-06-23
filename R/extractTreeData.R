@@ -233,7 +233,8 @@ extractTrees.wbart <- function(model, data){
 
   # get which observations
 
-  dat <- BART::bartModelMatrix(data)
+  dataNew <- as.data.frame(data)
+  dat <- BART::bartModelMatrix(dataNew)
   dat <- as.data.frame(dat)
 
   dfObs <-  trees$structure %>%
