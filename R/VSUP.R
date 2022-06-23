@@ -669,7 +669,7 @@ guide_gengrob.colourfan <- function(guide, theme) {
     title.y.position <- "none"
   } else {
     title.y.pos <- transform_radial(
-      tibble(x = 1, y = 0.5), xoff = 0.45
+      tibble(x = 1, y = 0.5), xoff = 0.55
     )
 
     grob.title.y <- element_grob(
