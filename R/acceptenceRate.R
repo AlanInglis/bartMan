@@ -2,7 +2,7 @@
 #'
 #' @description Plots the acceptance rate of trees from a BART model.
 #'
-#' @param treeData A data frame created by treeData function.
+#' @param treeData A data frame created by extractTreeData function.
 #'  Displays a division on the plot to separate prior and post burn-in iterations.
 #'
 #' @return A plot of acceptance rate.
