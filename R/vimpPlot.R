@@ -47,7 +47,7 @@ vimpPlot <- function(treeData, type = "prop", plotType = "barplot", metric = "me
   vimp75 <- apply(vimp, 2, function(x) quantile(x, c(.75)))
 
   # get median and mean value
-  vimpMed <- apply(vimp, 2, function(x) median(x))
+  vimpMed <- apply(vimp, 2, function(x) quantile(x, c(.5)))
   vimpMean <- colMeans(vimp)
 
   if (metric == "mean") {
@@ -75,7 +75,7 @@ vimpPlot <- function(treeData, type = "prop", plotType = "barplot", metric = "me
       theme_light() +
       coord_flip() +
       theme_bw() +
-      xlab("Variable") +
+      xlab("") +
       ylab("Importance") +
       theme(
         axis.title.y = element_text(angle = 90, vjust = 0.5),
@@ -88,20 +88,21 @@ vimpPlot <- function(treeData, type = "prop", plotType = "barplot", metric = "me
       ggplot(aes(x = Variable, y = imp)) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = upperQ,
-        col = Variable, alpha = rev(stat(index))
+        colour = "gray50", alpha = rev(stat(index))
       ),
       size = 5, n = 1000
       ) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = lowerQ,
-        col = Variable, alpha = rev(stat(index))
+        colour = 'gray50', alpha = rev(stat(index))
       ),
       size = 5, n = 1000
       ) +
       geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
+      scale_colour_identity() +
       coord_flip() +
       theme_bw() +
-      labs(x = "Variable", y = "Importance") +
+      labs(x = "", y = "Importance") +
       theme(legend.position = "none")
   } else if (plotType == "lvp") {
     suppressMessages(
@@ -122,6 +123,7 @@ vimpPlot <- function(treeData, type = "prop", plotType = "barplot", metric = "me
       # geom_jitter(width = 0.2, alpha = 0.08) +
        scale_fill_manual(values = pal) +
       #scale_fill_brewer(palette = "Blues", direction = -1) +
+       labs(x = "", y = "Importance") +
       theme_bw() +
       theme(legend.position = "none")
   }
