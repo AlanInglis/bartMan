@@ -7,7 +7,7 @@
 acceptRate(treeData)
 }
 \arguments{
-\item{treeData}{A data frame created by treeData function.
+\item{treeData}{A data frame created by extractTreeData function.
 Displays a division on the plot to separate prior and post burn-in iterations.}
 }
 \value{
