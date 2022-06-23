@@ -217,6 +217,12 @@ viviPlot.vsup <- function(matrix,
   dfInt$Variable_1 <- factor(dfInt$Variable_1, levels = nam)
   dfInt$Variable_2 <- factor(dfInt$Variable_2, levels = nam)
 
+  # label name
+  # if(is.null(labelName)){
+  #   labelName <- ()
+  # }
+
+
 
   # create plot for Vint ----------------------------------------------------
 
@@ -226,7 +232,7 @@ viviPlot.vsup <- function(matrix,
     scale_y_discrete(limits = rev(levels(dfInt$Variable_2))) +
     coord_equal() +
     bivariate_scale(
-      name = c("Vint", "Uncertainty"),
+      name = c("Vint", "SD"),
       aesthetics = "fill",
       limits = vintLims,
       breaks = vintBreaks,
@@ -252,7 +258,7 @@ viviPlot.vsup <- function(matrix,
       geom_raster(data = dfImp, aes(x = Variable_1, y = Variable_2, fill = zip(Value, Uncert))) +
       coord_equal() +
       bivariate_scale(
-        name = c("Vimp", "Uncertainty"),
+        name = c("Vimp", "SD"),
         aesthetics = "fill",
         limits = vimpLims,
         breaks = vimpsBreaks,
