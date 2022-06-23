@@ -31,7 +31,7 @@ viviBart <- function(treeData){
   vimpsVal <- bartMan::vimpBart(treeData, type = 'val')
   #propVimp <- proportions(vimps, 1)
   vImp <- colMeans(vimps)
-  vimpsVal <- colMeans(vimpsVal)
+  vimpsVal <- colSums(vimpsVal)
 
   # get SE
   vimpSD <- apply(vimps, 2, sd)
@@ -159,7 +159,7 @@ viviBart <- function(treeData){
 
   propFinal <- propMM %>%
     group_by(var) %>%
-    mutate(propMean = mean(value))  %>%
+    mutate(propMean = sum(value))  %>%
     mutate(count = sum(count)) %>%
     mutate(SD = mean(SD)) %>%
     mutate(lowerQ = mean(lowerQ)) %>%
