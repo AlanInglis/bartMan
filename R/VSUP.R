@@ -535,9 +535,10 @@ guide_gengrob.colourfan <- function(guide, theme) {
   #   #guide$fan.y[c(26, length(guide$fan.y))]
   # ) / (guide$nbin)
 
+  # this is where to change the legend tick positions
   tick.x.pos <- seq(0,1, length.out = 5)
-  a <- c(0, .25, .5, .75)
-  a <- a + 0.125
+  a <- c(0, .25, .5, .75, 1)
+  #a <- a + 0.125
   tick.y.pos <- a
 
 
