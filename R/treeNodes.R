@@ -25,10 +25,21 @@ treeNodes <- function(treeData) {
 
   p <- ggplot(df, aes(iteration, new)) +
     geom_point(alpha = 0.5, colour = 'blue') +
-    geom_line(alpha = 0.5, colour = 'blue') +
+    # geom_line(alpha = 0.5, colour = 'blue') +
+    geom_smooth(formula = y ~ x, method = "loess", colour = "black", se = F) +
     theme_bw() +
     xlab("Iteration") +
     ylab("Average Tree Nodes")
+
+
+
+  #
+  # p <- ggplot(df, aes(iteration, new)) +
+  #   geom_point(alpha = 0.5, colour = 'blue') +
+  #   geom_line(alpha = 0.5, colour = 'blue') +
+  #   theme_bw() +
+  #   xlab("Iteration") +
+  #   ylab("Average Tree Nodes")
 
   # p <- ggplot(df[1:burnIn, ], aes(iteration, new)) +
   #   geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +

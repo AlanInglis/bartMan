@@ -29,12 +29,22 @@ treeDepth <- function(treeData) {
 
   ylimMax <- max(newTrees$avgDepth)
 
-  p<- ggplot(newTrees, aes(iteration, avgDepth)) +
+  p <-  ggplot(newTrees, aes(iteration, avgDepth)) +
     geom_point(alpha = 0.5, colour = 'blue') +
-    geom_line(alpha = 0.5, colour = 'blue') +
+    #geom_line(alpha = 0.5, colour = 'blue') +
+    geom_smooth(formula = y ~ x, method = "loess", colour = "black", se = F) +
     theme_bw() +
     xlab("Iteration") +
     ylab("Average Tree Depth")
+
+
+
+  # p<- ggplot(newTrees, aes(iteration, avgDepth)) +
+  #   geom_point(alpha = 0.5, colour = 'blue') +
+  #   geom_line(alpha = 0.5, colour = 'blue') +
+  #   theme_bw() +
+  #   xlab("Iteration") +
+  #   ylab("Average Tree Depth")
 
 
   # p <- ggplot(newTrees[1:burnIn, ], aes(iteration, avgDepth)) +
