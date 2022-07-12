@@ -6,6 +6,8 @@
 #' @param topTrees integer value to show the top x variables.
 #' @param iter The selected iteration
 #' @param treeNo The selected tree number.
+#' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
+#' remain in plot and are coloured grey.
 #'
 #' @return A barplot plot.
 #'
@@ -36,13 +38,55 @@
 treeBarPlot <- function(treeData,
                         iter = NULL,
                         treeNo = NULL,
-                        topTrees = NULL){
+                        topTrees = NULL,
+                        removeStump = FALSE){
 
 
   treeList <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = NULL)
 
   # remove stumps
   treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
+
+  if(removeStump){
+    treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
+    stumpIdx <- NULL
+  }else{
+    # get the stump index
+    whichStump = NULL
+    for(i in 1:length(treeList)){
+      whichStump[[i]] <-  which(igraph::gsize(treeList[[i]]) == 0)
+    }
+    stumpIdx <- which(whichStump == 1)
+
+    if(length(stumpIdx >=1)){
+      # create new tree list
+      newTrees <- treeList[stumpIdx]
+
+      # create df of tree stumps
+      newTreesDF <- NULL
+      for(i in 1:length(newTrees)){
+        newTreesDF[[i]] <- newTrees[[i]] %>%
+          activate(nodes) %>%
+          data.frame()
+        newTreesDF[[i]]$var <- "Stump"
+      }
+      # create edge data for stumps
+      newDF_Nodes <- newDF_Edges <- NULL
+      for(i in 1:length(newTreesDF)){
+        newDF_Nodes[[i]] <- rbind(newTreesDF[[i]], newTreesDF[[i]][rep(1), ])
+        newDF_Edges[[i]] <- data.frame(from = c(1,1), to = c(1,1))
+      }
+      # turn into tidygraph trees
+      newTree <- NULL
+      for(i in 1:length(newDF_Nodes)){
+        newTree[[i]] <- tbl_graph(nodes = newDF_Nodes[[i]], edges = newDF_Edges[[i]])
+      }
+      # replace stumps with new stumps
+      treeList[stumpIdx] <- newTree
+    }
+  }
+
+
 
   # get the frequency of similar trees:
   freqs <- map(treeList, function(x){
@@ -85,11 +129,11 @@ treeBarPlot <- function(treeData,
     treeList <- treeListNew
 
   # add plot name as number
-  for(i in 1:(length(treeList))){
-    treeList[[i]] <- treeList[[i]] %>%
-      activate(nodes) %>%
-      mutate(name = c(i, rep("", length.out = igraph::gsize(treeList[[i]]))))
-  }
+  # for(i in 1:(length(treeList))){
+  #   treeList[[i]] <- treeList[[i]] %>%
+  #     activate(nodes) %>%
+  #     mutate(name = c(i, rep("", length.out = igraph::gsize(treeList[[i]]))))
+  # }
 
 
   # Create barplot of frequency ---------------------------------------------
@@ -115,6 +159,12 @@ treeBarPlot <- function(treeData,
   nodenames <- sort(nodenames)
   nodecolors <- setNames(scales::hue_pal(c(0,360)+15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 
+  if(length(stumpIdx) >=  1){
+      nodecolors[["Stump"]] <- '#808080'
+  }
+
+
+
   # plotting function
   plotFun <- function(List, colors = NULL, n) {
 
@@ -139,6 +189,19 @@ treeBarPlot <- function(treeData,
 
   # remove legends from individual plots
   allPlots <- lapply(allPlots, function(x) x + theme(legend.position = "none"))
+
+   if(removeStump == FALSE){
+
+    whichStumpData = NULL
+    for(i in 1:length(allPlots)){
+      whichStumpData[[i]] <-  which(allPlots[[i]]$data$leaf[1] == TRUE)
+    }
+
+    stumpIdxNew <- which(whichStumpData == 1)
+    for(i in stumpIdxNew){
+      allPlots[[i]]$data <- allPlots[[i]]$data[-2, ]
+    }
+   }
 
   # filter top X% of plots
   if(!is.null(topTrees)){
