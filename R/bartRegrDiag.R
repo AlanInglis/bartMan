@@ -112,7 +112,7 @@ bartTrace <- function(model, burnIn = 0) {
     theme_bw() +
     xlab("Iteration") +
     ylab("Sigma") +
-    ggtitle("Trace plot of model variance")
+    ggtitle("Trace plot")
 
   return(p)
 }
@@ -268,17 +268,18 @@ bartVimp <- function(model) {
     ggplot(aes(x = Variable, y = imp)) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = upperQ,
-      col = Variable, alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(stat(index))
     ),
     size = 2, n = 1000
     ) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = lowerQ,
-      col = Variable, alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(stat(index))
     ),
     size = 2, n = 1000
     ) +
     geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
+    scale_colour_identity() +
     coord_flip() +
     theme_bw() +
     labs(x = "Variable", y = "Importance") +
