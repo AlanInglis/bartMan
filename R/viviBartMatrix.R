@@ -167,23 +167,23 @@ viviBartInternal <- function(treeData){
 
 
   # create a matrix of all possible combinations
-  # nam <- treeData$varName
-  # namDF <- expand.grid(nam, nam)
-  #
-  # newName <- NULL
-  # for(i in 1:length(namDF$Var1)){
-  #   newName[i] <- paste0(namDF$Var2[i], ":", namDF$Var1[i])
-  # }
-  #
-  # allCombMat <- matrix(NA, nrow = treeData$nMCMC, ncol = length(newName))
-  # colnames(allCombMat) <- newName
-  #
-  # # join actual values into matirx of all combinations
-  # oIdx <- match(colnames(dfVint), colnames(allCombMat))
-  #
-  # allCombMat[ ,oIdx] <- dfVint
-  # allCombMat[is.na(allCombMat)] <- 0
-  # dfVint <- allCombMat
+  nam <- treeData$varName
+  namDF <- expand.grid(nam, nam)
+
+  newName <- NULL
+  for(i in 1:length(namDF$Var1)){
+    newName[i] <- paste0(namDF$Var2[i], ":", namDF$Var1[i])
+  }
+
+  allCombMat <- matrix(NA, nrow = treeData$nMCMC, ncol = length(newName))
+  colnames(allCombMat) <- newName
+
+  # join actual values into matirx of all combinations
+  oIdx <- match(colnames(dfVint), colnames(allCombMat))
+
+  allCombMat[ ,oIdx] <- dfVint
+  allCombMat[is.na(allCombMat)] <- 0
+  dfVint <- allCombMat
 
   # get proportions
   propMatVint <- proportions(dfVint, 1)
@@ -260,10 +260,17 @@ viviBartInternal <- function(treeData){
   dfFinal$Q50 <- errorFinal$q50
   dfFinal$Q75 <- errorFinal$q75
 
+  # Dont need to average error metrics here as it's being averaged when creating
+  # the matrix of values
   dfFinal <- dfFinal %>%
     group_by(var) %>%
     mutate(count = sum(count),
-           propMean = mean(props)) %>%
+           propMean = mean(props),
+           SD = mean(SD),
+           SE = mean(SE),
+           Q25 = mean(Q25),
+           Q50 = mean(Q50),
+           Q75 = mean(Q75)) %>%
     select(var, count, propMean, SD, SE, Q25, Q50, Q75, -props) %>%
     distinct() %>%
     ungroup()
