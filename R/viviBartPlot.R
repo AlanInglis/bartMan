@@ -158,12 +158,13 @@ viviPlot.vsup <- function(matrix,
   # })
 
   vintBreaks[[1]] <- seq(vintBreaks[[1]][1], vintBreaks[[1]][2], length.out = 5)
-  vintBreaks[[2]] <- seq(vintBreaks[[2]][1], vintBreaks[[2]][2], length.out = 4)
+  vintBreaks[[2]] <- seq(vintBreaks[[2]][1], vintBreaks[[2]][2], length.out = 5)
 
 
   vintBreaksLabel <- vintBreaks
   vintBreaksLabel[[1]] <- round(vintBreaksLabel[[1]], 3)
   vintBreaksLabel[[2]] <- round(vintBreaksLabel[[2]], 5)
+  vintBreaksLabel[[2]] <-  rev(vintBreaksLabel[[2]])
 
   # vintBreaksLabel <- lapply(vintBreaks, function(x){
   #   round(x, 4)
@@ -185,12 +186,12 @@ viviPlot.vsup <- function(matrix,
   # })
 
   vimpsBreaks[[1]] <- seq(vimpsBreaks[[1]][1], vimpsBreaks[[1]][2], length.out = 5)
-  vimpsBreaks[[2]] <- seq(vimpsBreaks[[2]][1], vimpsBreaks[[2]][2], length.out = 4)
+  vimpsBreaks[[2]] <- seq(vimpsBreaks[[2]][1], vimpsBreaks[[2]][2], length.out = 5)
 
   vimpBreaksLabel <- vimpsBreaks
   vimpBreaksLabel[[1]] <- round(vimpBreaksLabel[[1]], 3)
   vimpBreaksLabel[[2]] <- round(vimpBreaksLabel[[2]], 5)
-
+  vimpBreaksLabel[[2]] <-rev( vimpBreaksLabel[[2]])
   # vimpBreaksLabel <- lapply(vimpsBreaks, function(x){
   #   round(x, 4)
   # })
