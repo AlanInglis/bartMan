@@ -8,8 +8,14 @@
 #'  @param treeData A data frame created by extractTreeData function.
 #'  @param type Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'
 #'  @param metric Which metric to use to fill the actual values matrix. Either 'propMean' or 'count'.
-#'  @param metricError Which metric to use to fill the uncertainty matrix. Either 'SD' or 'SEofCI'.
+#'  @param metricError Which metric to use to fill the uncertainty matrix. Either 'SD', 'CV' or 'SE'.
 #'  @param reorder LOGICAL. If TRUE then the matrix is reordered so high values are pushed to the top left.
+#'  @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' If combineFact = TRUE, then both the importance and interactions are calculated for the entire factor by aggregating the dummy variables’
+#' inclusion proportions.
+#'
+#'
 #'
 #' @importFrom dplyr %>%
 #' @importFrom dplyr group_by
@@ -26,33 +32,40 @@
 #' @export
 
 
-viviBartMatrix <- function(treeData, type = "standard", metric = "propMean", metricError = "SD", reorder = FALSE){
+viviBartMatrix <- function(treeData,
+                           type = "standard",
+                           metric = "propMean",
+                           metricError = "SD",
+                           reorder = FALSE,
+                           combineFact = FALSE){
 
   if (!(metric %in% c("propMean", "count", "adjusted"))) {
     stop("metric must be \"propMean\", \"count\", or \"adjusted\"")
   }
 
-  if (!(metricError %in% c("SD", 'SE', "SEofCI"))) {
-    stop("metricError must be \"SD\", \'SE\', or \"SEofCI\"")
+  if (!(metricError %in% c("SD", 'SE', "CV"))) {
+    stop("metricError must be \"SD\", \'SE\', or \"CV\"")
   }
 
   if (!(type %in% c("standard", "vsup", "quantiles"))) {
     stop("type must be \"standard\", \"vsup\", or \"quantiles\"")
   }
 
-  viviDf <- viviBartInternal(treeData)
+  viviDf <- viviBartInternal(treeData, combineFact = combineFact)
 
   if(type == 'standard'){
    viviMat <-  viviBartStd(treeData = treeData,
                                  data = viviDf,
                                  metric = metric,
-                                 reorder = reorder
+                                 reorder = reorder,
+                                 combineFact = combineFact
                                  )
   }else if(type == 'vsup'){
     viviMat <- viviBartVSUP(treeData = treeData,
                                  data = viviDf,
                                  metricError = metricError,
-                                 metric = metric)
+                                 metric = metric,
+                                 combineFact = combineFact)
   }else if(type == 'quantiles'){
     viviMat <- viviBartQuantile(treeData = treeData,
                                    data = viviDf,
@@ -70,34 +83,44 @@ viviBartMatrix <- function(treeData, type = "standard", metric = "propMean", met
 # VIVI dataframe ----------------------------------------------------------
 # -------------------------------------------------------------------------
 
-viviBartInternal <- function(treeData){
+viviBartInternal <- function(treeData, combineFact = FALSE){
 
   # Vimps -------------------------------------------------------------------
 
   # get vimps
   vimps <- bartMan::vimpBart(treeData, type = 'prop')
   vimpsVal <- bartMan::vimpBart(treeData, type = 'val')
-  #propVimp <- proportions(vimps, 1)
+
+  if(combineFact){
+    vimps <- combineFactors(treeData, vimps)
+    vimpsVal <- combineFactors(treeData, vimpsVal)
+  }
+
   vImp <- colMeans(vimps)
   vimpsVal <- colSums(vimpsVal)
 
-  # get SE
+  # get uncertainty measures
   vimpSD <- apply(vimps, 2, sd)
   upperVimp  <- vImp + 1.96 * vimpSD/sqrt(treeData$nMCMC)
   lowerVimp  <- vImp - 1.96 * vimpSD/sqrt(treeData$nMCMC)
-  SECIvimp <- (upperVimp - lowerVimp) / 3.92 # SE of 95% CI
   SEvimp <- sapply(as.data.frame(vimps), function(x) sd(x)/sqrt(length(x)))
+  CVvimp <- vimpSD / vImp
 
   # get quantiles of proportions
   vimp25 <- apply(vimps, 2, function(x) quantile(x, c(.25)))
   vimp50 <- apply(vimps, 2, function(x) quantile(x, c(.50)))
   vimp75 <- apply(vimps, 2, function(x) quantile(x, c(.75)))
 
-  vimpData <- cbind(vimpsVal, vImp, vimpSD, lowerVimp, upperVimp, SEvimp, SECIvimp, vimp25, vimp50, vimp75)
+  # put together in dataframe
+  vimpData <- cbind(vimpsVal, vImp, vimpSD, CVvimp, SEvimp,
+                    lowerVimp, upperVimp, vimp25, vimp50, vimp75)
+
   vimpData <- vimpData %>%
     as.data.frame() %>%
     tibble::rownames_to_column(var = "variable") %>%
-    rename(count = vimpsVal, propMean = vImp, SD = vimpSD,  lowerCI = lowerVimp, upperCI = upperVimp, SE = SEvimp, SEofCI = SECIvimp,
+    rename(count = vimpsVal, propMean = vImp, SD = vimpSD,
+           CV = CVvimp,  SE = SEvimp,
+           lowerCI = lowerVimp, upperCI = upperVimp,
            lowerQ = vimp25, median = vimp50, upperQ = vimp75)
 
 
@@ -187,6 +210,11 @@ viviBartInternal <- function(treeData){
 
   # get proportions
   propMatVint <- proportions(dfVint, 1)
+
+  if(combineFact){
+    propMatVint <- combineFactorsInt(propMatVint, treeData$data)
+    dfVint <- combineFactorsInt(dfVint, treeData$data)
+  }
   propMatVintMean <- colMeans(propMatVint)
 
   # turn into df
@@ -205,17 +233,18 @@ viviBartInternal <- function(treeData){
     distinct()
   dfProps$count <- countMean$count
 
-  # get error metrics
-  vintSD <- apply(dfVint, 2, sd)
+  # get uncertainty metrics
+  vintSD <- apply(propMatVint, 2, sd)
   vintSD <- vintSD %>%
     reshape2::melt() %>%
     tibble::rownames_to_column(c('var'))
 
   vintSE <- vintSD$value/sqrt(treeData$nMCMC)
   names(vintSE) <- vintSD$var
-  vintSE <- vintSE %>% reshape2::melt() %>%  tibble::rownames_to_column(c('var'))
+  vintSE <- vintSE %>%
+    reshape2::melt() %>%
+    tibble::rownames_to_column(c('var'))
 
-  #SEvint <- (upperVint - lowerVint) / 3.92 # SE of 95% CI
 
   # get quantiles of proportions
   vint25 <- apply(propMatVint, 2, function(x) quantile(x, c(.25)))
@@ -239,6 +268,7 @@ viviBartInternal <- function(treeData){
       stringr::str_split(var, pattern = ":"),
       ~ sort(.x) %>% trimws(.) %>% paste0(., collapse = ':')
     ))
+
 
 
 
@@ -274,8 +304,14 @@ viviBartInternal <- function(treeData){
     select(var, count, propMean, SD, SE, Q25, Q50, Q75, -props) %>%
     distinct() %>%
     ungroup()
+    dfFinal$var <- unlist(dfFinal$var)
 
+    # add coeff of variance
+    dfFinal$CV <- dfFinal$SD / dfFinal$propMean
+    dfFinal$CV[is.nan(dfFinal$CV)] <- 0
 
+    # reorder
+    dfFinal <-  dfFinal |> select(var, count, propMean, SD, CV, SE, Q25, Q50, Q75)
   # dfFinal1 <- dfFinal %>%
   #   group_by(var) %>%
   #   mutate(count = sum(count),
@@ -298,18 +334,21 @@ viviBartInternal <- function(treeData){
   suppressMessages(
     res <- cbind(dfFinal, values)
   )
-  names(res) <- c('var', 'count', 'propMean', 'SD',  'lowerQ', 'median',
-                  'upperQ', 'SE', 'propVimp1', 'propVimp2')
+  names(res) <- c('var', 'count', 'propMean', 'SD', 'CV',
+                  'SE', 'lowerQ', 'median', 'upperQ',
+                  'propVimp1', 'propVimp2')
 
   trans <- apply(res[,c('propMean', 'propVimp1', 'propVimp2')], 1, function(x){
     (x[1]-x[2]*x[3])/sqrt(x[2]*x[3])
   })
 
   dfFinal$adjusted <- trans
-
   dfFinal$adjusted[dfFinal$adjusted <=  0] <- 0
-  names(dfFinal) <- c('var', 'count', 'propMean', 'SD',  'lowerQ', 'median',
-                  'upperQ', 'SE', 'adjusted')
+  dfFinal$adjusted[is.na( dfFinal$adjusted)] <- 0
+
+  names(dfFinal) <- c('var', 'count', 'propMean', 'SD', "CV",
+                      'SE',  'lowerQ', 'median',
+                      'upperQ', 'adjusted')
 
   myList <- list(Vimp = vimpData, Vint = dfFinal)
 
@@ -325,11 +364,21 @@ viviBartInternal <- function(treeData){
 # Standard Matrix ---------------------------------------------------------
 # -------------------------------------------------------------------------
 
-viviBartStd <- function(treeData, data, reorder = TRUE, metric = "propMean"){
+viviBartStd <- function(treeData,
+                        data,
+                        reorder = TRUE,
+                        metric = "propMean",
+                        combineFact = FALSE){
 
   propFinal <- data$Vint
   vars2  <- t(simplify2array(strsplit(as.character(propFinal[["var"]]), ":")))
-  ovars <- treeData$varName
+  if(combineFact){
+    vimps <- bartMan::vimpBart(treeData, type = 'prop')
+    vimps <- combineFactors(treeData, vimps)
+    ovars <- names(vimps)
+  }else{
+    ovars <- treeData$varName
+  }
   mat <- matrix(0, length(ovars), length(ovars)) # create matrix
   rownames(mat) <- colnames(mat) <- ovars # set names
   mat[vars2] <- propFinal[[metric]] # set values
@@ -366,12 +415,25 @@ viviBartStd <- function(treeData, data, reorder = TRUE, metric = "propMean"){
 
 
 
-viviBartVSUP <- function(treeData, data, reorder = TRUE, metricError = 'SD', metric = "propMean"){
+viviBartVSUP <- function(treeData,
+                         data,
+                         reorder = TRUE,
+                         metricError = 'SD',
+                         metric = "propMean",
+                         combineFact = FALSE){
 
   # get matrix of uncertainty values
   propFinal <- data$Vint
   vars2  <- t(simplify2array(strsplit(as.character(propFinal[["var"]]), ":")))
-  ovars <- treeData$varName
+
+  if(combineFact){
+    vimps <- bartMan::vimpBart(treeData, type = 'prop')
+    vimps <- combineFactors(treeData, vimps)
+    ovars <- names(vimps)
+  }else{
+    ovars <- treeData$varName
+  }
+
   mat <- matrix(0, length(ovars), length(ovars)) # create matrix
   rownames(mat) <- colnames(mat) <- ovars # set names
   mat[vars2] <- propFinal[[metricError]] # set values
@@ -385,7 +447,9 @@ viviBartVSUP <- function(treeData, data, reorder = TRUE, metricError = 'SD', met
   uncertaintyMatrix <- mat
 
   # get actual values matrix
-  actualMatrix <- viviBartStd(treeData, data, reorder = FALSE, metric = metric)
+  actualMatrix <- viviBartStd(treeData = treeData, data = data,
+                              reorder = reorder, metric = metric,
+                              combineFact = combineFact)
 
   # reorder actual values matrix
   if(reorder){

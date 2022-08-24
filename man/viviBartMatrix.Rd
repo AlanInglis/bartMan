@@ -9,7 +9,8 @@ viviBartMatrix(
   type = "standard",
   metric = "propMean",
   metricError = "SD",
-  reorder = FALSE
+  reorder = FALSE,
+  combineFact = FALSE
 )
 }
 \value{
@@ -25,6 +26,10 @@ If type = 'quantiles', three matrices are returned. One for the 25%, 50%, and 75
  @param treeData A data frame created by extractTreeData function.
  @param type Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'
  @param metric Which metric to use to fill the actual values matrix. Either 'propMean' or 'count'.
- @param metricError Which metric to use to fill the uncertainty matrix. Either 'SD' or 'SEofCI'.
+ @param metricError Which metric to use to fill the uncertainty matrix. Either 'SD', 'CV' or 'SE'.
  @param reorder LOGICAL. If TRUE then the matrix is reordered so high values are pushed to the top left.
+ @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+If combineFact = TRUE, then both the importance and interactions are calculated for the entire factor by aggregating the dummy variables’
+inclusion proportions.
 }

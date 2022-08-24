@@ -13,6 +13,9 @@
 #' @param fillBy Which parameter to colour the terminal nodes. Either 'response' or 'mu'.
 #' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 #' remain in plot and are coloured grey.
+#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' If combineFact = TRUE, then the dummy factors are combined into their original factor.
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
 #' @importFrom gridExtra arrangeGrob
@@ -47,8 +50,16 @@ plotAllTrees <- function(treeData,
                          pal = RColorBrewer::brewer.pal(9, "Purples"),
                          fillBy = NULL,
                          selectedVars = NULL,
-                         removeStump = FALSE
+                         removeStump = FALSE,
+                         combineFact = FALSE
                          ) {
+
+  # ONLY FOR BART ATM:
+  if(combineFact){
+    treeData <-  cFactTrees(treeData)
+  }
+
+
 
   if(length(selectedVars) > length(treeData$varName)){
     message("SelectedVars is longer than number of available variables. Selecting all variables")
@@ -65,7 +76,9 @@ plotAllTrees <- function(treeData,
                             fillBy = fillBy,
                             name = treeData$varName,
                             selectedVars = selectedVars,
-                            removeStump = removeStump
+                            removeStump = removeStump,
+                            combineFact = combineFact,
+                            treeData = treeData
                             )
 
   )
@@ -91,9 +104,23 @@ plotAll <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
   maxIter <- treeData$nMCMC
 
+  # if (is.null(iter) & is.null(treeNo)) {
+  #   df <- treeData$structure %>%
+  #     filter(iteration == maxIter)
+  # } else if (is.null(iter) & !is.null(treeNo)) {
+  #   df <- treeData$structure %>%
+  #     filter(treeNum == treeNo)
+  # } else if (!is.null(iter) & is.null(treeNo)) {
+  #   df <- treeData$structure %>%
+  #     filter(iteration == iter)
+  # } else {
+  #   df <- treeData$structure %>%
+  #     filter(iteration == iter, treeNum == treeNo)
+  # }
+
   if (is.null(iter) & is.null(treeNo)) {
-    df <- treeData$structure %>%
-      filter(iteration == maxIter)
+    df <- treeData$structure
+    message("Both iter and treeNo are NULL. Not recommended for plotting all trees")
   } else if (is.null(iter) & !is.null(treeNo)) {
     df <- treeData$structure %>%
       filter(treeNum == treeNo)
@@ -177,8 +204,8 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
   maxIter <- treeData$nMCMC
 
   if (is.null(iter) & is.null(treeNo)) {
-    treeData$structure <- treeData$structure %>%
-      filter(iteration == maxIter)
+    treeData$structure <- treeData$structure
+    message("Both iter and treeNo are NULL. Not recommended for plotting all trees")
   } else if (is.null(iter) & !is.null(treeNo)) {
     treeData$structure <- treeData$structure %>%
       filter(treeNum == treeNo)
@@ -362,8 +389,10 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
   noObservations <- treeData$structure$noObs[1]
 
   if (is.null(iter) & is.null(treeNo)) {
-    df <- df %>%
-      filter(iteration == maxIter)
+    df <- df
+    message("Both iter and treeNo are NULL. Not recommended for plotting all trees")
+    #%>%
+     # filter(iteration == maxIter)
   } else if (is.null(iter) & !is.null(treeNo)) {
     df <- df %>%
       filter(treeNum == treeNo)
@@ -488,6 +517,9 @@ clusterTrees <- function(treeList) {
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
 #' @param fillBy Which parameter to colour the terminal nodes. Either 'response' or 'mu'.
+#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' If combineFact = TRUE, then the dummy factors are combined into their original factor.
 #' @param name Variable names
 #'
 #'
@@ -502,6 +534,8 @@ plotAllTreesPlotFn <- function(treeList,
                                fillBy = NULL,
                                selectedVars = NULL,
                                removeStump = FALSE,
+                               combineFact = FALSE,
+                               treeData,
                                name) {
 
 
@@ -535,8 +569,11 @@ plotAllTreesPlotFn <- function(treeList,
       newTreesDF[[i]] <- newTrees[[i]] %>%
         activate(nodes) %>%
         data.frame()
-      newTreesDF[[i]]$var <- "Stump"
-
+      if(is.null(fillBy)){
+        newTreesDF[[i]]$var <- "Stump/Leaf"
+      }else{
+        newTreesDF[[i]]$var <- "Stump"
+      }
     }
 
 
@@ -579,6 +616,18 @@ plotAllTreesPlotFn <- function(treeList,
   if(!is.null(selectedVars)){
     nodeNamesImp <- name[selectedVars]
     nodeNamesOthers <- name[-selectedVars]
+
+    if(combineFact){
+      nameChange <- cFactTreesSelVars(treeData)
+      for (i in 1:length(nameChange$dfnew)) {
+        nodeNamesImp[which(nodeNamesImp %in% nameChange$dfnew[[i]])] <- nameChange$factorColNam[i]
+        nodeNamesOthers[which(nodeNamesOthers %in% nameChange$dfnew[[i]])] <- nameChange$factorColNam[i]
+      }
+      nodeNamesImp <- unique(nodeNamesImp)
+      nodeNamesOthers <- unique(nodeNamesOthers)
+    }
+
+
     nodeColorsImp <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNamesImp)), nodeNamesImp)
     nodeColorsOth <- setNames(rep('#e6e6e6', length(nodeNamesOthers)), nodeNamesOthers)
     nodecolors <- c(nodeColorsImp, nodeColorsOth)
@@ -592,8 +641,14 @@ plotAllTreesPlotFn <- function(treeList,
     pLeg <- ggplot(dfLegend, aes(x = varName, y = val, fill = varName)) +
       geom_bar(stat = 'identity') +
       scale_fill_manual(values = dfLegend$value, name = 'Variable')
-    if(length(stumpIdx) >=  1){
-      nodecolors[["Stump"]] <- '#e6e6e6'
+    if(is.null(fillBy)){
+      if(length(stumpIdx) >=  1){
+        nodecolors[["Stump/Leaf"]] <- '#e6e6e6'
+      }
+    }else{
+      if(length(stumpIdx) >=  1){
+        nodecolors[["Stump"]] <- '#e6e6e6'
+      }
     }
   }else{
     nodeNames <- unique(na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
@@ -603,9 +658,9 @@ plotAllTreesPlotFn <- function(treeList,
     # colour stumps grey
     if(length(stumpIdx) >=  1){
       if(is.null(fillBy)){
-        nodecolors[["Stump"]] <- '#808080'
+        nodecolors[["Stump/Leaf"]] <- '#808080'
       }else if(fillBy == 'response'){
-        nodecolors[["Stump"]] <- min(pal)
+        nodecolors[["Stump"]] <- pal[ceiling(length(pal)/2)]
       }else if(fillBy == 'mu'){
         # stumpVal <- lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))
         # sv  <- as.data.frame(stumpVal[stumpIdx])
@@ -823,6 +878,48 @@ plotFun <- function(List,
 # -------------------------------------------------------------------------
 
 
+# Combine factor function for trees ---------------------------------------
+
+cFactTrees <- function(treeData){
+  dfOG <- treeData$data
+  # find out which columns in my original data are factors
+  factorColNam <- names(which(!(sapply(dfOG[colnames(dfOG)], is.numeric))))
+  factorCols <- which((colnames(dfOG) %in% factorColNam))
+
+
+  # create a list of the variables split into their factors
+  dfnew <- list()
+  for (i in 1:length(factorCols)) {
+    facLevels <- unique(dfOG[ ,factorCols[i]])
+    dfnew[[i]] <- paste0(factorColNam[i],  as.numeric(facLevels))
+  }
+
+
+  # rename each element it's original name
+  for (i in 1:length(dfnew)) {
+    treeData$structure$var[which(treeData$structure$var %in% dfnew[[i]])] <- factorColNam[i]
+  }
+
+  return(treeData)
+}
+
+cFactTreesSelVars <- function(treeData){
+  dfOG <- treeData$data
+  # find out which columns in my original data are factors
+  factorColNam <- names(which(!(sapply(dfOG[colnames(dfOG)], is.numeric))))
+  factorCols <- which((colnames(dfOG) %in% factorColNam))
+
+
+  # create a list of the variables split into their factors
+  dfnew <- list()
+  for (i in 1:length(factorCols)) {
+    facLevels <- unique(dfOG[ ,factorCols[i]])
+    dfnew[[i]] <- paste0(factorColNam[i],  as.numeric(facLevels))
+  }
+
+  myList <- list(dfnew = dfnew, factorColNam = factorColNam)
+  return(myList)
+}
 
 
 

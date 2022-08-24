@@ -8,16 +8,26 @@ mdsBart(
   treeData,
   data,
   target,
-  type = "mean",
   plotType = "rows",
-  showGroup = TRUE
+  showGroup = TRUE,
+  level = 0.95
 )
 }
 \arguments{
 \item{treeData}{A data frame created by treeData function.}
 
-\item{type}{What value to return. Either the raw count 'val', the proportion 'prop'
-or the column means of the proportions 'propMean'}
+\item{data}{a dataframe}
+
+\item{target}{A target proximity matrix to}
+
+\item{plotType}{Type of plot to show. Either 'interactive' - showing interactive confidence ellipses.
+'point' - a point plot showing the average position of a observation.
+'rows' - displaying the average position of a observation number instead of points.
+'all' - show all observations (not averaged).}
+
+\item{showGroup}{Logical. Show confidence ellipses.}
+
+\item{level}{The confidence level to show. Default is 95\% confidence level.}
 }
 \value{
 For this function, the MDS coordinates are calculated for each iteration.

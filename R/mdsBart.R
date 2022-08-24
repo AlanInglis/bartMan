@@ -3,8 +3,15 @@
 #' @description Multi-dimensional Scaling Plot of proximity matrix from a BART model.
 #'
 #' @param treeData A data frame created by treeData function.
-#' @param type What value to return. Either the raw count 'val', the proportion 'prop'
-#' or the column means of the proportions 'propMean'
+#' @param plotType xxx
+#' @param data  a dataframe
+#' @param target A target proximity matrix to
+#' @param plotType Type of plot to show. Either 'interactive' - showing interactive confidence ellipses.
+#' 'point' - a point plot showing the average position of a observation.
+#' 'rows' - displaying the average position of a observation number instead of points.
+#' 'all' - show all observations (not averaged).
+#' @param showGroup Logical. Show confidence ellipses.
+#' @param level The confidence level to show. Default is 95\% confidence level.
 #'
 #' @return For this function, the MDS coordinates are calculated for each iteration.
 #' Procrustes method is then applied to align each of the coordinates to a target set
@@ -21,25 +28,24 @@
 #' @importFrom dplyr summarize
 #' @importFrom dplyr tibble
 #' @importFrom RColorBrewer brewer.pal
-#' @importFrom ggforce geom_mark_ellipse
+#' @importFrom ggiraph geom_polygon_interactive
+#' @importFrom ggiraph ggiraph
+#' @importFrom ggiraph opts_hover_inv
+#' @importfrom ggiraph ots_hover
 #'
 #' @export
 #'
 
 mdsBart <- function(
-                    treeData,
-                    data,
-                    target,
-                    type = "mean",
-                    plotType = "rows",
-                    showGroup = TRUE){
+    treeData,
+    data,
+    target,
+    plotType = "rows",
+    showGroup = TRUE,
+    level = 0.95){
 
-  if (!(type %in% c("mean", "kmeans"))) {
-    stop("type must be \"mean\" or \"kmeans\"")
-  }
-
-  if (!(plotType %in% c("point", "rows", "all", 'none'))) {
-    stop("plotType must be \"point\", \"rows\", \"all\", or \"none\"")
+  if (!(plotType %in% c("interactive", "point", "rows", "all"))) {
+    stop("plotType must be  \"interactive\", \"point\", \"rows\", or \"all\"")
   }
 
   # remove stumps
@@ -61,10 +67,10 @@ mdsBart <- function(
   rotationMatrix <- list()
   for(i in 1:iter){
     rotationMatrix[[i]] <- bartMan::proximityMatrix(df,
-                                           data,
-                                           reorder = F,
-                                           normalize = T,
-                                           iter = i)
+                                                    data,
+                                                    reorder = F,
+                                                    normalize = T,
+                                                    iter = i)
   }
 
   # get all MDS fits
@@ -97,9 +103,9 @@ mdsBart <- function(
   response <- names(data[responseNum])
 
   addResponse <- function(x){
-     d <- x %>%
+    d <- x %>%
       mutate(response = data[response][,1])
-     return(d)
+    return(d)
   }
 
   dfRot <- lapply(dfRot, addResponse)
@@ -121,95 +127,161 @@ mdsBart <- function(
 
   # turn response into something usable
   dfRotateAll$response <- as.numeric(as.factor(dfRotateAll$response))
+  #dfRotateAll$palette <- pal1[dfRotateAll$response]
   if(max(dfRotateAll$response) < 2){
-  dfRotateAll <- dfRotateAll %>%
-    mutate(factResponse = ifelse(response ==  0 ,1,2))
+    dfRotateAll <- dfRotateAll %>%
+      mutate(factResponse = ifelse(response ==  0 ,1,2))
   }else{
     dfRotateAll$factResponse <- dfRotateAll$response
   }
 
-  if(type == 'mean'){
+  # create data frame to plot
+  dfM <-  dfRotateAll %>%
+    arrange(rowNo) %>%
+    group_by(rowNo) %>%
+    summarise(kmX = bind_rows(kmeans(x, 1)[2]),
+              kmY = bind_rows(kmeans(y, 1)[2]))
+  dfM <- tibble(rowNo = dfM$rowNo,
+                #pals = dfM$palette,
+                mX = dfM$kmX$centers[,1],
+                mY = dfM$kmY$centers[,1])
 
-    dfRotateAll$rowNo <- as.numeric(dfRotateAll$rowNo)
-    dfM <- dfRotateAll %>%
-      arrange(rowNo) %>%
-      group_by(rowNo) %>%
-      dplyr::summarize(mX = mean(x), mY = mean(y))
-    dfRotateAll$rowNo <-  as.character(dfRotateAll$rowNo)
-
-  }else if(type == "kmeans"){
-
-   dfM <-  dfRotateAll %>%
-      arrange(rowNo) %>%
-      group_by(rowNo) %>%
-      summarise(kmX = bind_rows(kmeans(x, 1)[2]),
-                kmY = bind_rows(kmeans(y, 1)[2]))
-   dfM <- tibble(rowNo = dfM$rowNo,
-                 mX = dfM$kmX$centers[,1],
-                 mY = dfM$kmY$centers[,1])
-  }
 
   # set up plot
   factorLevel <- as.factor(dfRotateAll$factResponse)
   nlevs <- nlevels(factorLevel)
   suppressWarnings(
     pal <-  RColorBrewer::brewer.pal(nlevs, "Set1")
-    )
+  )
   pal <- pal[as.numeric(dfRotateAll$factResponse)]
   pal <- pal[as.numeric(dfM$rowNo)]
 
   # plot
 
-  if(showGroup){
-    p <- ggplot(data = dfRotateAll, aes(x = x, y = y)) +
-      ggforce::geom_mark_ellipse(data = dfRotateAll,
-                                 aes(x = x,
-                                     y = y,
-                                     fill = factor(rowNo),
-                                     col = rowNo),
-                                 alpha = 0.1)
-    if(plotType == 'point'){
-      p <- p + #ggplot(dfM, aes(x = mX, y = mY)) +
-        geom_point(data = dfM, aes(x = mX, y = mY), col = pal)
-    }else if(plotType == 'rows'){
-      p <- p + #ggplot(dfM, aes(x = mX, y = mY)) +
-        geom_text(data = dfM, aes(x = mX, y = mY, label = rowNo), col = pal)
-    }else if(plotType == "all"){
-      p <- p +
-        geom_text(label = dfRotateAll$rowNo, col = dfRotateAll$rowNo)
-    }else if(plotType == 'none'){
-      p <- p
-    }
-  }else{
-    if(plotType == 'point'){
-      p <-  ggplot(dfM, aes(x = mX, y = mY)) +
-        geom_point(col = pal)
-    }else if(plotType == 'rows'){
-      p <-  ggplot(dfM, aes(x = mX, y = mY)) +
-        geom_text(label = dfM$rowNo, col = pal)
-    }else if(plotType == "all"){
-      p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
-        geom_text(label = dfRotateAll$rowNo, col = dfRotateAll$rowNo)
-    }else if(plotType == 'none'){
-      stop("plotType cannot be 'none' if showGroup is FALSE")
-    }
-  }
+  # set the limits
+  rangeRot <- rbind(dfM$mX, dfM$mY)
+  limitsRot <- range(rangeRot)
+  limitsRot <- range(labeling::rpretty(limitsRot[1], limitsRot[2]))
 
 
-  p <- p +
-    xlab("Dimension 1") +
-    ylab("Dimension 2") +
-    theme_bw() +
-    theme(legend.position = 'none')
+  suppressMessages(
+    suppressWarnings(
+      if(plotType == 'interactive'){
+        # set the limits
+        rangeRot <- rbind(dfRotateAll$x, dfRotateAll$y)
+        limitsRotInt <- range(rangeRot)
+        limitsRotInt <- range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
 
-  return(p)
+        p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
+          #geom_text(label = dfRotateAll$rowNo) +
+          geom_point(data = dfM, aes(x = mX, y = mY), col = 'steelblue') +
+          #geom_text(data = dfM, aes(x = mX, y = mY, label = rowNo)) +
+          stat_ellipse(alpha = 0, aes(col = rowNo), level = level)+
+          xlab("Dimension 1") +
+          ylab("Dimension 2") +
+          theme_bw() +
+          theme(legend.position = 'none') +
+          scale_x_continuous(limits = limitsRotInt) +
+          scale_y_continuous(limits = limitsRotInt)
+
+
+        build <- ggplot_build(p)$data
+        ell <- build[[2]]
+        ell$group <- as.factor(ell$group)
+        levels(ell$group) <- levels(as.factor(dfM$rowNo))
+
+        pp <- p + ggiraph::geom_polygon_interactive(data = ell,
+                                           aes(x, y,
+                                               group = group,
+                                               fill  = group,
+                                               tooltip = group,
+                                               data_id = group),
+                                           fill = ell$group,
+                                           alpha = 0.3)
+
+
+        pFinal <- ggiraph::ggiraph(ggobj = pp,
+                          options = list(
+                            ggiraph::opts_hover_inv(css = "opacity:0.05;"),
+                            ggiraph::opts_hover(ggiraph::girafe_css(
+                              css = "fill:blue;stroke:gray;",
+                              line = "fill:blue",
+                              area = "stroke-width:10px",
+                              point = "stroke-width:10px",
+                              image = "outline:2px red"
+                            ))
+                          )
+        )
+      }else{
+        if(showGroup){
+          rangeRot <- rbind(dfRotateAll$x, dfRotateAll$y)
+          limitsRotInt <- range(rangeRot)
+          limitsRotInt <- range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
+
+
+          p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
+            stat_ellipse(geom = "polygon", alpha = 0.1, aes(fill = rowNo), level = level)+
+            xlab("Dimension 1") +
+            ylab("Dimension 2") +
+            theme_bw() +
+            theme(legend.position = 'none') +
+            scale_x_continuous(limits = limitsRotInt) +
+            scale_y_continuous(limits = limitsRotInt)
+
+          p
+          # p <- ggplot(data = dfRotateAll, aes(x = x, y = y)) +
+          #   ggforce::geom_mark_ellipse(data = dfRotateAll,
+          #                              aes(x = x,
+          #                                  y = y,
+          #                                  fill = factor(rowNo),
+          #                                  col = rowNo),
+          #                              alpha = 0.1)
+          if(plotType == 'point'){
+            p <- p +
+              geom_point(data = dfM, aes(x = mX, y = mY), col = pal)
+          }else if(plotType == 'rows'){
+            p <- p +
+              geom_text(data = dfM, aes(x = mX, y = mY, label = rowNo), col = pal)
+          }else if(plotType == "all"){
+            p <- p +
+              geom_text(label = dfRotateAll$rowNo, col = dfRotateAll$rowNo)
+          }
+        }else{
+          rangeRot1 <- rbind(dfRotateAll$x, dfRotateAll$y)
+          limitsRotInt <- range(rangeRot1)
+          limitsRotInt <- range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
+
+          p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
+            xlab("Dimension 1") +
+            ylab("Dimension 2") +
+            theme_bw() +
+            theme(legend.position = 'none') +
+            scale_x_continuous(limits = limitsRot) +
+            scale_y_continuous(limits = limitsRot)
+
+          if(plotType == 'point'){
+            p <- p +
+              geom_point(data = dfM, aes(x = mX, y = mY), col = pal)
+          }else if(plotType == 'rows'){
+            p <-   p +
+              geom_text(data = dfM, aes(x = mX, y = mY, label = rowNo), col = pal)
+          }else if(plotType == "all"){
+            p <- p +
+              geom_text(label = dfRotateAll$rowNo, col = dfRotateAll$rowNo)  +
+              scale_x_continuous(limits = limitsRotInt) +
+              scale_y_continuous(limits = limitsRotInt)
+          }
+        }
+
+
+        pFinal <- p +
+          theme_bw() +
+          theme(legend.position = 'none')
+      }
+    )
+  )
+
+  #return(pFinal)
+  suppressWarnings(print(pFinal))
 }
-
-
-
-
-
-
-
-
 

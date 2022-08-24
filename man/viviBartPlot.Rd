@@ -12,8 +12,14 @@ viviBartPlot(
   impLims = NULL,
   uncIntLims = NULL,
   uncImpLims = NULL,
+  unc_levels = 4,
+  max_desat = 0.6,
+  pow_desat = 0.2,
+  max_light = 0.6,
+  pow_light = 1,
   angle = 0,
-  border = FALSE
+  border = FALSE,
+  label = NULL
 )
 }
 \arguments{
@@ -31,9 +37,21 @@ viviBartPlot(
 
 \item{uncImpLims}{Specifies the fit range for the color map for importance uncertainties.}
 
+\item{unc_levels}{The number of uncertainty levels}
+
+\item{max_desat}{The maximum desaturation level.}
+
+\item{pow_desat}{The power of desaturation level.}
+
+\item{max_light}{The maximum light level.}
+
+\item{pow_light}{The power of light level.}
+
 \item{angle}{The angle to rotate the x-axis labels. Defaults to zero.}
 
 \item{border}{Logical. If TRUE then draw a black border around the diagonal elements.}
+
+\item{label}{legend label for the uncertainty measure.}
 }
 \value{
 TBD

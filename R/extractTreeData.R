@@ -123,6 +123,7 @@ extractTrees.wbart <- function(model, data){
   trees$nMCMC <- as.integer(modelInfo[1])
   trees$nTree <- as.integer(modelInfo[2])
   trees$nVar  <- as.integer(modelInfo[3])
+  trees$data  <- data
 
   trees$structure$uniqueTreeID <- cumsum(is.na(trees$structure$var) & is.na(trees$structure$splitValue) & is.na(trees$structure$leafValue))
   trees$structure$iteration <- ((trees$structure$uniqueTreeID - 1) %/% trees$nTree) + 1
@@ -279,6 +280,7 @@ extractTrees.bart <- function(model, data){
   trees$nMCMC <- as.integer(iteration)
   trees$nTree <- as.integer(treesTotal)
   trees$nVar  <- as.integer(length(colMeans((model$varcount))))
+  trees$data  <- data
 
   # Get variable names
   varNames <- colnames(model$fit$data@x)
@@ -528,6 +530,7 @@ extractTrees.bartMachine <- function(model, data){
   trees$nTree <- model$num_trees
   trees$nVar <- model$p
   trees$varName <- model$training_data_features
+  trees$data  <- model$X
 
 
   class(trees) <- c("bartMach", "list")

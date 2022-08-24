@@ -4,7 +4,13 @@
 \alias{vimpPlot}
 \title{vimpPlot}
 \usage{
-vimpPlot(treeData, type = "prop", plotType = "barplot", metric = "median")
+vimpPlot(
+  treeData,
+  type = "prop",
+  plotType = "barplot",
+  metric = "median",
+  combineFact = FALSE
+)
 }
 \arguments{
 \item{treeData}{A data frame created by treeData function.}
@@ -18,6 +24,11 @@ letter-value plot 'lvp'.}
 
 \item{metric}{Whether to show the 'mean' or 'median' importance values. Note, this has
 no effect when using plotType = 'lvp'.}
+
+\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
+inclusion proportions.}
 }
 \value{
 A plot of variable importance.

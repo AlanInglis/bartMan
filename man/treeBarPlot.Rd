@@ -4,7 +4,13 @@
 \alias{treeBarPlot}
 \title{treeBarPlot}
 \usage{
-treeBarPlot(treeData, iter = NULL, treeNo = NULL, topTrees = NULL)
+treeBarPlot(
+  treeData,
+  iter = NULL,
+  treeNo = NULL,
+  topTrees = NULL,
+  removeStump = FALSE
+)
 }
 \arguments{
 \item{iter}{The selected iteration}
@@ -12,6 +18,9 @@ treeBarPlot(treeData, iter = NULL, treeNo = NULL, topTrees = NULL)
 \item{treeNo}{The selected tree number.}
 
 \item{topTrees}{integer value to show the top x variables.}
+
+\item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
+remain in plot and are coloured grey.}
 
 \item{treeList}{A list of trees created using the treeList function.}
 }

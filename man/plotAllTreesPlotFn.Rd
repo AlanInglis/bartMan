@@ -12,6 +12,8 @@ plotAllTreesPlotFn(
   fillBy = NULL,
   selectedVars = NULL,
   removeStump = FALSE,
+  combineFact = FALSE,
+  treeData,
   name
 )
 }
@@ -25,6 +27,10 @@ plotAllTreesPlotFn(
 \item{pal}{A palette to colour the terminal nodes.}
 
 \item{fillBy}{Which parameter to colour the terminal nodes. Either 'response' or 'mu'.}
+
+\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+If combineFact = TRUE, then the dummy factors are combined into their original factor.}
 
 \item{name}{Variable names}
 }

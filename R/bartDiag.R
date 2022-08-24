@@ -1,3 +1,395 @@
+#' bartDiag
+#'
+#' @description Displays a selection of diagnostic plots for a BART model.
+#'
+#' @param model a model created from either the BART, modelarts, or bartMachine package.
+#' @param response The name of the response for the fit.
+#' @param burnIn Trace plot will only show iterations above selected burn in value.
+#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
+#' inclusion proportions.
+#' @param data A dataframe used to build the model.
+#' @param threshold A dashed line on some plots to indicate a chosen threshold value (classification only).
+#' by default the Youden index is shown.
+#' @param pNorm apply pnorm to the y-hat data (classification only).
+#' @param showInterval LOGICAL if TRUE then show 5\% and 95\% quantile intervals on ROC an PC curves (classification only).
+#'
+#'
+#'
+#' @return A selection of diagnostic plots
+#'
+#' @import tidytreatment
+#' @importFrom patchwork area
+#' @importFrom patchwork plot_layout
+#' @importFrom tidybayes residual_draws
+#' @importFrom tidybayes point_interval
+#' @importFrom tidybayes geom_pointinterval
+#' @importFrom dplyr %>%
+#' @importFrom dplyr select
+#' @importFrom dplyr filter
+#' @importFrom dplyr summarise
+#' @importFrom dplyr tibble
+#' @importFrom dplyr first
+#' @importFrom tibble as_tibble
+#' @import ggplot2
+#' @importFrom ROCR prediction
+#' @importFrom ROCR performance
+#' @importFrom bartMachine investigate_var_importance
+#' @importFrom condvis2 CVpredict
+#' @export
+
+bartDiag <- function(model,
+                     data,
+                     response,
+                     burnIn = 0,
+                     threshold = 'Youden',
+                     pNorm = FALSE,
+                     showInterval = TRUE,
+                     combineFact = FALSE){
+
+  if(class(model) == 'pbart'){
+
+    output <- bartClassifDiag(model = model, data = data, response = response,
+                    threshold = threshold, pNorm = pNorm, showInterval = showInterval,
+                    combineFact = combineFact)
+
+  }else if(class(model) == 'wbart'){
+
+    output <- bartRegrDiag(model = model, data = data, response = response,
+                           burnIn = burnIn, combineFact = combineFact)
+
+  }else if(class(model) == 'bart'){
+
+    if(model$fit$control@binary == TRUE){
+
+      output <- bartClassifDiag(model = model, data = data, response = response,
+                                threshold = threshold, pNorm = pNorm, showInterval = showInterval,
+                                combineFact = combineFact)
+
+    }else{
+      output <- bartRegrDiag(model = model, data = data, response = response,
+                             burnIn = burnIn, combineFact = combineFact)
+    }
+
+  }else if(class(model) == 'bartMachine'){
+
+    if(model$pred_type == 'classification'){
+
+      output <- bartClassifDiag(model = model, data = data, response = response,
+                                threshold = threshold, pNorm = pNorm, showInterval = showInterval,
+                                combineFact = combineFact)
+    }else{
+      output <- bartRegrDiag(model = model, data = data, response = response,
+                             burnIn = burnIn, combineFact = combineFact)
+    }
+  }
+  return(output)
+}
+
+
+# -------------------------------------------------------------------------
+# Diagnostics for regression ----------------------------------------------
+# -------------------------------------------------------------------------
+
+#' bartRegrDiag
+#'
+#' @description Displays a selection of diagnostic plots for a BART model.
+#'
+#' @param model a model created from either the BART, modelarts, or bartMachine package.
+#' @param response The name of the response for the fit.
+#' @param burnIn Trace plot will only show iterations above selected burn in value.
+#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
+#' inclusion proportions.
+#' @param data A dataframe used to build the model.
+#'
+#'
+#' @return A selection of diagnostic plots
+#'
+
+#' @import ggplot2
+#' @import tidytreatment
+#' @importFrom patchwork area
+#' @importFrom patchwork plot_layout
+#' @importFrom tidybayes residual_draws
+#' @importFrom tidybayes point_interval
+#' @importFrom tidybayes geom_pointinterval
+#' @importFrom dplyr %>%
+#' @importFrom dplyr select
+#' @importFrom dplyr filter
+#' @importFrom dplyr summarise
+#' @importFrom dplyr tibble
+#' @importFrom dplyr first
+#' @importFrom tibble as_tibble
+#' @importFrom bartMachine investigate_var_importance
+#' @export
+
+
+bartRegrDiag <- function(model,
+                         response,
+                         burnIn = 0,
+                         combineFact = FALSE,
+                         data) {
+
+  qq <- bartQQ(model, response)
+  trace <- bartTrace(model, burnIn = burnIn)
+  residual <- bartResiduals(model, response = response)
+  histogram <- bartHist(model, response)
+  fitVSact <- bartFitted(model, response)
+  vImp <- bartVimp(model, combineFact = combineFact, data = data)
+
+  design <- c(
+    area(1, 1, 3, 3),
+    area(1, 5, 3, 7),
+    area(5, 1, 7, 3),
+    area(5, 5, 7, 7),
+    area(9, 1, 11, 3),
+    area(9, 5, 11, 7)
+  )
+
+  diagPlot <- qq + trace + residual + histogram +
+    fitVSact + vImp + plot_layout(design = design)
+
+  return(diagPlot)
+}
+
+
+# QQ plot -----------------------------------------------------------------
+
+bartQQ <- function(model, response) {
+  if (class(model) == "wbart" || class(model) == "bartMachine") {
+    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
+    res <- res %>% summarise(.residual = mean(.residual))
+  } else {
+    res <- data.frame(.residual = residuals(model))
+  }
+
+  p <- res %>%
+    ggplot(aes(sample = .residual)) +
+    geom_qq(color = "blue", alpha = 0.2) +
+    geom_qq_line() +
+    xlab("Theoretical") +
+    ylab("Sample") +
+    theme_bw() +
+    ggtitle("Q-Q plot")
+
+  return(p)
+}
+
+
+# Trace plot --------------------------------------------------------------
+
+
+bartTrace <- function(model, burnIn = 0) {
+  if (class(model) == "wbart" || class(model) == "bartMachine") {
+    # get values
+    varDraws <- tidytreatment::variance_draws(model, value = "siqsq")
+    varDraws$sigma <- sqrt(varDraws$siqsq)
+  } else {
+    varDraws <- data.frame(
+      sigma = model$sigma,
+      .draw = c(1:model$call$ndpost)
+    )
+  }
+
+
+  maxIter <- max(varDraws$.draw)
+
+  p <- ggplot(varDraws[1:burnIn, ], aes(x = .draw, y = sigma)) +
+    geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
+    geom_line(alpha = 0.5) +
+    geom_line(data = varDraws[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
+    theme_bw() +
+    xlab("Iteration") +
+    ylab("Sigma") +
+    ggtitle("Trace plot")
+
+  return(p)
+}
+
+# Residuals vs Fitted --------------------------------------------------------------
+
+
+bartResiduals <- function(model,
+                          response) {
+  if (class(model) == "wbart" || class(model) == "bartMachine") {
+    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
+  } else {
+    res <- data.frame(
+      .residual = residuals(model),
+      .fitted = fitted(model)
+    )
+  }
+
+
+  if (class(model) == "wbart" || class(model) == "bartMachine") {
+    p <- res %>%
+      tidybayes::point_interval(.fitted, .residual, .width = c(0.95)) %>%
+      select(-.fitted.lower, -.fitted.upper) %>%
+      ggplot() +
+      tidybayes::geom_pointinterval(aes(x = .fitted, y = .residual, ymin = .residual.lower, ymax = .residual.upper),
+                                    alpha = 0.1,
+                                    color = "blue"
+      ) +
+      theme_bw() +
+      xlab("Fitted") +
+      ylab("Residual") +
+      ggtitle("Fitted vs Residuals")
+  } else {
+    p <- ggplot(res, aes(.fitted, .residual)) +
+      geom_point(color = "blue", alpha = 0.1) +
+      theme_bw() +
+      xlab("Fitted") +
+      ylab("Residual") +
+      ggtitle("Fitted vs Residuals")
+  }
+
+  return(p)
+}
+
+
+# Histogram Residuals -----------------------------------------------------
+
+bartHist <- function(model, response) {
+
+  if (class(model) == "wbart" || class(model) == "bartMachine") {
+    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
+  } else {
+    res <- data.frame(.residual = residuals(model))
+  }
+
+  p <- ggplot(data = res, aes(.residual)) +
+    geom_histogram(bins = 50, color = "blue", fill = "white") +
+    theme_bw() +
+    xlab("Residual") +
+    ylab("Frequency") +
+    ggtitle("Histogram")
+
+  return(p)
+}
+
+
+# Fitted Vs Actual --------------------------------------------------------
+
+
+bartFitted <- function(model, response) {
+
+
+  if (class(model) == "wbart" || class(model) == "bartMachine") {
+    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
+  } else {
+    plquants = c(.05,.95)
+    cols = c('blue', 'black')
+
+    qLow <- apply(model$yhat.train, length(dim(model$yhat.train)), quantile, probs = plquants[1])
+    qMid <- apply(model$yhat.train, length(dim(model$yhat.train)), quantile, probs = 0.5)
+    qUpp <- apply(model$yhat.train, length(dim(model$yhat.train)), quantile, probs=plquants[2])
+
+    res <- data.frame(y = response,
+                      qMid = qMid,
+                      qLow = qLow,
+                      qUpp = qUpp)
+  }
+
+
+  if (class(model) == "wbart" || class(model) == "bartMachine") {
+    p <- res %>%
+      tidybayes::point_interval(.fitted, y, .width = c(0.95)) %>%
+      select(-y.lower, -y.upper) %>%
+      ggplot() +
+      tidybayes::geom_pointinterval(aes(x = y, y = .fitted, ymin = .fitted.lower, ymax = .fitted.upper),
+                                    alpha = 0.1,
+                                    color = "blue"
+      ) +
+      geom_smooth(aes(x = y, y = .fitted), method = "lm", color = "black", formula = y ~ x) +
+      xlab("Actual") +
+      ylab("Fitted") +
+      theme_bw() +
+      ggtitle("Actual vs Fitted")
+
+  }else{
+    p <-  ggplot(data = res, aes(y, qMid)) +
+      geom_point(color = "blue", alpha = 0.1) +
+      theme_bw() +
+      xlab("Actual") +
+      ylab("Fitted") +
+      ggtitle("Actual vs Fitted") +
+      geom_smooth(aes(x = y, y = qMid), method = "lm", color = "black", formula = y ~ x) +
+      tidybayes::geom_pointinterval(aes(x = y, y = qMid, ymin = qLow, ymax = qUpp),
+                                    alpha = 0.1,
+                                    color = "blue"
+      )
+  }
+
+
+  return(p)
+}
+
+
+# Variable Importance -----------------------------------------------------
+
+bartVimp <- function(model, combineFact = FALSE, data) {
+
+
+  if(class(model) == "bartMachine"){
+    vImp <- bartMachine::get_var_counts_over_chain(model)
+  } else {
+    # get variable importance
+    vImp <- model$varcount
+  }
+
+  vImpProps <- proportions(vImp, 1)
+  if(combineFact){
+    vImpProps <- combineFactorsDiag(data = data, df2 = vImpProps, model = model)
+  }
+  vImp <- colMeans(vImpProps)
+
+
+  # get quantiles of proportions
+  vimp25 <- apply(vImpProps, 2, function(x) quantile(x, c(.25)))
+  vimp75 <- apply(vImpProps, 2, function(x) quantile(x, c(.75)))
+
+  vImp <- dplyr::tibble(
+    Variable = names(vImp),
+    imp = vImp,
+    upperQ = vimp75,
+    lowerQ = vimp25
+  )
+
+  p <- vImp %>%
+    arrange(imp) %>%
+    mutate(Variable = factor(Variable, unique(Variable))) %>%
+    ggplot(aes(x = Variable, y = imp)) +
+    ggforce::geom_link(aes(
+      x = Variable, xend = Variable, yend = upperQ,
+      colour = "gray50", alpha = rev(stat(index))
+    ),
+    size = 2, n = 1000
+    ) +
+    ggforce::geom_link(aes(
+      x = Variable, xend = Variable, yend = lowerQ,
+      colour = "gray50", alpha = rev(stat(index))
+    ),
+    size = 2, n = 1000
+    ) +
+    geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
+    scale_colour_identity() +
+    coord_flip() +
+    theme_bw() +
+    labs(x = "Variable", y = "Importance") +
+    theme(legend.position = "none")
+
+  return(p)
+
+}
+
+
+# -------------------------------------------------------------------------
+# Diagnostic for classification -------------------------------------------
+# -------------------------------------------------------------------------
+
 #' bartClassifDiag
 #'
 #' @description Displays a selection of diagnostic plots for a BART model.
@@ -28,7 +420,8 @@ bartClassifDiag <- function(model,
                             response,
                             threshold = 'Youden',
                             pNorm = FALSE,
-                            showInterval = FALSE){
+                            showInterval = TRUE,
+                            combineFact = FALSE){
 
   responseVals <- response
 
@@ -79,7 +472,7 @@ bartClassifDiag <- function(model,
                                actual = responseVals)
 
   if(threshold == 'Youden'){
-  threshold <- yI
+    threshold <- yI
   }else{
     threshold <- threshold
   }
@@ -116,7 +509,7 @@ bartClassifDiag <- function(model,
   }
   classF <- classFit(dfFitClassBart, threshold = threshold)
   histogram <- classHist(dfHist, threshold = threshold)
-  vimp <- bartVimpClass(model)
+  vimp <- bartVimpClass(model, combineFact = combineFact, data = data)
   cM <- confMat(model, data, response)
 
   design <- c(
@@ -229,7 +622,8 @@ classHist <- function(data, threshold){
 
 # VIMP --------------------------------------------------------------------
 
-bartVimpClass <- function(model){
+bartVimpClass <- function(model, combineFact = FALSE, data){
+
 
 
   if(class(model) == "bartMachine"){
@@ -240,6 +634,9 @@ bartVimpClass <- function(model){
   }
 
   vImpProps <- proportions(vImp, 1)
+  if(combineFact){
+    vImpProps <- combineFactorsDiag(data = data, df2 = vImpProps, model = model)
+  }
   vImp <- colMeans(vImpProps)
 
 
@@ -260,21 +657,21 @@ bartVimpClass <- function(model){
     ggplot(aes(x = Variable, y = imp)) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = upperQ,
-      col = Variable, alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(stat(index))
     ),
     size = 2, n = 1000
     ) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = lowerQ,
-      col = Variable, alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(stat(index))
     ),
     size = 2, n = 1000
     ) +
     geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
+    scale_colour_identity() +
     coord_flip() +
     theme_bw() +
     labs(x = "Variable", y = "Importance") +
-    ggtitle('VImp') +
     theme(legend.position = "none")
 
   return(p)
@@ -561,6 +958,5 @@ prCI <- function(model, response, data){
   return(p)
 
 }
-
 
 

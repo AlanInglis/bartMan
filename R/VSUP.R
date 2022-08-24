@@ -324,7 +324,7 @@ pal_vsup <- function(values, unc_levels = 4, max_light = 0.9, max_desat = 0, pow
     stop(length(values), " colors are provided but ", n, " colors are needed for ", unc_levels, " uncertainty levels.", call. = FALSE)
   }
 
-  ramp <- colour_ramp(values)
+  ramp <- scales::colour_ramp(values)
 
   # v = value, 0: small, 1: large
   # u = uncertainty, 0: completely certain, 1: completely uncertain
@@ -336,7 +336,10 @@ pal_vsup <- function(values, unc_levels = 4, max_light = 0.9, max_desat = 0, pow
     i <- 1 + floor(v * val_levels)
     i <- ifelse( i >= val_levels, val_levels, i)
 
-    list(i = i, j = j, v = ((i - 0.5)/val_levels - 0.5/n)*n/(n - 1), u = 1 - (j - 1)/(unc_levels - 1))
+    list(i = i,
+         j = j,
+         v = ((i - 0.5)/val_levels - 0.5/n)*n/(n - 1),
+         u = 1 - (j - 1)/(unc_levels - 1))
   }
 
   function(v, u){
@@ -344,10 +347,15 @@ pal_vsup <- function(values, unc_levels = 4, max_light = 0.9, max_desat = 0, pow
     v <- x$v
     u <- x$u # need maximum lightening for 0 certainty
 
+    range01 <- function(x,a,b){
+       ((b-a)*((x-min(x)))/(max(x)-min(x)))+a
+     }
+
     # limit maximal desaturation and lightening
     des_amt <- max_desat*u^pow_desat
     light_amt <- max_light*u^pow_light
     cols_des <- colorspace::desaturate(ramp(v), des_amt)
+    #cols_des <- colorspace::lighten(ramp(v), range01(des_amt, 0, 0.9))
     nas <- is.na(light_amt)
     light_amt[nas] <- 0
     ifelse(nas, NA, colorspace::lighten(cols_des, light_amt, space = "HLS"))
@@ -538,6 +546,7 @@ guide_gengrob.colourfan <- function(guide, theme) {
   # this is where to change the legend tick positions
   tick.x.pos <- seq(0,1, length.out = 5)
   a <- c(0, .25, .5, .75, 1)
+  #a<- rev(a)
   #a <- a + 0.125
   tick.y.pos <- a
 

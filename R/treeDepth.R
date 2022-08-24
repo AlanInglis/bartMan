@@ -35,7 +35,7 @@ treeDepth <- function(treeData) {
     geom_smooth(formula = y ~ x, method = "loess", colour = "black", se = F) +
     theme_bw() +
     xlab("Iteration") +
-    ylab("Average Tree Depth")
+    ylab("Mean Tree Depth")
 
 
 

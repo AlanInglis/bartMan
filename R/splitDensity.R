@@ -5,7 +5,8 @@
 #' @param treeData A list of trees created using the treeData function.
 #' @param data Data frame containing variables from the model.
 #' @param colBy A parameter used to control the colour of the density plots.
-#' @param display Choose how to display the plot. Either histogram, facet wrap or ridges.
+#' @param display Choose how to display the plot. Either histogram, facet wrap, ridges
+#' or display both the split value and density of the predictor by using either both1 or both2.
 #'
 #' @return A faceted group of density plots
 #'
@@ -21,8 +22,8 @@
 
 splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
 
-  if (!(display %in% c("histogram", "ridge", "density", 'both'))) {
-    stop("display must be \"histogram\", \"ridge\", \"density\", or \"both\"")
+  if (!(display %in% c("histogram", "ridge", "density", 'both1', 'both2'))) {
+    stop("display must be \"histogram\", \"ridge\", \"density\", \"both1\", or \"both2\"")
   }
 
   # get just the variable and split value
@@ -65,7 +66,7 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
       ylab("Density") +
       xlab("Split value") +
       theme(legend.position = "none")
-  }else if(display == 'both'){
+  }else if(display == 'both1'){
 
     dataIdx <- which((names(data) %in% varNames))
     dat <- data[, dataIdx]
@@ -74,7 +75,7 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
     names(tt) <- c('variable', 'value')
 
     dataList <- list(meltDat, tt)
-    names(dataList)  <- c('dat', 'sv')
+    names(dataList)  <- c('data', 'split  \nvalue')
     dfList <- plyr::ldply(dataList)
 
    dPlot <- ggplot(dfList) +
@@ -84,6 +85,26 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
       ylab('Density') +
       xlab("Split value") +
       theme_bw()
+  }else if(display == 'both2'){
+
+    dataIdx <- which((names(data) %in% varNames))
+    dat <- data[, dataIdx]
+
+    meltDat <- reshape2::melt(dat)
+    names(tt) <- c('variable', 'value')
+
+    dataList <- list(meltDat, tt)
+    names(dataList)  <- c('data', 'split  \nvalue')
+    dfList <- plyr::ldply(dataList)
+
+    dPlot <- dfList %>%
+      ggplot(aes(x = value, y = .id, fill = stat(x))) +
+      geom_density_ridges(aes(fill = .id, alpha = 0.1), panel_scaling = F) +
+      facet_wrap(~variable)+
+      ylab("") +
+      xlab("Value") +
+      theme_bw() +
+      theme(legend.position = "none")
   }
 
   suppressMessages(print(dPlot))

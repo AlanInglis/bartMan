@@ -12,7 +12,12 @@
 #' @param uncImpLims Specifies the fit range for the color map for importance uncertainties.
 #' @param angle The angle to rotate the x-axis labels. Defaults to zero.
 #' @param border Logical. If TRUE then draw a black border around the diagonal elements.
-#'
+#' @param unc_levels The number of uncertainty levels
+#' @param max_desat The maximum desaturation level.
+#' @param pow_desat The power of desaturation level.
+#' @param max_light The maximum light level.
+#' @param pow_light The power of light level.
+#' @param label legend label for the uncertainty measure.
 #' @import vivid
 #' @importFrom ggnewscale new_scale_fill
 #'
@@ -28,8 +33,14 @@ viviBartPlot <- function(matrix,
                          impLims = NULL,
                          uncIntLims = NULL,
                          uncImpLims = NULL,
+                         unc_levels = 4,
+                         max_desat = 0.6,
+                         pow_desat = 0.2,
+                         max_light = 0.6,
+                         pow_light = 1,
                          angle = 0,
-                         border = FALSE){
+                         border = FALSE,
+                         label = NULL){
 
   p <- viviPlot(matrix = matrix,
                 intPal = intPal,
@@ -38,8 +49,14 @@ viviBartPlot <- function(matrix,
                 impLims = impLims,
                 uncIntLims = uncIntLims,
                 uncImpLims = uncImpLims,
+                unc_levels = unc_levels,
+                max_desat = max_desat,
+                pow_desat = pow_desat,
+                max_light = max_light,
+                pow_light = pow_light,
                 angle = angle,
-                border = border)
+                border = border,
+                label = label)
   return(p)
 }
 
@@ -54,8 +71,14 @@ viviPlot <- function(matrix,
                      impLims = NULL,
                      uncIntLims = NULL,
                      uncImpLims = NULL,
+                     unc_levels = 4,
+                     max_desat = 0.6,
+                     pow_desat = 0.2,
+                     max_light = 0.6,
+                     pow_light = 1,
                      angle = 0,
-                     border = FALSE) {
+                     border = FALSE,
+                     label = NULL) {
   UseMethod("viviPlot", matrix)
 }
 
@@ -97,9 +120,19 @@ viviPlot.vsup <- function(matrix,
                           impLims = NULL,
                           uncIntLims = NULL,
                           uncImpLims = NULL,
+                          unc_levels = 4,
+                          max_desat = 0.6,
+                          pow_desat = 0.2,
+                          max_light = 0.6,
+                          pow_light = 1,
                           angle = 0,
-                          border = FALSE
+                          border = FALSE,
+                          label = NULL
 ){
+
+  if(is.null(label)){
+    label <- 'Uncertainty'
+  }
 
   # get values
   actualMatrix <- matrix$actualMatrix
@@ -223,8 +256,6 @@ viviPlot.vsup <- function(matrix,
   #   labelName <- ()
   # }
 
-
-
   # create plot for Vint ----------------------------------------------------
 
   pInt <- ggplot(dfInt) +
@@ -233,19 +264,19 @@ viviPlot.vsup <- function(matrix,
     scale_y_discrete(limits = rev(levels(dfInt$Variable_2))) +
     coord_equal() +
     bivariate_scale(
-      name = c("Vint", "SD"),
+      name = c("Vint", label),
       aesthetics = "fill",
       limits = vintLims,
       breaks = vintBreaks,
       labels = vintBreaksLabel,
-      oob = scales::squish,
+      #oob = scales::squish,
       palette = pal_vsup(
         values = intPal,
-        unc_levels = 4,
-        max_desat = 0.6,
-        pow_desat = 0.2,
-        max_light = 0.6,
-        pow_light = 1
+        unc_levels = unc_levels,
+        max_desat = max_desat,
+        pow_desat = pow_desat,
+        max_light = max_light,
+        pow_light = pow_light
       ),
       guide = "colorfan"
     ) +
@@ -259,7 +290,7 @@ viviPlot.vsup <- function(matrix,
       geom_raster(data = dfImp, aes(x = Variable_1, y = Variable_2, fill = zip(Value, Uncert))) +
       coord_equal() +
       bivariate_scale(
-        name = c("Vimp", "SD"),
+        name = c("Vimp", label),
         aesthetics = "fill",
         limits = vimpLims,
         breaks = vimpsBreaks,
@@ -267,11 +298,11 @@ viviPlot.vsup <- function(matrix,
         oob = scales::squish,
         palette = pal_vsup(
           values = impPal,
-          unc_levels = 4,
-          max_desat = 0.6,
-          pow_desat = 0.2,
-          max_light = 0.6,
-          pow_light = 1
+          unc_levels = unc_levels,
+          max_desat = max_desat,
+          pow_desat = pow_desat,
+          max_light = max_light,
+          pow_light = pow_light
         ),
         guide = "colorfan"
       ) +

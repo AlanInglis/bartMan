@@ -45,7 +45,7 @@ treeBarPlot <- function(treeData,
   treeList <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = NULL)
 
   # remove stumps
-  treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
+  #treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
 
   if(removeStump){
     treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
@@ -221,7 +221,7 @@ treeBarPlot <- function(treeData,
     theme_void()
 
   bp1 <- bp + theme(axis.text.y = element_blank())
-  ppp <- p_axis + theme(aspect.ratio = 6)
+  ppp <- p_axis + theme(aspect.ratio = 10)
   px <- ppp|bp1
 
   bpFinal <- cowplot::plot_grid(px, legend, rel_heights = c(1, .1), ncol = 1)
