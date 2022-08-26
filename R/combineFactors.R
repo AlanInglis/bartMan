@@ -129,13 +129,15 @@ return(df2)
 combineFactorsInt <- function(propData, dataOG){
 
   propData <- propData %>%
-    as_tibble(rownames = "id") %>%
-    pivot_longer(-id) %>%
-    mutate(name = map_chr(str_extract_all(name, paste(c(colnames(dataOG), ":"), collapse = "|")),
+    dplyr::as_tibble(rownames = "id") %>%
+    tidyr::pivot_longer(-id) %>%
+    dplyr::mutate(name = purrr::map_chr(stringr::str_extract_all(name, paste(c(colnames(dataOG), ":"), collapse = "|")),
                           paste0, collapse = "")) %>%
-    group_by(id, name) %>%
-    summarise(value = sum(value)) %>%
-    pivot_wider()
+    dplyr::group_by(id, name) %>%
+    dplyr::summarise(value = sum(value)) |>
+    dplyr::na_if("") %>%
+    na.omit %>%
+    tidyr::pivot_wider()
 
 
   propData <- propData[,-1]
