@@ -27,8 +27,8 @@
 #'
 
 viviBartPlot <- function(matrix,
-                         intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
-                         impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
+                         intPal = NULL,
+                         impPal = NULL,
                          intLims = NULL,
                          impLims = NULL,
                          uncIntLims = NULL,
@@ -41,6 +41,17 @@ viviBartPlot <- function(matrix,
                          angle = 0,
                          border = FALSE,
                          label = NULL){
+
+  if(is.null(intPal)){
+    intPal <- scales::colour_ramp(
+      colors = c(blue = '#FFFFCC', red = '#800026')
+    )((0:7)/7)
+  }
+  if(is.null(impPal)){
+    impPal <-  RColorBrewer::brewer.pal(9, 'GnBu')
+    impPal <- impPal[-1]
+
+  }
 
   p <- viviPlot(matrix = matrix,
                 intPal = intPal,
