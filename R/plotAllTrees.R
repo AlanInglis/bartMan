@@ -345,7 +345,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 
   allEdges <- sapply(treesSplit, getEdges)
 
-  # temporary fix for single type of tree
+  #  for single type of tree
   needLe <- paste0("\\b", paste(c(1, 1, 1, 4, 4, 6, 6, 1), collapse = ","), "\\b")
   changeTo <- paste(c(1, 1, 3, 4, 4, 6, 6, 3), collapse = ",")
   allEdges <- lapply(
