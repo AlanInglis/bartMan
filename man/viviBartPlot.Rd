@@ -6,8 +6,8 @@
 \usage{
 viviBartPlot(
   matrix,
-  intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 2^4/2)),
-  impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n = 2^4/2)),
+  intPal = NULL,
+  impPal = NULL,
   intLims = NULL,
   impLims = NULL,
   uncIntLims = NULL,

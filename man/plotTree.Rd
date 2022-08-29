@@ -4,7 +4,7 @@
 \alias{plotTree}
 \title{plotTree}
 \usage{
-plotTree(treeData, iter = 1, treeNo = 1, plotType = c("dendrogram", "icicle"))
+plotTree(treeData, iter = 1, treeNo = 1, plotType = "icicle")
 }
 \arguments{
 \item{treeData}{A data frame created by treeData function}

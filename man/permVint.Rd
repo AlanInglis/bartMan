@@ -10,7 +10,8 @@ permVint(
   treeData,
   response,
   numTreesPerm = NULL,
-  plotType = "barplot"
+  plotType = "barplot",
+  top = NULL
 )
 }
 \arguments{
@@ -25,9 +26,13 @@ permVint(
 \item{numTreesPerm}{The number of trees to be used in the null model.
 As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 variables to used in the model. If NULL, then the number of trees from the true model is used.}
+
+\item{top}{Display only the top X interactions.}
 }
 \value{
-A variable interaction plot.
+A variable interaction plot. Note that for a dbarts fit, due to the internal workings of
+dbarts, the null model is hard-coded to 20 trees, a burn-in of 100, and 1000 iterations. Both a
+BART and bartMachine null model will extract the identical parameters from the original model.
 }
 \description{
 A variable interaction evaluation which creates a null model by
