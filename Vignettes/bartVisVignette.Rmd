@@ -26,7 +26,7 @@ Bayesian Additive Regression Trees (BART) 1^[Chipman et al (2010)] is a non-para
 In this document, we illustrate some visualisations for posterior evaluation of BART models using the bartMan (BART Model ANalysis) package.
 
 ## Install instructions
-to install the development version from GitHub, use:
+To install the development version from GitHub, use:
 
 ```{r setup, warning=FALSE, message=FALSE}
 # install.packages("devtools")
