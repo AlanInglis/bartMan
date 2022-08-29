@@ -135,9 +135,9 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
   incProp$difference <- incProp$imp - incProp$threshold
   incProp$difference[incProp$difference <=  0] <- 0
 
-  for(i in seq_along(incProp$Variable)){
-    incProp$zSc[i] <- (incProp$imp[i] - mean(incProp$imp))/sd(incProp$imp)
-  }
+  # for(i in seq_along(incProp$Variable)){
+  #   incProp$zSc[i] <- (incProp$imp[i] - mean(incProp$imp))/sd(incProp$imp)
+  # }
 
   incProp$Variable <- factor(incProp$Variable, levels = rev(incProp$Variable))
 
@@ -362,8 +362,8 @@ lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alph
     p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
       geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
       geom_point(aes(x = Variable, y = imp), shape = incProp$shape, size = 3) +
-      theme_bw() + ylab('proportion included') + coord_flip() +
-      geom_hline(yintercept = maxCut, col = 'red')
+      theme_bw() + ylab('proportion included') + coord_flip()# +
+     # geom_hline(yintercept = maxCut, col = 'red')
   }
 
   return(p)

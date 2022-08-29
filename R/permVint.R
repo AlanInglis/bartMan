@@ -12,8 +12,11 @@
 #' @param numTreesPerm The number of trees to be used in the null model.
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 #' variables to used in the model. If NULL, then the number of trees from the true model is used.
+#' @param top Display only the top X interactions.
 #'
-#' @return A variable interaction plot.
+#' @return A variable interaction plot. Note that for a dbarts fit, due to the internal workings of
+#' dbarts, the null model is hard-coded to 20 trees, a burn-in of 100, and 1000 iterations. Both a
+#' BART and bartMachine null model will extract the identical parameters from the original model.
 #'
 #'
 #' @importFrom BART wbart
@@ -29,10 +32,16 @@
 #'
 
 
-permVint <- function(model, data, treeData, response, numTreesPerm = NULL, plotType = 'barplot') {
+permVint <- function(model,
+                     data,
+                     treeData,
+                     response,
+                     numTreesPerm = NULL,
+                     plotType = 'barplot',
+                     top = NULL) {
 
   # get og model vints
-  actualVint <- vints(treeData = treeData)
+  actualVint <- viviBart(treeData = treeData, combineFact = F, out = 'vint')
 
   # get null permutation vints
   permVint <- permBartVint(
@@ -43,42 +52,41 @@ permVint <- function(model, data, treeData, response, numTreesPerm = NULL, plotT
   )
 
   # final vints
-  finalVintDF <- actualVint$dfVint
-  finalVintMat <- actualVint$propMat - permVint$propMat
+  finalVintDF <- actualVint
+  finalVintMat <- actualVint$propMean - permVint$propMean
 
-  # turn into df
-  vintDF <- permVintDF(propData = finalVintMat,
-                       dataF = finalVintDF,
-                       treeData = treeData)
+  finalDf <- data.frame(
+    var = actualVint$var,
+    propMean = finalVintMat
+  )
 
-  # vintPlot <- permPlotFn(data = vimp,
-  #                        plotType = plotType)
-  vintDF$meanNew <- pmax(vintDF$propMean, 0)
-  vintDF$low = pmax(vintDF$meanNew - 2 * vintDF$SE, 0)
-  vintDF$high = pmax(vintDF$meanNew + 2 * vintDF$SE, 0)
+  if(!is.null(top)){
+    finalDf <- finalDf |> arrange(-propMean) |> filter(row_number() %in% 1:top)
+  }
 
 
-  p <- vintDF %>%
-    arrange(meanNew) %>%
-    mutate(Variable = factor(var, unique(var))) %>%
-    ggplot(aes(x = Variable, y = meanNew)) +
-    ggforce::geom_link(aes(
-      x = Variable, xend = Variable, yend = low,
-      col = Variable, alpha = rev(stat(index))
-    ),
-    size = 5, n = 1000
-    ) +
-    ggforce::geom_link(aes(
-      x = Variable, xend = Variable, yend = high,
-      col = Variable, alpha = rev(stat(index))
-    ),
-    size = 5, n = 1000
-    ) +
-    geom_point(aes(x = Variable, y = meanNew), shape = 18, size = 2, color = "black") +
-    coord_flip() +
-    theme_bw() +
-    labs(x = "Variable", y = "Importance") +
-    theme(legend.position = "none")
+  finalDf$propMean[finalDf$propMean<0] <- 0
+
+
+    p <- finalDf %>%
+      arrange(propMean) %>%
+      mutate(Variable = factor(var, unique(var))) %>%
+      ggplot() +
+      aes(x = Variable, y = propMean) +
+      geom_bar(aes(x = Variable, y = propMean), stat = "identity", fill = "steelblue", col = "black") +
+      theme_light() +
+      coord_flip() +
+      theme_bw() +
+      xlab("Variable") +
+      ylab("Importance") +
+      theme(
+        axis.title.y = element_text(angle = 90, vjust = 0.5),
+        legend.key.size = unit(0.5, "cm")
+      )
+
+
+
+
 
 
   return(p)
@@ -88,196 +96,108 @@ permVint <- function(model, data, treeData, response, numTreesPerm = NULL, plotT
 
 # Main function:
 permBartVint <- function(model, data, response, numTreesPerm = NULL) {
-  UseMethod("perBart")
+  UseMethod("permBartVint")
 }
 
 
 
 
 # -------------------------------------------------------------------------
-
-# Vint function
-
-vints <- function(treeData){
-
-  df <- treeData$structure
-  nam <- treeData$varName
-
-  # cycle through trees and create list of Vints
-  mkTree <- function(x, pos = 1L) {
-    var <- x[pos]
-    if (is.na(var)) {
-      list(NA_character_, NULL, NULL, 1L)
-    } else {
-      node <- vector("list", 4L)
-      node[[1L]] <- var
-      node[[2L]] <- l <- Recall(x, pos + 1L)
-      node[[3L]] <- r <- Recall(x, pos + 1L + l[[4L]])
-      node[[4L]] <- 1L + l[[4L]] + r[[4L]]
-      node
-    }
-  }
-
-
-  tabTree <- function(tree, sep = ":") {
-    x <- rep.int(NA_character_, tree[[4L]])
-    pos <- 1L
-    recurse <- function(subtree) {
-      var1 <- subtree[[1L]]
-      if (!is.na(var1)) {
-        for (i in 2:3) {
-          var2 <- subtree[[c(i, 1L)]]
-          if (!is.na(var2)) {
-            x[pos] <<- paste0(var1, sep, var2)
-            pos <<- pos + 1L
-            Recall(subtree[[i]])
-          }
-        }
-      }
-    }
-    recurse(tree)
-    x <- x[!is.na(x)]
-    if (length(x)) {
-      x <- factor(x)
-      setNames(tabulate(x), levels(x))
-    } else {
-      integer(0L)
-    }
-  }
-
-  f <- function(x) tabTree(mkTree(x))
-  L <- tapply(df[["var"]], df[c("treeNum", "iteration")], f, simplify = FALSE)
-
-  g <- function(l) {
-    x <- unlist(unname(l))
-    tapply(x, names(x), sum)
-  }
-
-  listVint <- apply(L, 2L, g)
-  emptyRows <- unique(which(lengths(listVint)==0))
-  listVint <- listVint[lengths(listVint)>0] # remove empty list element
-
-
-  # turn into df
-  dfVint <- as.matrix(bind_rows(listVint))
-  if(length(emptyRows > 0)){
-    dfVint <- rbind(dfVint, matrix(data=NA, ncol=ncol(dfVint), nrow=length(emptyRows)))
-
-  }
-  dfVint[is.na(dfVint)] <- 0
-
-
-  # create a matirx of all possible combinations
-  nam <- treeData$varName
-  namDF <- expand.grid(nam, nam)
-
-  newName <- NULL
-  for(i in 1:length(namDF$Var1)){
-    newName[i] <- paste0(namDF$Var2[i], ":", namDF$Var1[i])
-  }
-
-  allCombMat <- matrix(NA, nrow = treeData$nMCMC, ncol = length(newName))
-  colnames(allCombMat) <- newName
-
-  # join actual values into matirx of all combinations
-  oIdx <- match(colnames(dfVint), colnames(allCombMat))
-
-  allCombMat[ ,oIdx] <- dfVint
-  allCombMat[is.na(allCombMat)] <- 0
-  dfVint <- allCombMat
-
-  # get proportions
-  propMatVint <- proportions(dfVint, 1)
-
-  myList <- list(dfVint = dfVint, propMat = propMatVint)
-  return(myList)
-
-}
-
-
-
 # -------------------------------------------------------------------------
-
-# Dataframe Function
-
-permVintDF <- function(propData, dataF, treeData){
-
-  dfVint <- dataF
-  propMatVint <- propData
-  # turn into df
-  dfProps <- reshape2::melt(propMatVint)
-  colnames(dfProps) <- c("iteration", "var", "props")
-
-  # add counts
-  countM <- reshape2::melt(dfVint)
-  colnames(countM) <- c("iteration", "var", "count")
-  dfProps$count <- countM$count
-
-  # make symmetrical interactions (ie x1:x2 == x2:x1)
-  # dfFinal <- dfProps %>%
-  #   mutate(
-  #     var = str_extract_all(var, "\\d+"),
-  #     var = map_chr(var, ~ str_glue("x{sort(.x)[[1]]}:x{sort(.x)[[2]]}"))
-  #   )
-  dfFinal <- dfProps %>%
-    mutate(var = map(
-      stringr::str_split(var, pattern = ":"),
-      ~ sort(.x) %>% trimws(.) %>% paste0(., collapse = ':')
-    ))
-
-  dfFinal[is.na(dfFinal)] <- 0
-
-  dfFinal <- dfFinal %>%
-    group_by(var) %>%
-    mutate(count = sum(count),
-           propMean = mean(props),
-           SD = sd(props),
-           Q25 = quantile(props, c(.25)),
-           Q50 = quantile(props, c(.50)),
-           Q75 = quantile(props, c(.75)),
-           SE =  sd(props)/sqrt(treeData$nMCMC)) %>%
-    select(-iteration, - props) %>%
-    distinct() %>%
-    ungroup()
-
-
-  # add adjustment
-  vimpsAdj <- bartMan::vimpBart(treeData, type = 'propMean')
-
-  splitN <- t(simplify2array(strsplit(as.character(dfFinal[["var"]]), ":")))
-  values <- t(apply(splitN, 1, function(x){c(vimpsAdj[x[1]], vimpsAdj[x[2]])}))
-  suppressMessages(
-    res <- cbind(dfFinal, values)
-  )
-  names(res) <- c('var', 'count', 'propMean', 'SD',  'lowerQ', 'median',
-                  'upperQ', 'SE', 'propVimp1', 'propVimp2')
-
-  trans <- apply(res[,c('propMean', 'propVimp1', 'propVimp2')], 1, function(x){
-    (x[1]-x[2]*x[3])/sqrt(x[2]*x[3])
-  })
-
-  dfFinal$adjusted <- trans
-
-  dfFinal$adjusted[dfFinal$adjusted <=  0] <- 0
-  names(dfFinal) <- c('var', 'count', 'propMean', 'SD',  'lowerQ', 'median',
-                      'upperQ', 'SE', 'adjusted')
-
-  dfFinal$var <- unlist(dfFinal$var)
-
-  return(dfFinal)
-}
-
-
-
-
-
 
 # BART --------------------------------------------------------------------
+permBartVint.bart <- function(model, data,  response, numTreesPerm = NULL){
+  # get some information
+  nTree <- model$call$ntree
+  nMCMC  <- model$call$ndpost
+  nVar  <- as.integer(length(colMeans((model$varcount))))
+  varNames <- colnames(model$fit$data@x)
+  burnIn <-  model$call$nskip
+
+  # get var inc props
+  varProp <- model$varcount
+  varPropAvg <- proportions(varProp, 1)
+
+  # null model info
+  responseIdx <- which((names(data) %in% response))
+  if(is.null(numTreesPerm)){
+    numTreesPerm <- nTree
+  }
+
+  permuteBARTFn <- function(data) {
+    yPerm <- sample(data[, responseIdx], replace = FALSE)
+    x <- data[, -responseIdx]
+
+    bmodelPerm <- dbarts::bart(x.train = x,
+                               y.train = yPerm,
+                               ntree = 20,
+                               keeptrees = TRUE,
+                               nskip = 100,
+                               ndpost = 1000,
+                               combinechains = F,
+                               nchain = 1
+    )
+
+    permDF <- extractTreeData(bmodelPerm, data)
+    permVints <- viviBart(treeData = permDF, combineFact = F, out = 'vint')
+    return(permVints)
+  }
+
+  perMats <- permuteBARTFn(data)
+
+  return(perMats)
+
+}
+
+permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL) {
+  # get some information
+  nTree <-  model$num_trees
+  nMCMC <-  model$num_iterations_after_burn_in
+  nVar  <- model$p
+  varNames <- colnames(model$X)
+  burnIn <-  model$num_burn_in
+
+  # get var inc props
+  varProp <- bartMachine::get_var_counts_over_chain(model)
+  varPropAvg <- proportions(varProp, 1)
+
+  # null model info
+  responseIdx <- which((names(data) %in% response))
+  if(is.null(numTreesPerm)){
+    numTreesPerm <- nTree
+  }
+
+  # null model fuunction
+  permuteBARTFn <- function(data){
+
+    yPerm <- sample(data[, responseIdx], replace = FALSE)
+    x <- data[, -responseIdx]
+
+    bmodelPerm <- bartMachine(X = x,
+                              y = yPerm,
+                              num_trees = numTreesPerm,
+                              flush_indices_to_save_RAM = FALSE,
+                              num_burn_in = burnIn,
+                              num_iterations_after_burn_in = nMCMC)
 
 
-perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
+
+
+    permDF <- extractTreeData(bmodelPerm, data)
+    permVints <- viviBart(treeData = permDF, combineFact = F, out = 'vint')
+    return(permVints)
+  }
+
+  perMats <- permuteBARTFn(data)
+
+  return(perMats)
+
+}
+
+permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
   # get model info
+
   modelTrees <- model$treedraws$trees
   modelInfo <- unlist(strsplit(modelTrees, " "))[1:3]
   modelInfo <- gsub("(^\\d+)([\a-zA-Z0-9]*)", "\\1", modelInfo)
@@ -298,7 +218,7 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <- wbart(
+    bmodelPerm <- BART::wbart(
       x.train = x,
       y.train = yPerm,
       nskip = burnIn,
@@ -308,7 +228,7 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
     )
 
     permDF <- extractTreeData(bmodelPerm, data)
-    permVints <- vints(permDF)
+    permVints <- viviBart(treeData = permDF, combineFact = F, out = 'vint')
     return(permVints)
   }
 

@@ -1,8 +1,8 @@
-#' permBART
+#' permVimp
 #'
 #' @description A variable selection approach which creates a null model by
 #' permuting the response, rebuilding the model, and calculating the inclusion proportion (IP) on the null model.
-#' The final result displayed is the original model's IP  minus the null IP.
+#' The final result displayed is the original model's IP minus the null IP.
 #'
 #' @param model Model created from either the BART, dbarts or bartMachine packages.
 #' @param data A data frame containing variables in the model.
@@ -25,8 +25,7 @@
 #'
 #' @export
 
-
-permBART <- function(model, data, response, numTreesPerm = NULL, plotType = 'barplot') {
+permVimp <- function(model, data, response, numTreesPerm = NULL, plotType = 'barplot') {
 
   vimp <- perBart(
     model = model,
@@ -35,7 +34,7 @@ permBART <- function(model, data, response, numTreesPerm = NULL, plotType = 'bar
     numTreesPerm = numTreesPerm
   )
 
-  vimpPlot <- permPlotFn(data = vimp,
+  vimpPlot <- permPlotFn(dat = vimp,
                          plotType = plotType)
 
   return(vimpPlot)
@@ -207,13 +206,13 @@ perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
 # Plotting function -------------------------------------------------------
 
 
-permPlotFn <- function(data, plotType = 'barplot'){
+permPlotFn <- function(dat, plotType = 'barplot'){
 
-  points <- tibble(
-    variable = colnames(data),
-    sds = apply(data, 2, sd),
-    se = apply(data, 2, function(a) sd(a) / sqrt(length(a))),
-    mean = pmax(apply(data, 2, mean), 0),
+  points <- dplyr::tibble(
+    variable = colnames(dat),
+    sds = apply(dat, 2, sd),
+    se = apply(dat, 2, function(a) sd(a) / sqrt(length(a))),
+    mean = pmax(apply(dat, 2, mean), 0),
     low = pmax(mean - 2 * se, 0),
     high = pmax(mean + 2 * se, 0)
   )

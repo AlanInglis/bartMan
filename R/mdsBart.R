@@ -31,7 +31,7 @@
 #' @importFrom ggiraph geom_polygon_interactive
 #' @importFrom ggiraph ggiraph
 #' @importFrom ggiraph opts_hover_inv
-#' @importfrom ggiraph ots_hover
+#' @importFrom ggiraph opts_hover
 #'
 #' @export
 #'

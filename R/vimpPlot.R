@@ -138,7 +138,7 @@ vimpPlot <- function(treeData,
       #scale_fill_brewer(palette = "Blues", direction = -1) +
        labs(x = "", y = "Importance") +
       theme_bw() +
-      theme(legend.position = "none")
+      theme(legend.position = "none") + coord_flip()
   }
 
   return(p)

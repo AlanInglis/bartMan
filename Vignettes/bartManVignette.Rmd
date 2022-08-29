@@ -35,7 +35,7 @@ Trees: The BART R Package. _Journal of Statistical Software_], `dbarts`^[Vincent
 
 
 
-In this document, we demonstrate our visualisations for evaluation of BART models using the `bartMan` (BART Model ANalysis) package.
+In this document, we demonstrate our visualizations for evaluation of BART models using the `bartMan` (BART Model ANalysis) package.
 
 ## Install instructions
 To install the development version from GitHub, use:
@@ -74,59 +74,36 @@ y <- fData$y
 
 ```
 
-Now we will create some basic BART models. To begin we load the libraries and then create our models.
+Now we will create a basic BART model using the `dbarts` package.  However, the process is identical for any of the `dbarts`, `BART`, or `bartMachine` BART packages.
+
+To begin we load the libraries and then create our models.
 
 ```{r,  message  = FALSE, warning = FALSE}
 # load libraries
-library(BART) # for model
 library(dbarts) # for model
-library(bartMachine) # for model
-library(patchwork)
-library(gridExtra) # for displaying plots
+library(ggplot2) # for plots
 ```
 
 ```{r, results =  'hide'}
-
-# create BART model:
-set.seed(99)
-bartModel <- wbart(x.train = x,
-                   y.train = y,
-                   nskip = 100,
-                   ndpost = 500,
-                   nkeeptreedraws = 500,
-                   ntree = 20
-                   )
 
 # create dbarts model:
 set.seed(99)
 dbartModel <- bart(x,
                    y,
-                   ntree = 20,
+                   ntree = 20,#50
                    keeptrees = TRUE,
-                   nskip = 10,#100,
-                   ndpost = 50,#500
+                   nskip = 100,
+                   ndpost = 500#1000
                    )
-
-
-# create bartMachine model 
-set.seed(90)
-bartMachineModel <-  bartMachine(X = x,
-                   y = y,
-                   num_trees = 20,
-                   flush_indices_to_save_RAM = FALSE,
-                   num_burn_in = 50,
-                   num_iterations_after_burn_in = 100)
 
 ```
 
-The first step in using `bartMan` is to create a dataframe of the trees used to build each model. This dataframe is used by many of the `bartMan` functions to create the visualizations. 
+The first step in using `bartMan` is to create a data frame of the trees used to build each model. This data frame is used by many of the `bartMan` functions to create the visualizations. 
 We extract the tree data for each model via:
 
 ```{r create_dataframe_of_trees}
 # Create data frames ------------------------------------------------------
-#btT <- extractTreeData(model = bartModel,  data = fData) 
 dbT <- extractTreeData(model = dbartModel, data = fData) 
-#bmT <- extractTreeData(model= bartMachineModel, data = fData) 
 ```
 
 
@@ -135,7 +112,7 @@ The structure of the data frame of trees created by `extractTreeData` is the sam
 dbT$structure
 ```
 
-Here we can see that `extractTreeData` gives back a dataframe with 12 columns, which are outlined below.
+Here we can see that `extractTreeData` gives back a data frame with 12 columns, which are outlined below.
 
 <br>      
 
@@ -151,7 +128,7 @@ isLeaf          Is the node a leaf node or not.
 leafValue       The leaf node value.
 iteration       The iteration number.
 treeNum         The tree number per iteration.
-label           Displays the split rule in full.
+label           Displays the split rule.
 value           The value in a node (i.e., either the split value or leaf value). 
 depthMax        The maximum depth of the tree.
 obsNode         A list containing the observations contained in each node.
@@ -168,7 +145,7 @@ In all of the following visualizations we use the `dbarts` model fit (unless oth
 
 ## VIVI-VSUP
 
-In Inglis et al. (2022)^[Inglis, A., Parnell, A., & Hurley, C. B. (2022). Visualizing Variable Importance and Variable Interaction Effects in Machine Learning Models. Journal of Computational and Graphical Statistics, 1-13.], the authors propose using a heatmap to display both importance and interactions simultaneously, where the importance values are on the diagonal and interaction values on the off-diagonal. We adapt the heatmap displays of importance and interactions to include the uncertainty by use of a VSUP. To begin we fist generate a list of two matrices. One containing the raw inclusion proportions and one containing the uncertainties. Here we use the coefficient of variation as our uncertainty measure. However the standard deviation or standard error is also available by setting `metricError = 'SD'`and `metricError = 'SE'`, in the code below respectivley. 
+In Inglis et al. (2022)^[Inglis, A., Parnell, A., & Hurley, C. B. (2022). Visualizing Variable Importance and Variable Interaction Effects in Machine Learning Models. Journal of Computational and Graphical Statistics, 1-13.], the authors propose using a heatmap to display both importance and interactions simultaneously, where the importance values are on the diagonal and interaction values on the off-diagonal. We adapt the heatmap displays of importance and interactions to include the uncertainty by use of a VSUP. To begin we fist generate a list of two matrices. One containing the raw inclusion proportions and one containing the uncertainties. Here we use the coefficient of variation as our uncertainty measure. However the standard deviation or standard error is also available by setting `metricError = 'SD'` or `metricError = 'SE'`, in the code below. 
 
 ```{r vsup-matrix}
 vsupMat <- viviBartMatrix(dbT,
@@ -176,7 +153,6 @@ vsupMat <- viviBartMatrix(dbT,
                           metric = 'propMean',
                           metricError = "CV")
 ```
-
 
 Once the matrices have been created, they can be plotted displaying a VSUP plot with the uncertainty included. For illustration purposes only we show the plot without uncertainty in Figure 1 and with uncertainty in Figure 2: 
 
@@ -200,7 +176,7 @@ vivid::viviHeatmap(vsupMat$actualMatrix,
 ```{r, echo = F}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/vivi.png", error = FALSE)
 ```
-<caption><span id="fig1:fig1">Figure 1: </span> Variable importance and interaction plot without uncertainty. The five important variables ($x_1$ to $x_5$) and the interaction between $x_1$ and $x_2$ is clear.</caption>
+<caption><span id="fig1:fig1">Figure 1: </span> Variable importance and interaction plot without uncertainty. The interaction between $x_1$ and $x_2$ is clear. The five important variables ($x_1$ to $x_5$) are highlighted. We can also see spurious importance and interaction values among the noise variables.</caption>
 
 ```{r vsup_plot, eval = FALSE}
 viviBartPlot(vsupMat,
@@ -231,7 +207,7 @@ plotTree(treeData = dbT, treeNo = 1, iter = 1, plotType = "icicle")
 ```{r, echo = F,  out.width = '100%'}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/dendice.png", error = FALSE)
 ```
-<caption><span id="fig3:fig3">Figure 3: </span>A dendrogram plot of a selected tree (left) and an icicle plot of a selected tree (right). In the icicle plot, the nodes are coloured by the variable used in the splitting rule. Leaf (terminal) nodes are coloured grey.</caption>
+<caption><span id="fig3:fig3">Figure 3: </span>A dendrogram plot of a selected tree (left) and an icicle plot of a selected tree (right). In the icicle plot, the nodes are colored by the variable used in the splitting rule. Leaf (terminal) nodes are colored grey.</caption>
 
 The `plotAllTrees` function allows for a few different options when plotting. For example, we can chose to display all the trees from a selected iteration:
 
@@ -244,7 +220,25 @@ knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/allTrees.png", error
 ```
 <caption><span id="fig4:fig4">Figure 4: </span>All trees from a single iteration. In this case the first iteration is shown.</caption>
 
-Additionally, we can plot a single tree over all iterations. This shows us visually BART's _grow, prune, change, swap_ mechanisms in action:
+
+
+When the number of variables or trees is large it can become harder to identify interesting features. We provide a plot that can be used to highlight interesting features by accentuating selected variables by coloring them brightly while uniformly coloring the remaining variables a light grey. We can then couple this with a sorting step to order the trees by the most frequent tree structure. 
+```{r all_trees_filter, eval=FALSE}
+plotAllTrees(treeData = dbT, 
+             iter = 1, 
+             removeStump = TRUE, 
+             selectedVars = c(1:5),
+             cluster = 'var')
+```
+
+```{r, echo = F,  out.width = '100%'}
+knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/allTreesFilter.png", error = FALSE)
+```
+<caption><span id="fig5:fig5">Figure 5: </span>All trees from a single iteration. In this case the first iteration is shown, the stumps have been removed, and the trees have been sorted according to their structure.</caption>
+
+
+
+Additionally, we can plot a single tree over all iterations by selecting a tree vis the `treeNo` argument. This shows us visually BART's _grow, prune, change, swap_ mechanisms in action.
 
 ```{r, eval=FALSE}
 plotAllTrees(treeData = dbT, treeNo = 20)
@@ -253,14 +247,14 @@ plotAllTrees(treeData = dbT, treeNo = 20)
 ```{r, echo = F,  out.width = '100%'}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/treeNo.png", error = FALSE)
 ```
-<caption><span id="fig5:fig5">Figure 5: </span>A single tree over all iterations. </caption>
+<caption><span id="fig6:fig6">Figure 6: </span>A single tree over all iterations. </caption>
 
 
 
-When viewing the trees, it can be useful to view different aspects or metrics. 
 
 
-In Figure 6 we show some of these aspects by displaying all the trees in a selected iteration. For example, in (a) we color terminal nodes and stumps by the mean response. In (b) we color them by the terminal node parameter value. In (c) we sort the trees by structure starting with the most common tree and descending to the least common tree found (useful for identifying the most important splits). Finally, in (d) we sort the trees by depth. As the $\mu$ values in (b) are centered around zero, we use a single-hue, colorblind friendly, diverging color palette to display the values. For comparison, we use the same palette to represent the mean response values in (a).
+
+When viewing the trees, it can be useful to view different aspects or metrics. In Figure 7 we show some of these aspects by displaying all the trees in a selected iteration. For example, in (a) we color terminal nodes and stumps by the mean response. In (b) we color them by the terminal node parameter value. In (c) we sort the trees by structure starting with the most common tree and descending to the least common tree found (useful for identifying the most important splits). Finally, in (d) we sort the trees by depth. As the $\mu$ values in (b) are centered around zero, we use a single-hue, colorblind friendly, diverging color palette to display the values. For comparison, we use the same palette to represent the mean response values in (a).
 
 ```{r, eval=FALSE}
 plotAllTrees(treeData = dbT, iter = 1, sizeNode = T, fillBy = 'mu', pal = mypalette)
@@ -273,10 +267,10 @@ plotAllTrees(treeData = dbT, iter = 1, cluster = "var")
 ```{r, echo = F,  out.width = '100%'}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/treesmet.png", error = FALSE)
 ```
-<caption><span id="fig6:fig6">Figure 6: </span>All trees in a selected iteration. In (a) the terminal nodes and stumps are colored by the mean response. In (b) the terminal nodes and stumps are colored by the predicted value $\mu$. In (c) we sort the trees by structure starting with the most common tree and descending to the least common tree shape and in (d) we sort the trees by tree depth. </caption>
+<caption><span id="fig7:fig7">Figure 7: </span>All trees in a selected iteration. In (a) the terminal nodes and stumps are colored by the mean response. In (b) the terminal nodes and stumps are colored by the predicted value $\mu$. In (c) we sort the trees by structure starting with the most common tree and descending to the least common tree shape and in (d) we sort the trees by tree depth. </caption>
 
 
-As an alternative to the sorting of the tree structures, seen in Figure 6 (c), we provide a bar plot summarizing the tree structures. Here we choose to display the top 10 most frequent tree structures, however displaying a single tree across iterations or displaying all trees in a single iteration is possible via the `iter` and `treeNo` arguments.
+As an alternative to the sorting of the tree structures, seen in Figure 7 (c), we provide a bar plot summarizing the tree structures. Here we choose to display the top 10 most frequent tree structures, however displaying a single tree across iterations or displaying all trees in a single iteration is possible via the `iter` and `treeNo` arguments.
 
 ```{r, eval=FALSE}
 treeBarPlot(treeData = dbT, topTrees = 10, iter = NULL, treeNo = NULL)
@@ -286,12 +280,12 @@ treeBarPlot(treeData = dbT, topTrees = 10, iter = NULL, treeNo = NULL)
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/barplot.png", error = FALSE)
 ```
 
-<caption><span id="fig6:fig6">Figure 6: </span> Bar plot of the top 10 most frequent tree types over all iterations. Trees with a single binary split on Petal.Length occur the most often. </caption>
+<caption><span id="fig8:fig8">Figure 8: </span> Bar plot of the top 10 most frequent tree types over all iterations. Trees with a single binary split on Petal.Length occur the most often. </caption>
 
 ## Proximity Matrix and Multidimensional Scaling
 Proximity matrices combined with multidimensional scaling (MDS) are commonly used in random forests to identify outlying observations^[Breiman, L. (2001). Random forests. Machine learning, 45(1), 5-32.Chicago]. When two observations lie in the same terminal node repeatedly they can be said to be similar, and so an $N × N$ proximity matrix is obtained by accumulating the number of times at which this occurs for each pair of observations, and subsequently divided by the total number of trees. A higher value indicates that two observations are more similar. 
 
-To begin, we fist create a proximity matrix. This can be seriated to group similar observations together by setting `reorder = TRUE`. The `normailze` argument will divide the proximity scores by the total number of trees. Additionally, we can choose to get the proximity matrix for a single iteration (as shown below) or over all iterations 9the latter is achieved by setting `iter = NUll`. 
+To begin, we fist create a proximity matrix. This can be seriated to group similar observations together by setting `reorder = TRUE`. The `normailze` argument will divide the proximity scores by the total number of trees. Additionally, we can choose to get the proximity matrix for a single iteration (as shown below) or over all iterations, the latter is achieved by setting `iter = NUll`. 
 
 ```{r}
 bmProx <- proximityMatrix(treeData = dbT,
@@ -301,7 +295,7 @@ bmProx <- proximityMatrix(treeData = dbT,
                           iter = 1)
 ```
 
-We can then visualise the proximity matrix using the `plotProximity` function. in the interest of space, we only display the first 50 rows and columns of the porximty matrix.
+We can then visualize the proximity matrix using the `plotProximity` function. In the interest of space, we only display the first 50 rows and columns of the proximity matrix.
 ```{r, eval=FALSE}
 plotProximity(matrix = bmProx[1:50,1:50]) + 
   theme(axis.text.x = element_text(angle = 90,)) 
@@ -311,12 +305,12 @@ plotProximity(matrix = bmProx[1:50,1:50]) +
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/prox.png", error = FALSE)
 ```
 
-<caption><span id="fig7:fig7">Figure 7: </span>Proximity matrix displaying only the first 50 rows and columns. </caption>
+<caption><span id="fig9:fig9">Figure 9: </span>Proximity matrix displaying only the first 50 rows and columns. </caption>
 
 The proximity matrix can then be visualized using classical MDS (henceforth MDS) to plot their relationship in a lower dimensional projection. 
 
 
-In BART, as there is a proximity matrix for every iteration and a posterior distribution of proximity matrices. We introduce a rotational constraint so that we can similarly obtain a posterior distribution of each observation in the lower dimensional space. We first choose a target iteration (as shown above) and apply MDS. For each subsequent iteration we rotate the MDS solution matrix to match this target as closely as possible using Procrustes’ method. We end up with a point for each observation per iteration per MDS dimension.We then group the observations by the mean of each group and produce a scatterplot, where each point represents the centroid of the location of each observation across all the MDS solutions. We extend this further by displaying the 95% confidence ellipses around each observation’s posterior location in the reduced space. Since these are often overlapping we have created an interactive version that highlights an observation’s ellipse and displays the observation number when hovering the mouse pointer above the ellipse (Figure 8 shows a screenshot of this interaction in use). However, non-interactive versions are available via the `plotType` argument.
+In BART, as there is a proximity matrix for every iteration and a posterior distribution of proximity matrices. We introduce a rotational constraint so that we can similarly obtain a posterior distribution of each observation in the lower dimensional space. We first choose a target iteration (as shown above) and apply MDS. For each subsequent iteration we rotate the MDS solution matrix to match this target as closely as possible using Procrustes’ method. We end up with a point for each observation per iteration per MDS dimension.We then group the observations by the mean of each group and produce a scatterplot, where each point represents the centroid of the location of each observation across all the MDS solutions. We extend this further by displaying the 95% confidence ellipses around each observation’s posterior location in the reduced space. Since these are often overlapping we have created an interactive version that highlights an observation’s ellipse and displays the observation number when hovering the mouse pointer above the ellipse (Figure 10 shows a screenshot of this interaction in use). However, non-interactive versions are available via the `plotType` argument.
 
 ```{r, eval=FALSE}
 mdsBart(treeData = dbT, data = fData, target =  bmProx,
@@ -327,23 +321,24 @@ mdsBart(treeData = dbT, data = fData, target =  bmProx,
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/mds.png", error = FALSE)
 ```
 
-<caption><span id="fig8:fig8">Figure 8: </span>Interactive MDS plot. Each 95% confidence ellipse corresponds to each observation’s posterior location. When hovering the mouse pointer over an ellipse, the ellipse is highlighted and the observation is displayed. </caption>
+<caption><span id="fig10:fig10">Figure 10: </span>Interactive MDS plot. Each 95% confidence ellipse corresponds to each observation’s posterior location. When hovering the mouse pointer over an ellipse, the ellipse is highlighted and the observation is displayed. </caption>
 
 
 ## Enhanced BART model diagnostics
 
-In addition to the above, we also provide visualisations for general diagnostics of a BART model. These include checking for convergence, the stability of the trees, the efficiency of the algorithm, and the predictive performance of the model. To begin we take a look at some general diagnostics  to assess the stability of the model fit. the `burnIn` argument should be set to the burn-in value selected when building the model and indicates the separation between the pre and post burn-in period in the plot.
+In addition to the above, we also provide visualizations for general diagnostics of a BART model. These include checking for convergence, the stability of the trees, the efficiency of the algorithm, and the predictive performance of the model. To begin we take a look at some general diagnostics  to assess the stability of the model fit. The `burnIn` argument should be set to the burn-in value selected when building the model and indicates the separation between the pre and post burn-in period in the plot.
 
 ```{r, eval=FALSE}
-bartDiag(model = dbartModel, response = fData$y, burnIn = 10, data = fData)
+bartDiag(model = dbartModel, response = fData$y, burnIn = 100, data = fData)
 ```
 
 ```{r, echo = F,  out.width = '80%'}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/diag.png", error = FALSE)
 ```
 
-<caption><span id="fig9:fig9">Figure 9: </span>General diagnostic plots for a BART regression fit. Top left: A QQ-plot of the residuals after fitting the model. Top right: $\sigma$ by MCMC iteration. Middle left: Residuals versus fitted values with 95\% credible intervals. Middle right: A histogram of the residuals. Bottom Left: Actual values versus fitted values with 95\% credible intervals. Bottom right: Variable importance plot with 25 to 75\% quantile interval shown. </caption>
+<caption><span id="fig11:fig11">Figure 11: </span>General diagnostic plots for a BART regression fit. Top left: A QQ-plot of the residuals after fitting the model. Top right: $\sigma$ by MCMC iteration. Middle left: Residuals versus fitted values with 95\% credible intervals. Middle right: A histogram of the residuals. Bottom Left: Actual values versus fitted values with 95\% credible intervals. Bottom right: Variable importance plot with 25 to 75\% quantile interval shown. </caption>
 
+### Acceptance Rate
 The post burn-in percentage acceptance rate across all iterations can also be visualized, where each point represents a single iteration. A regression line is shown to indicate the changes in acceptance rate across iterations and to identify the mean rate. 
 
 ```{r, eval=FALSE}
@@ -354,11 +349,11 @@ acceptRate(treeData = dbT)
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/accept.png", error = FALSE)
 ```
 
-<caption><span id="fig10:fig10">Figure 10: </span> Post burn-in acceptance rate of trees per iteration. A black regression line is shown to indicate the changes in acceptance rate across iterations and to identify the mean rate.  </caption>
+<caption><span id="fig12:fig12">Figure 12: </span> Post burn-in acceptance rate of trees per iteration. A black regression line is shown to indicate the changes in acceptance rate across iterations and to identify the mean rate.  </caption>
 
 
 
-
+### Mean Tree Depth and Mean Tree Nodes
 As with the acceptance rate, the average tree depth and average number of all nodes per iteration can give an insight into the fit’s stability. Figure 11 displays these two metrics. A locally estimated scatterplot smoothing (LOESS) regression line is shown to indicate the changes in both the average tree depth and the average number of nodes across iterations:
 ```{r, eval=FALSE}
 treeDepth(treeData = dbT)
@@ -369,9 +364,9 @@ treeNodes(treeData = dbT)
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/treeDepthNode.png", error = FALSE)
 ```
 
-<caption><span id="fig11:fig11">Figure 11: </span>  In (a) we show the post burn-in average tree depth per iteration. In (b) we show the post burn-in average number of nodes per iteration. A black LOESS regression curve is shown to indicate the changes in both the average tree depth and number of nodes across iterations. </caption>
+<caption><span id="fig13:fig13">Figure 13: </span>  In (a) we show the post burn-in average tree depth per iteration. In (b) we show the post burn-in average number of nodes per iteration. A black LOESS regression curve is shown to indicate the changes in both the average tree depth and number of nodes across iterations. </caption>
 
-
+### Split Densities
 Figure 12 shows the densities of split values over all post burn-in iterations for each variable for both models (in green), combined with the densities of the predictor variables (labeled “data”, in red):
 
 ```{r, eval=FALSE}
@@ -383,45 +378,33 @@ splitDensity(treeData = dbT, data = fData, display = 'both2')
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/splitDens.png", error = FALSE)
 ```
 
-<caption><span id="fig12:fig12">Figure 12: </span>  Split values densities (in green) over all iterations for each variable overlayed on the densities of the predictors (in red). </caption>
+<caption><span id="fig14:fig14">Figure 14: </span>  Split values densities (in green) over all iterations for each variable overlayed on the densities of the predictors (in red). </caption>
 
 ## Additional Importance and Interaction plots.
 
-The asses the inclusion proportions for use with variable importance or variable interactions. We also provide some useful functions for extracting these values and for visualizing them. For example, to retrieve a matrix of the inclusion proportions for each variable we can use the `vimpBart` function and then to visualize them (with their 25\% to 75\% quantile interval included) we use the `vimpPlot` function. 
+The assess the inclusion proportions for use with variable importance or variable interactions. We also provide some useful functions for extracting these values and for visualizing them. For example, to retrieve a list containing both the variable importance and variable interactions (and associated error metrics) we can use the `viviBart` function. To select either just the importance or just the interactions, we set the `out` argument to 'vimp' or vint' respectively. The `combineFact` argument is discussed in greater detail below. 
+```{r, eval=FALSE}
+# show both vimp and vint
+viviBart(treeData = dbT, combineFact = F, out = 'vivi') 
+```
+
+
+To visualize the inclusion proportion variable importance (with their 25\% to 75\% quantile interval included) we use the `vimpPlot` function. 
 
 ```{r, eval=FALSE}
-# te extract a matrix of inclusion proportions for each variable:
-vimpBart(treeData = dbT)
-
 # plot inclusion proportions of each variable:
 vimpPlot(treeData = dbT, plotType = 'pointGrad')
 
 ```
 
-```{r, echo = F,  out.width = '100%'}
+```{r, echo = F,  out.width = '60%', fig.align='center'}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/vimp1.png", error = FALSE)
 ```
 
-<caption><span id="fig13:fig13">Figure 13: </span>  Inclusion proportions for each variable shown with the 25\% to 75\% quantile interval extending from the points. </caption>
+<caption><span id="fig15:fig15">Figure 15: </span>  Inclusion proportions for each variable shown with the 25\% to 75\% quantile interval extending from the points. </caption>
 
-Similarly, we provide a function for extracting and viewing the inclusion proportions for interactions (this time displayed as a barplot, again with 25\% to 75\% quantile interval included):
 
-```{r, eval=FALSE}
-# te extract a dataframe of inclusion proportions for each variable pair:
-vintBart(treeData = dbT)
-
-# plot inclusion proportions of each variable pair:
-vintPlot(treeData = dbT, plotType = 'barplot')
-
-```
-
-```{r, echo = F,  out.width = '100%'}
-knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/vint1.png", error = FALSE)
-```
-
-<caption><span id="fig14:fig14">Figure 14: </span>  Inclusion proportions for each variable pair shown with the 25\% to 75\% quantile interval extending from the bars </caption>
-
-Our Final method to display the inclusion proprotions is by using a _Letter-value plot_^[Hofmann, H., Wickham, H., & Kafadar, K. (2017). value plots: Boxplots for large data. Journal of Computational and Graphical Statistics, 26(3), 469-477.]. This type of plot is useful for visualizing the distribution of a continuous variable (here variable inclusion proportions), with the inner-most box showing the lower and upper fourths, as with a conventional boxplot, the median value being shown as a black line and outliers as blue triangles. Each extending section is drawn at incremental steps of upper and lower eights, sixteenths and so on until a stopping rule has been reached. The color of each box corresponds to the density of the data with darker shades indicating higher data density.
+An alternative method to display the inclusion proportions is by using a _Letter-value plot_^[Hofmann, H., Wickham, H., & Kafadar, K. (2017). value plots: Boxplots for large data. Journal of Computational and Graphical Statistics, 26(3), 469-477.]. This type of plot is useful for visualizing the distribution of a continuous variable (here variable inclusion proportions), with the inner-most box showing the lower and upper fourths, as with a conventional boxplot, the median value being shown as a black line and outliers as blue triangles. Each extending section is drawn at incremental steps of upper and lower eights, sixteenths and so on until a stopping rule has been reached. The color of each box corresponds to the density of the data with darker shades indicating higher data density.
 
 
 ```{r, eval=FALSE}
@@ -429,19 +412,33 @@ vimpPlot(treeData = dbT, plotType = 'lvp') + coord_flip()
 
 ```
 
-```{r, echo = F,  out.width = '100%'}
+```{r, echo = F,  out.width = '60%', fig.align='center'}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/lvp.png", error = FALSE)
 ```
 
-<caption><span id="fig15:fig15">Figure 15: </span>  Letter-value plot of the Inclusion proportions for each variable. </caption>
+<caption><span id="fig16:fig16">Figure 16: </span>  Letter-value plot of the inclusion proportions for each variable. </caption>
 
-## Null model inclusion proprtions
+Similarly, we provide a function for viewing the inclusion proportions for interactions (this time displayed as a barplot, again with 25\% to 75\% quantile interval included):
+
+```{r, eval=FALSE}
+# plot inclusion proportions of each variable pair:
+vintPlot(treeData = dbT, top = 5)
+
+```
+
+```{r, echo = F,  out.width = '60%', fig.align='center'}
+knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/vint1.png", error = FALSE)
+```
+
+<caption><span id="fig17:fig17">Figure 17: </span>  Inclusion proportions for each variable pair shown with the 25\% to 75\% quantile interval extending from the bars </caption>
+
+## Null model inclusion proportions
 
 In our package we also implement one of the variable selection procedures developed in Bleich et al. (2014)^[Bleich, J., Kapelner, A., George, E. I., & Jensen, S. T. (2014). Variable selection for BART: an application to gene regulation. The Annals of Applied Statistics, 8(3), 1750-1781.], specifically, the so-called _local threshold procedure_. In this method, the proportion of splitting rules is calculated, then the response variable is randomly permuted, which has the effect of breaking the relationship between the response and the covariates. The model is then re-built as a _null_ model using the permuted response. From this, the null proportion, is calculated and a new measure of importance is obtained. 
 
 
-When using this method, there are three key arguments. They are; `numRep`, `numTreesRep`, and `alpha`. `numRep` determines the number of replicates to perform for the BART null model's variable inclusion proportions. Whereas `numTreesRep`, determines the number of trees to be used in the replicates. `alpha` sets the cut-off level for the thresholds. that is, a predictor is deemed important if its variable inclusion proportion exceeds
-the 1 − $\alphs$ quantile of its own null distribution. If setting `shift = TRUE`, the inclusion proportions are shifted by the difference in distance between the quantile and the value of the inclusion proportion point.
+When using this method, there are three key arguments: `numRep`, `numTreesRep`, and `alpha`. `numRep` determines the number of replicates to perform for the BART null model's variable inclusion proportions. Whereas, `numTreesRep` determines the number of trees to be used in the replicates. `alpha` sets the cut-off level for the thresholds. That is, a predictor is deemed important if its variable inclusion proportion exceeds
+the 1 − $\alpha$ quantile of its own null distribution. If setting `shift = TRUE`, the inclusion proportions are shifted by the difference in distance between the quantile and the value of the inclusion proportion point.
 
 ```{r, eval=FALSE}
 localProcedure(model = dbartModel, 
@@ -453,13 +450,96 @@ localProcedure(model = dbartModel,
 
 ```
 
-```{r, echo = F,  out.width = '100%'}
+```{r, echo = F,  out.width = '60%', fig.align='center'}
 knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/local.png", error = FALSE)
 ```
 
-<caption><span id="fig16:fig16">Figure 16: </span> Visualization of the  local procedure variable selection method. The blue lines are the threshold levels determined from the permutation distributions that must be exceeded for a variable to be deemed important. The points are the variable inclusion proportions for the observed data (averaged over a selected number of duplicate BART models). If the observed value is higher than the bar, the variable is deemed important and is displayed as a solid dot; if not, it is displayed as an X. </caption>
+<caption><span id="fig18:fig18">Figure 18: </span> Visualization of the  local procedure variable selection method. The blue lines are the threshold levels determined from the permutation distributions that must be exceeded for a variable to be deemed important. The points are the variable inclusion proportions for the observed data (averaged over a selected number of duplicate BART models). If the observed value is higher than the bar, the variable is deemed important and is displayed as a solid dot; if not, it is displayed as an X. </caption>
+
+### Single Permutation Null Model
+We also provide the functionality for a variable selection approach which creates a null model by permuting the response once, rebuilding the model, and calculating the inclusion proportion on the null model. The final result displayed is the original model's inclusion proportion minus the null inclusion proportion. This function is available for both the importance and the interactions.
+
+```{r, permvimp, eval=FALSE}
+permVimp(model = dbartModel, data = fData, response = 'y')
+
+```
+
+```{r, echo = F,  out.width = '60%', fig.align='center'}
+knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/permvimp.png", error = FALSE)
+```
+<caption><span id="fig19:fig19">Figure 19: </span> Variable importance calculated from permuting the response and rebuilding the model. The importance score is measured as the original model's inclusion proportion minus the null inclusion proportion </caption>
+
+For assessing the interactions using the single permutation method we have:
+```{r, permvint, eval=FALSE}
+permVint(treeData = dbT,model = dbartModel, data = fData, response = 'y', top = 5)
+```
+
+```{r, echo = F,  out.width = '60%', fig.align='center'}
+knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/permvint.png", error = FALSE)
+```
+<caption><span id="fig20:fig20">Figure 20: </span> Variable interactions calculated from permuting the response and rebuilding the model. The interaction score is measured as the original model's inclusion proportion minus the null inclusion proportion </caption>
+
 
 ## Combining Categorical Variables
 
-xxxxxxx
+If any of the variables used to build the BART model are categorical, the aforementioned BART packages replace the categorical variables with $d$ dummy variables, where $d$ is the number of factor levels. However, we provide the functionality to adjust the inclusion proportions for variable importance and interaction by aggregating over factor levels. This provides a complete picture of the importance of a factor, rather than that associated with individual factor levels.
 
+In the following example, we build a BART model using the `BART` package where one of the covariates is a factor and extract the tree data.
+
+```{r, results =  'hide'}
+library(BART)
+
+data(iris)
+set.seed(1701)
+bartModel <- wbart(x.train = iris[,2:5],
+                   y.train = iris[,1],
+                   nskip = 100,
+                   ndpost = 1000,
+                   nkeeptreedraws = 1000,
+                   ntree = 20
+)
+
+btt <- extractTreeData(model = bartModel, data = iris)
+```
+
+As species is a factor with three levels, it is split into three dummy variables when building the model. For a practical example of what this looks like, we examine the variable importance inclusion proportions both before and after aggregating over the factor levels.  
+
+```{r, warning=FALSE}
+# extract the vimp data
+vimpData <- viviBart(treeData = btt, combineFact = FALSE, out = 'vimp')
+vimpData[,1:3] # looking at the relevant columns 
+```
+
+
+In the above output we can see that species has been split into three dummy variables. Plotting the data now would include each dummy factor.
+
+```{r, eval=FALSE}
+vimpPlot(treeData = btt, combineFact = FALSE)
+```
+
+```{r, echo = F,  out.width = '60%', fig.align='center'}
+knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/vimpDum.png", error = FALSE)
+```
+<caption><span id="fig21:fig21">Figure 21: </span>Variable inclusion proportions with dummy factors included.</caption>
+
+However, if we set `combineFact = TRUE`, we then apply our adjustment and aggregate over the factor levels. Applying the same process as above now yields:
+
+```{r, warning=FALSE}
+# extract the vimp data
+vimpData <- viviBart(treeData = btt, combineFact = TRUE, out = 'vimp')
+vimpData[,1:3] # looking at the relevant columns 
+```
+
+
+In the above output species has been combined into a single variable. Plotting the variable importance now looks like:
+
+```{r, eval=FALSE}
+vimpPlot(treeData = btt, combineFact = TRUE)
+```
+```{r, echo = F,  out.width = '60%', fig.align='center'}
+knitr::include_graphics("/Users/alaninglis/Desktop/vigplots/vimpDum2.png", error = FALSE)
+```
+<caption><span id="fig22:fig22">Figure 22: </span>Variable inclusion proportions after agregating over the dummy factor levels</caption>
+
+
+This method of aggregating over the factor levels can also be applied to the interactions and in any functions that contain the `combineFact` argument.
