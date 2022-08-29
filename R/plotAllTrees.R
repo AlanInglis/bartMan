@@ -390,7 +390,7 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
 
   if (is.null(iter) & is.null(treeNo)) {
     df <- df
-    message("Both iter and treeNo are NULL. Not recommended for plotting all trees")
+    message("Both iter and treeNo are NULL. Recommend filtering trees")
     #%>%
      # filter(iteration == maxIter)
   } else if (is.null(iter) & !is.null(treeNo)) {
