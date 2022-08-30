@@ -272,16 +272,16 @@ for any of the aforementioned BART packages.</p>
 <h2 class="hasAnchor">
 <a href="#vivi-vsup" class="anchor"></a>VIVI-VSUP</h2>
 <p>In Inglis et al. (2022)<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a>, the authors propose using a heatmap to
-display both importance and interactions simultaneously, where the
-importance values are on the diagonal and interaction values on the
-off-diagonal. We adapt the heatmap displays of importance and
-interactions to include the uncertainty by use of a VSUP. To begin we
-fist generate a list of two matrices. One containing the raw inclusion
-proportions and one containing the uncertainties. Here we use the
-coefficient of variation as our uncertainty measure. However the
-standard deviation or standard error is also available by setting
-<code>metricError = 'SD'</code> or <code>metricError = 'SE'</code>, in
-the code below.</p>
+display both variable importance (VImp) and variable interactions (VInt)
+simultaneously (together VIVI), where the importance values are on the
+diagonal and interaction values on the off-diagonal. We adapt the
+heatmap displays of importance and interactions to include the
+uncertainty by use of a VSUP. To begin we fist generate a list of two
+matrices. One containing the raw inclusion proportions and one
+containing the uncertainties. Here we use the coefficient of variation
+as our uncertainty measure. However the standard deviation or standard
+error is also available by setting <code>metricError = 'SD'</code> or
+<code>metricError = 'SE'</code>, in the code below.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vsupMat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBartMatrix.html">viviBartMatrix</a></span><span class="op">(</span><span class="va">dbT</span>,
                           type <span class="op">=</span> <span class="st">'vsup'</span>,
