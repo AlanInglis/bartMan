@@ -100,9 +100,6 @@ The final result displayed is the original model's IP minus the null IP." />
     <li>
       <a href="../articles/bartManVignette.html">bartMan</a>
     </li>
-    <li>
-      <a href="../articles/bartVisVignette.html">bartMan</a>
-    </li>
   </ul>
 </li>
       </ul>
@@ -139,7 +136,8 @@ The final result displayed is the original model's IP minus the null IP.</p>
   <span class='va'>treeData</span>,
   <span class='va'>response</span>,
   numTreesPerm <span class='op'>=</span> <span class='cn'>NULL</span>,
-  plotType <span class='op'>=</span> <span class='st'>"barplot"</span>
+  plotType <span class='op'>=</span> <span class='st'>"barplot"</span>,
+  top <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -167,11 +165,17 @@ The final result displayed is the original model's IP minus the null IP.</p>
 As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 variables to used in the model. If NULL, then the number of trees from the true model is used.</p></td>
     </tr>
+    <tr>
+      <th>top</th>
+      <td><p>Display only the top X interactions.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A variable interaction plot.</p>
+    <p>A variable interaction plot. Note that for a dbarts fit, due to the internal workings of
+dbarts, the null model is hard-coded to 20 trees, a burn-in of 100, and 1000 iterations. Both a
+BART and bartMachine null model will extract the identical parameters from the original model.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
