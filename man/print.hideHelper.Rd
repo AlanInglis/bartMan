@@ -6,6 +6,11 @@
 \usage{
 \method{print}{hideHelper}(x, ...)
 }
+\arguments{
+\item{x}{A data frame of trees}
+
+\item{...}{Extra parameters}
+}
 \description{
 This function hides some columns from the print out
 but are still accessible via indexing.

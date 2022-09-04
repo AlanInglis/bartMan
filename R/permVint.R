@@ -13,16 +13,11 @@
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 #' variables to used in the model. If NULL, then the number of trees from the true model is used.
 #' @param top Display only the top X interactions.
-#'
 #' @return A variable interaction plot. Note that for a dbarts fit, due to the internal workings of
 #' dbarts, the null model is hard-coded to 20 trees, a burn-in of 100, and 1000 iterations. Both a
 #' BART and bartMachine null model will extract the identical parameters from the original model.
 #'
 #'
-#' @importFrom BART wbart
-#' @importFrom dbarts bart
-#' @importFrom bartMachine bartMachine
-#' @importFrom bartMachine get_var_counts_over_chain
 #' @importFrom dplyr tibble
 #' @importFrom dplyr mutate
 #' @importFrom dplyr arrange
@@ -37,7 +32,6 @@ permVint <- function(model,
                      treeData,
                      response,
                      numTreesPerm = NULL,
-                     plotType = 'barplot',
                      top = NULL) {
 
   # get og model vints
@@ -107,6 +101,13 @@ permBartVint <- function(model, data, response, numTreesPerm = NULL) {
 
 # BART --------------------------------------------------------------------
 permBartVint.bart <- function(model, data,  response, numTreesPerm = NULL){
+
+  if (!requireNamespace("dbarts", quietly = TRUE)) {
+    stop("Package \"dbarts\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+
   # get some information
   nTree <- model$call$ntree
   nMCMC  <- model$call$ndpost
@@ -150,16 +151,18 @@ permBartVint.bart <- function(model, data,  response, numTreesPerm = NULL){
 }
 
 permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL) {
+
+   if (!requireNamespace("bartMachine", quietly = TRUE)) {
+    stop("Package \"bartMachine\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   # get some information
   nTree <-  model$num_trees
   nMCMC <-  model$num_iterations_after_burn_in
   nVar  <- model$p
   varNames <- colnames(model$X)
   burnIn <-  model$num_burn_in
-
-  # get var inc props
-  varProp <- bartMachine::get_var_counts_over_chain(model)
-  varPropAvg <- proportions(varProp, 1)
 
   # null model info
   responseIdx <- which((names(data) %in% response))
@@ -173,7 +176,7 @@ permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <- bartMachine(X = x,
+    bmodelPerm <- bartMachine::bartMachine(X = x,
                               y = yPerm,
                               num_trees = numTreesPerm,
                               flush_indices_to_save_RAM = FALSE,
@@ -195,6 +198,11 @@ permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL
 }
 
 permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
+
+  if (!requireNamespace("BART", quietly = TRUE)) {
+    stop("Package \"BART\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
   # get model info
 

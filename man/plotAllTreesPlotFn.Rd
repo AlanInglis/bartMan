@@ -8,7 +8,7 @@ plotAllTreesPlotFn(
   treeList,
   sampleSize = NULL,
   sizeNode = TRUE,
-  pal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+  pal = rev(colorRampPalette(c("steelblue", "#f7fcfd", "orange"))(5)),
   fillBy = NULL,
   selectedVars = NULL,
   removeStump = FALSE,
@@ -28,9 +28,16 @@ plotAllTreesPlotFn(
 
 \item{fillBy}{Which parameter to colour the terminal nodes. Either 'response' or 'mu'.}
 
+\item{selectedVars}{A vector of selected variables to display.}
+
+\item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
+remain in plot and are coloured grey.}
+
 \item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
 Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
 If combineFact = TRUE, then the dummy factors are combined into their original factor.}
+
+\item{treeData}{A list of tree attributes created by exctractTreeData function.}
 
 \item{name}{Variable names}
 }

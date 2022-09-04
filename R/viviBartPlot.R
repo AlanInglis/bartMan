@@ -18,10 +18,11 @@
 #' @param max_light The maximum light level.
 #' @param pow_light The power of light level.
 #' @param label legend label for the uncertainty measure.
-#' @import vivid
-#' @importFrom ggnewscale new_scale_fill
 #'
-#' @return TBD
+#' @importFrom ggnewscale new_scale_fill
+#' @importFrom stats as.dist
+#'
+#' @return Either a heatmap, VSUp, or quantile heatmap plot.
 #' @export
 #'
 #'
@@ -48,8 +49,8 @@ viviBartPlot <- function(matrix,
     )((0:7)/7)
   }
   if(is.null(impPal)){
-    impPal <-  RColorBrewer::brewer.pal(9, 'GnBu')
-    impPal <- impPal[-1]
+    impPal <-  c("#E0F3DB", "#CCEBC5", "#A8DDB5", "#7BCCC4",
+                 "#4EB3D3", "#2B8CBE", "#0868AC", "#084081")
 
   }
 
@@ -76,8 +77,8 @@ viviBartPlot <- function(matrix,
 
 # Main function:
 viviPlot <- function(matrix,
-                     intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
-                     impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
+                     intPal = NULL,
+                     impPal = NULL,
                      intLims = NULL,
                      impLims = NULL,
                      uncIntLims = NULL,
@@ -100,22 +101,28 @@ viviPlot <- function(matrix,
 # -------------------------------------------------------------------------
 
 viviPlot.standardMat <-function(matrix,
-                                intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
-                                impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
+                                intPal = NULL,
+                                impPal = NULL,
                                 intLims = NULL,
                                 impLims = NULL,
                                 uncIntLims = NULL,
                                 uncImpLims = NULL,
                                 angle = 0,
-                                border = FALSE){
+                                border = FALSE,
+                                unc_levels = 4,
+                                max_desat = 0.6,
+                                pow_desat = 0.2,
+                                max_light = 0.6,
+                                pow_light = 1,
+                                label = NULL){
 
-  p <- vivid::viviHeatmap(mat = matrix,
-                          intPal = intPal,
-                          impPal = impPal,
-                          intLims = intLims,
-                          impLims = impLims,
-                          angle = angle,
-                          border = border)
+  p <- bartHeatmap(mat = matrix,
+                   intPal = intPal,
+                   impPal = impPal,
+                   intLims = intLims,
+                   impLims = impLims,
+                   angle = angle,
+                   border = border)
   return(p)
 }
 
@@ -155,15 +162,15 @@ viviPlot.vsup <- function(matrix,
   # set the limits for actual importance
   if (is.null(impLims)) {
     impLims <- range(diag(actualMatrix))
-    limitsImp <- range(labeling::rpretty(impLims[1], impLims[2]))
+    limitsImp <- range(pretty(c(impLims[1], impLims[2])))#range(labeling::rpretty(impLims[1], impLims[2]))
   } else {
     limitsImp <- impLims
   }
 
   # set the limits for actual interactions
   if (is.null(intLims)) {
-    intLims <- range(as.dist(actualMatrix))
-    limitsInt <- range(labeling::rpretty(intLims[1], intLims[2]))
+    intLims <- range(stats::as.dist(actualMatrix))
+    limitsInt <-  range(pretty(c(intLims[1], intLims[2])))#range(labeling::rpretty(intLims[1], intLims[2]))
   } else {
     limitsInt <- intLims
   }
@@ -172,15 +179,15 @@ viviPlot.vsup <- function(matrix,
   # set the limits for uncert importance
   if (is.null(uncImpLims)) {
     uncImpLims <- range(diag(uncertMatrix))
-    limitsImpUnc <- range(labeling::rpretty(uncImpLims[1], uncImpLims[2]))
+    limitsImpUnc <-  range(pretty(c(uncImpLims[1], uncImpLims[2])))#range(labeling::rpretty(uncImpLims[1], uncImpLims[2]))
   } else {
     limitsImpUnc <- uncImpLims
   }
 
   # set the limits for uncert interactions
   if (is.null(uncIntLims)) {
-    uncIntLims <- range(as.dist(uncertMatrix))
-    limitsIntUnc <- range(labeling::rpretty(uncIntLims[1], uncIntLims[2]))
+    uncIntLims <- range(stats::as.dist(uncertMatrix))
+    limitsIntUnc <-  range(pretty(c(uncIntLims[1], uncIntLims[2])))#range(labeling::rpretty(uncIntLims[1], uncIntLims[2]))
   } else {
     limitsIntUnc <- uncIntLims
   }
@@ -245,8 +252,8 @@ viviPlot.vsup <- function(matrix,
   # Create dataframe  -------------------------------------------------------
 
   # turn into dataframe for plotting
-  meltedMat <- vivid:::as.data.frame.vivid(actualMatrix)
-  meltedUnc <- vivid:::as.data.frame.vivid(uncertMatrix)
+  meltedMat <- as.data.frame.bartMan(actualMatrix)
+  meltedUnc <- as.data.frame.bartMan(uncertMatrix)
 
   # add uncertainty to actual dataframe
   meltedMat$Uncert <- meltedUnc$Value
@@ -346,7 +353,13 @@ viviPlot.quantiles <- function(matrixList,
                                uncIntLims = NULL,
                                uncImpLims = NULL,
                                angle = 0,
-                               border = FALSE
+                               border = FALSE,
+                               unc_levels = 4,
+                               max_desat = 0.6,
+                               pow_desat = 0.2,
+                               max_light = 0.6,
+                               pow_light = 1,
+                               label = NULL
 ){
 
   # get each matirx
@@ -361,15 +374,15 @@ viviPlot.quantiles <- function(matrixList,
     # set the limits for actual importance
     if (is.null(impLims)) {
       impLims <- range(diag(matrix))
-      limitsImp <- range(labeling::rpretty(impLims[1], impLims[2]))
+      limitsImp <-  range(pretty(c(impLims[1], impLims[2])))#range(labeling::rpretty(impLims[1], impLims[2]))
     } else {
       limitsImp <- impLims
     }
 
     # set the limits for actual interactions
     if (is.null(intLims)) {
-      intLims <- range(as.dist(matrix))
-      limitsInt <- range(labeling::rpretty(intLims[1], intLims[2]))
+      intLims <- range(stats::as.dist(matrix))
+      limitsInt <-  range(pretty(c(intLims[1], intLims[2])))#range(labeling::rpretty(intLims[1], intLims[2]))
     } else {
       limitsInt <- intLims
     }
@@ -398,7 +411,7 @@ viviPlot.quantiles <- function(matrixList,
 
   createDataFrame <- function(matrix){
 
-    meltedMat <- vivid:::as.data.frame.vivid(matrix)
+    meltedMat <- as.data.frame.bartMan(matrix)
     # get int vals
     dfInt <- meltedMat[which(meltedMat$Measure == "Vint"), ]
     # get imp vals
@@ -419,6 +432,12 @@ viviPlot.quantiles <- function(matrixList,
 
 
   # Create plots -----------------------------------------------------------
+
+  if(angle > 10){
+    hj <- 0
+  }else{
+    hj <- 0.5
+  }
 
 
   plotfun <- function(dat, lims){
@@ -461,7 +480,7 @@ viviPlot.quantiles <- function(matrixList,
         panel.grid.minor = element_blank()
       ) +
       theme(axis.text = element_text(size = 11)) +
-      theme(axis.text.x = element_text(angle = angle, hjust = 0)) +
+      theme(axis.text.x = element_text(angle = angle, hjust = hj)) +
       theme(aspect.ratio = 1)
 
     if(border){
@@ -497,4 +516,134 @@ viviPlot.quantiles <- function(matrixList,
 
   return(allPlots)
 }
+
+
+as.data.frame.bartMan <- function(x, row.names = NULL, optional = FALSE, ...) {
+
+  matrix <- x
+  df <- cbind(expand.grid(dimnames(matrix), stringsAsFactors = FALSE), value = as.vector(matrix) )
+
+  # get the row and column index
+  Row <- as.vector(row(matrix))
+  Col <- as.vector(col(matrix))
+
+  # Create measure column
+  df$Measure <- with(df, ifelse(Var1 == Var2, "Vimp", "Vint"))
+
+  # cbind them together
+  viviDataFrame <- cbind(df, Row, Col)
+
+  # set names
+  names(viviDataFrame)[1] <- "Variable_1"
+  names(viviDataFrame)[2] <- "Variable_2"
+  names(viviDataFrame)[3] <- "Value"
+
+  return(viviDataFrame)
+}
+
+
+bartHeatmap <- function(mat,
+                        intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+                        impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n = 100)),
+                        intLims = NULL,
+                        impLims = NULL,
+                        border = FALSE,
+                        angle = 0) {
+
+
+
+
+  # Small set-up ------------------------------------------------------------
+
+  # get label names
+  labelNames <- colnames(mat)
+
+  # Limits ------------------------------------------------------------------
+
+  # set the limits for importance
+  if (is.null(impLims)) {
+    impLims <- range(diag(mat))
+    limitsImp <- range(pretty(c(impLims[1], impLims[2])))#range(labeling::rpretty(impLims[1], impLims[2]))
+  } else {
+    limitsImp <- impLims
+  }
+
+  # set the limits for interactions
+  if (is.null(intLims)) {
+    intLims <- range(stats::as.dist(mat))
+    limitsInt <- range(pretty(c(intLims[1], intLims[2])))#range(labeling::rpretty(intLims[1], intLims[2]))
+  } else {
+    limitsInt <- intLims
+  }
+
+
+
+  # Set up plot -------------------------------------------------------
+
+  df <- as.data.frame.bartMan(mat)
+  # get int vals
+  dfInt <- df[which(df$Measure == "Vint"), ]
+  # get imp vals
+  dfImp <- df[which(df$Measure == "Vimp"), ]
+
+
+  # Create Plot ------------------------------------------------------------
+
+  # order factors
+  dfInt$Variable_1 <- factor(dfInt$Variable_1, levels = labelNames)
+  dfInt$Variable_2 <- factor(dfInt$Variable_2, levels = labelNames)
+
+  if(angle > 10){
+    hj <- 0
+  }else{
+    hj <- 0.5
+  }
+
+
+  p <- ggplot(dfInt, aes(.data[["Variable_1"]], .data[["Variable_2"]])) +
+    geom_tile(aes(fill = .data[["Value"]])) +
+    scale_x_discrete(position = "top") +
+    scale_y_discrete(limits = rev(levels(dfInt$Variable_2))) +
+    scale_fill_gradientn(
+      colors = intPal, limits = limitsInt, name = "Vint",
+      guide = guide_colorbar(
+        order = 1,
+        frame.colour = "black",
+        ticks.colour = "black"
+      ), oob = scales::squish
+    ) +
+    new_scale_fill() +
+    geom_tile(data = dfImp,
+              aes(fill = .data[["Value"]])
+    ) +
+    scale_fill_gradientn(
+      colors = impPal, limits = limitsImp, name = "Vimp",
+      guide = guide_colorbar(
+        order = 2,
+        frame.colour = "black",
+        ticks.colour = "black"
+      ), oob = scales::squish
+    ) +
+    xlab("") +
+    ylab("") +
+    theme_light() +
+    theme(
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank()
+    ) +
+    theme(axis.text = element_text(size = 11)) +
+    theme(axis.text.x = element_text(angle = angle, hjust = hj)) +
+    theme(aspect.ratio = 1)
+
+  if(border){
+    p$layers[[2]]$aes_params$colour = 'black'
+    p$layers[[2]]$aes_params$size = 0.2
+  }
+
+
+  return(p)
+}
+
+
+
 

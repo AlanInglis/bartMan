@@ -41,6 +41,37 @@ guide_colorfan(
   ...
 )
 }
+\arguments{
+\item{title}{Title}
+
+\item{title.x.position}{Title x position}
+
+\item{title.y.position}{Title y position}
+
+\item{title.theme}{Title theme}
+
+\item{title.hjust}{Title hjust}
+
+\item{title.vjust}{Title vjust}
+
+\item{label}{Label}
+
+\item{label.theme}{Label theme}
+
+\item{barwidth}{Barwidth}
+
+\item{barheight}{Barheight}
+
+\item{nbin}{Number of bins}
+
+\item{reverse}{Reverse}
+
+\item{order}{order}
+
+\item{available_aes}{Available aesthetics}
+
+\item{...}{Extra paramters}
+}
 \description{
 Colourfan guide
 }

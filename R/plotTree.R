@@ -23,7 +23,6 @@
 #' @importFrom dplyr filter
 #' @importFrom dplyr n
 #' @importFrom stats setNames
-#' @importFrom tibble as_tibble
 #' @importFrom tidygraph bfs_dist
 #'
 #' @export

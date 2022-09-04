@@ -10,14 +10,10 @@
 #' @param numTreesPerm The number of trees to be used in the null model.
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 #' variables to used in the model. If NULL, then the number of trees from the true model is used.
-#'
+#' @param plotType Either a bar plot ('barplot') or a point plot ('pointGrad')
 #' @return A variable selection plot.
 #'
 #'
-#' @importFrom BART wbart
-#' @importFrom dbarts bart
-#' @importFrom bartMachine bartMachine
-#' @importFrom bartMachine get_var_counts_over_chain
 #' @importFrom dplyr tibble
 #' @importFrom dplyr mutate
 #' @importFrom dplyr arrange
@@ -56,6 +52,11 @@ perBart <- function(model, data, response, numTreesPerm = NULL) {
 
 perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
+  if (!requireNamespace("BART", quietly = TRUE)) {
+    stop("Package \"BART\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   # get model info
   modelTrees <- model$treedraws$trees
   modelInfo <- unlist(strsplit(modelTrees, " "))[1:3]
@@ -81,7 +82,9 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <- wbart(
+
+
+    bmodelPerm <- BART:: wbart(
       x.train = x,
       y.train = yPerm,
       nskip = burnIn,
@@ -89,6 +92,7 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
       nkeeptreedraws = nMCMC,
       ntree = numTreesPerm
     )
+
 
     varPropsPerm <- bmodelPerm$varcount
     varPropsPerm <- proportions(varPropsPerm, 1)
@@ -105,6 +109,11 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 # dbarts ------------------------------------------------------------------
 
 perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
+
+  if (!requireNamespace("dbarts", quietly = TRUE)) {
+    stop("Package \"dbarts\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
   # get some information
   nTree <- model$call$ntree
@@ -129,7 +138,7 @@ perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <- bart(x.train = x,
+    bmodelPerm <- dbarts::bart(x.train = x,
                        y.train = yPerm,
                        ntree = numTreesPerm,
                        keeptrees = TRUE,
@@ -158,6 +167,12 @@ perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
 
 perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
 
+  if (!requireNamespace("bartMachine", quietly = TRUE)) {
+    stop("Package \"bartMachine\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
+
   # get some information
   nTree <-  model$num_trees
   nMCMC <-  model$num_iterations_after_burn_in
@@ -181,14 +196,12 @@ perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <- bartMachine(X = x,
+    bmodelPerm <- bartMachine::bartMachine(X = x,
                               y = yPerm,
                               num_trees = numTreesPerm,
                               flush_indices_to_save_RAM = FALSE,
                               num_burn_in = burnIn,
                               num_iterations_after_burn_in = nMCMC)
-
-
 
 
     varPropPerm <- bartMachine::get_var_counts_over_chain(bmodelPerm)
@@ -235,6 +248,12 @@ permPlotFn <- function(dat, plotType = 'barplot'){
         legend.key.size = unit(0.5, "cm")
       )
   } else if (plotType == "pointGrad") {
+
+    if (!requireNamespace("ggforce", quietly = TRUE)) {
+      stop("Package \"ggforce\" needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
+
     p <- points %>%
       arrange(mean) %>%
       mutate(Variable = factor(variable, unique(variable))) %>%

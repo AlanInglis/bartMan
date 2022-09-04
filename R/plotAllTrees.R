@@ -13,13 +13,13 @@
 #' @param fillBy Which parameter to colour the terminal nodes. Either 'response' or 'mu'.
 #' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 #' remain in plot and are coloured grey.
+#' @param selectedVars A vector of selected variables to display.
 #' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
 #' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
 #' If combineFact = TRUE, then the dummy factors are combined into their original factor.
 #' @return A list containing vectors of the indices of observations from leaf nodes.
 #'
-#' @importFrom gridExtra arrangeGrob
-#' @importFrom ggraph ggraph
+#' @import ggraph
 #' @importFrom igraph gsize
 #' @importFrom cowplot get_legend
 #' @importFrom cowplot plot_grid
@@ -36,8 +36,9 @@
 #' @importFrom dplyr row_number
 #' @importFrom dplyr pull
 #' @importFrom dplyr n
-#' @importFrom dplyr add_tally
 #' @importFrom stats setNames
+#' @importFrom rlang :=
+#' @importFrom grDevices colorRampPalette
 #'
 #' @export
 
@@ -47,7 +48,7 @@ plotAllTrees <- function(treeData,
                          sampleSize = NULL,
                          cluster = NULL,
                          sizeNode = TRUE,
-                         pal = RColorBrewer::brewer.pal(9, "Purples"),
+                         pal = rev(colorRampPalette(c('steelblue', '#f7fcfd', 'orange'))(5)),
                          fillBy = NULL,
                          selectedVars = NULL,
                          removeStump = FALSE,
@@ -89,7 +90,6 @@ plotAllTrees <- function(treeData,
 
 # -------------------------------------------------------------------------
 
-#' @export
 # Main plot function:
 plotAll <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
   UseMethod("plotAll")
@@ -296,7 +296,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
       ))
 
       # get second group of edges
-      edgeSet2 <- setNames(rev(data.frame(embed(trees$node[!trees$isLeaf], 2))), c("from", "to"))
+      edgeSet2 <- setNames(rev(data.frame(stats::embed(trees$node[!trees$isLeaf], 2))), c("from", "to"))
 
       # bind them together
       edges <- rbind(edgeSet1, edgeSet2)
@@ -452,7 +452,7 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
       to = df_tree$to
     )
     # delete NAs from result
-    res <- na.omit(res)
+    res <- stats::na.omit(res)
     return(res)
   })
 
@@ -516,11 +516,15 @@ clusterTrees <- function(treeList) {
 #' @param sampleSize Sample the tree list.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
+#' @param selectedVars A vector of selected variables to display.
 #' @param fillBy Which parameter to colour the terminal nodes. Either 'response' or 'mu'.
+#' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
+#' remain in plot and are coloured grey.
 #' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
 #' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
 #' If combineFact = TRUE, then the dummy factors are combined into their original factor.
 #' @param name Variable names
+#' @param treeData A list of tree attributes created by exctractTreeData function.
 #'
 #'
 #' @return A list containing vectors of the indices of observations from leaf nodes.
@@ -530,7 +534,7 @@ clusterTrees <- function(treeList) {
 plotAllTreesPlotFn <- function(treeList,
                                sampleSize = NULL,
                                sizeNode = TRUE,
-                               pal =  rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+                               pal =  rev(colorRampPalette(c('steelblue', '#f7fcfd', 'orange'))(5)),
                                fillBy = NULL,
                                selectedVars = NULL,
                                removeStump = FALSE,
@@ -599,7 +603,7 @@ plotAllTreesPlotFn <- function(treeList,
   if(!is.null(fillBy)){
   if(fillBy == 'response'){
     lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode))))
-    lims <- labeling::rpretty(lims[1], lims[2])
+    lims <- pretty(c(lims[1], lims[2]))
     lims <- c(min(lims), max(lims))
     nam <- 'Mean \nResponse'
   } else if(fillBy == "mu"){
@@ -634,8 +638,13 @@ plotAllTreesPlotFn <- function(treeList,
 
     namedOthers <- setNames('#e6e6e6',  "Others")
     legColours <- c(nodeColorsImp, namedOthers)
-    dfLegend <- reshape::melt(legColours) %>%
-      tibble::rownames_to_column(var = 'varName')
+    # dfLegend <- reshape::melt(legColours) %>%
+    #   tibble::rownames_to_column(var = 'varName')
+
+    dfLegend <- utils::stack(legColours)
+    colnames(dfLegend) <- c('value', 'varName')
+    dfLegend$varName <- as.character(dfLegend$varName)
+
     dfLegend$val <- rep(1, times = length(dfLegend$varName))
     dfLegend$varName <- factor(dfLegend$varName, levels = names(legColours))
     pLeg <- ggplot(dfLegend, aes(x = varName, y = val, fill = varName)) +
@@ -651,7 +660,7 @@ plotAllTreesPlotFn <- function(treeList,
       }
     }
   }else{
-    nodeNames <- unique(na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
+    nodeNames <- unique(stats::na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
     nodeNames <- sort(nodeNames)
     nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNames)), nodeNames)
 
@@ -706,11 +715,14 @@ plotAllTreesPlotFn <- function(treeList,
       allPlots[[i]]$data <- allPlots[[i]]$data[-2, ]
     }
   }
-  n <- length(allPlots)
-  nRow <- floor(sqrt(n))
-  allTreesPlot <- arrangeGrob(grobs=allPlots, nrow=nRow)
+  # n <- length(allPlots)
+  # nRow <- floor(sqrt(n))
+  # allTreesPlot <- arrangeGrob(grobs=allPlots, nrow=nRow)
+  # cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(0.9, 0.13), ncol = 2)
 
-  cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(0.9, 0.13), ncol = 2)
+  treesPlot <- cowplot::plot_grid(plotlist = allPlots)
+  legendPlot <- cowplot::plot_grid(legend)
+  cowplot::plot_grid(treesPlot, legendPlot, rel_widths = c(0.9, 0.13))
 
 
 }
@@ -723,7 +735,7 @@ plotFun <- function(List,
                     color = NULL,
                     n,
                     sizeNode = TRUE,
-                    pal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
+                    pal = rev(colorRampPalette(c('steelblue', '#f7fcfd', 'orange'))(5)),
                     range,
                     name,
                     fill) {

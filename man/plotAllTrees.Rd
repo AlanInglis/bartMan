@@ -11,7 +11,7 @@ plotAllTrees(
   sampleSize = NULL,
   cluster = NULL,
   sizeNode = TRUE,
-  pal = RColorBrewer::brewer.pal(9, "Purples"),
+  pal = rev(colorRampPalette(c("steelblue", "#f7fcfd", "orange"))(5)),
   fillBy = NULL,
   selectedVars = NULL,
   removeStump = FALSE,
@@ -34,6 +34,8 @@ plotAllTrees(
 \item{pal}{A palette to colour the terminal nodes.}
 
 \item{fillBy}{Which parameter to colour the terminal nodes. Either 'response' or 'mu'.}
+
+\item{selectedVars}{A vector of selected variables to display.}
 
 \item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 remain in plot and are coloured grey.}

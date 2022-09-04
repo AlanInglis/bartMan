@@ -13,6 +13,8 @@ treeBarPlot(
 )
 }
 \arguments{
+\item{treeData}{A list of tree attributes created using the extractTreeData function.}
+
 \item{iter}{The selected iteration}
 
 \item{treeNo}{The selected tree number.}
@@ -21,8 +23,6 @@ treeBarPlot(
 
 \item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 remain in plot and are coloured grey.}
-
-\item{treeList}{A list of trees created using the treeList function.}
 }
 \value{
 A barplot plot.

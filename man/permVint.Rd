@@ -4,15 +4,7 @@
 \alias{permVint}
 \title{permVint}
 \usage{
-permVint(
-  model,
-  data,
-  treeData,
-  response,
-  numTreesPerm = NULL,
-  plotType = "barplot",
-  top = NULL
-)
+permVint(model, data, treeData, response, numTreesPerm = NULL, top = NULL)
 }
 \arguments{
 \item{model}{Model created from either the BART, dbarts or bartMachine packages.}

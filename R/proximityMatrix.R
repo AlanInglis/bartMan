@@ -13,7 +13,6 @@
 #'
 #' @return A matrix containing proximity values.
 #'
-#' @importFrom utils combn
 #' @importFrom dplyr select
 #' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
@@ -79,7 +78,7 @@ proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = T
   allIndex <- dfTerm$whichNode
 
   # turn into matrix
-  resMat <- tcrossprod(table(stack(allIndex)))
+  resMat <- tcrossprod(table(utils::stack(allIndex)))
   diag(resMat) <- 0
 
   # normalize
@@ -98,7 +97,7 @@ proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = T
 # reorder proximity matrix ------------------------------------------------
 
 proxReorder <- function(d) {
-  prox <- as.dist(d)
+  prox <- stats::as.dist(d)
   score <- apply(as.matrix(prox), 1, max)
   o <- DendSer::dser(-prox, -score, cost = DendSer::costLS)
   res <- d[o, o]

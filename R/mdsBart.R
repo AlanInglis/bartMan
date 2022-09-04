@@ -18,7 +18,6 @@
 #' of coordinates. The returning result is then a clustered average of each point.
 #'
 #' @import ggplot2
-#' @importFrom smacof Procrustes
 #' @importFrom dplyr %>%
 #' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
@@ -27,11 +26,11 @@
 #' @importFrom dplyr group_by
 #' @importFrom dplyr summarize
 #' @importFrom dplyr tibble
-#' @importFrom RColorBrewer brewer.pal
 #' @importFrom ggiraph geom_polygon_interactive
 #' @importFrom ggiraph ggiraph
 #' @importFrom ggiraph opts_hover_inv
 #' @importFrom ggiraph opts_hover
+#' @importFrom grDevices rainbow
 #'
 #' @export
 #'
@@ -59,7 +58,7 @@ mdsBart <- function(
 
 
   # set target matrix
-  targetFit <- cmdscale(1 - target, eig = TRUE, k = 2)
+  targetFit <- stats::cmdscale(1 - target, eig = TRUE, k = 2)
   iter <- treeData$nMCMC
 
   # get all rotation matrices
@@ -78,7 +77,7 @@ mdsBart <- function(
   fitRot <- list()
   suppressWarnings(
     for(i in 1:length(rotationMatrix)){
-      fitRot[[i]] <- cmdscale(1 - rotationMatrix[[i]], eig = TRUE, k = 2)
+      fitRot[[i]] <- stats::cmdscale(1 - rotationMatrix[[i]], eig = TRUE, k = 2)
     }
   )
 
@@ -87,7 +86,7 @@ mdsBart <- function(
   allProc <- list()
   suppressWarnings(
     for(i in 1:length(fitRot)){
-      allProc[[i]] <- smacof::Procrustes(targetFit$points, fitRot[[i]]$points)
+      allProc[[i]] <- ProcrustesFn(targetFit$points, fitRot[[i]]$points)
     }
   )
 
@@ -139,8 +138,8 @@ mdsBart <- function(
   dfM <-  dfRotateAll %>%
     arrange(rowNo) %>%
     group_by(rowNo) %>%
-    summarise(kmX = bind_rows(kmeans(x, 1)[2]),
-              kmY = bind_rows(kmeans(y, 1)[2]))
+    summarise(kmX = bind_rows(stats::kmeans(x, 1)[2]),
+              kmY = bind_rows(stats::kmeans(y, 1)[2]))
   dfM <- tibble(rowNo = dfM$rowNo,
                 #pals = dfM$palette,
                 mX = dfM$kmX$centers[,1],
@@ -151,7 +150,7 @@ mdsBart <- function(
   factorLevel <- as.factor(dfRotateAll$factResponse)
   nlevs <- nlevels(factorLevel)
   suppressWarnings(
-    pal <-  RColorBrewer::brewer.pal(nlevs, "Set1")
+    pal <-  grDevices::rainbow(length(nlevs))#RColorBrewer::brewer.pal(nlevs, "Set1")
   )
   pal <- pal[as.numeric(dfRotateAll$factResponse)]
   pal <- pal[as.numeric(dfM$rowNo)]
@@ -161,7 +160,8 @@ mdsBart <- function(
   # set the limits
   rangeRot <- rbind(dfM$mX, dfM$mY)
   limitsRot <- range(rangeRot)
-  limitsRot <- range(labeling::rpretty(limitsRot[1], limitsRot[2]))
+  limitsRot <- range(pretty(c(limitsRot[1], limitsRot[2])))
+    #range(labeling::rpretty(limitsRot[1], limitsRot[2]))
 
 
   suppressMessages(
@@ -170,7 +170,8 @@ mdsBart <- function(
         # set the limits
         rangeRot <- rbind(dfRotateAll$x, dfRotateAll$y)
         limitsRotInt <- range(rangeRot)
-        limitsRotInt <- range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
+        limitsRotInt <- range(pretty(c(limitsRotInt[1], limitsRotInt[2])))
+         # range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
 
         p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
           #geom_text(label = dfRotateAll$rowNo) +
@@ -216,7 +217,8 @@ mdsBart <- function(
         if(showGroup){
           rangeRot <- rbind(dfRotateAll$x, dfRotateAll$y)
           limitsRotInt <- range(rangeRot)
-          limitsRotInt <- range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
+          limitsRotInt <- range(pretty(c(limitsRotInt[1], limitsRotInt[2])))
+            #range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
 
 
           p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
@@ -249,7 +251,8 @@ mdsBart <- function(
         }else{
           rangeRot1 <- rbind(dfRotateAll$x, dfRotateAll$y)
           limitsRotInt <- range(rangeRot1)
-          limitsRotInt <- range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
+          limitsRotInt <- range(pretty(c(limitsRotInt[1], limitsRotInt[2])))
+            #range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
 
           p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
             xlab("Dimension 1") +
@@ -284,4 +287,42 @@ mdsBart <- function(
   #return(pFinal)
   suppressWarnings(print(pFinal))
 }
+
+
+ProcrustesFn <- function (X, Y) {
+    n <- dim(X)[1]
+    E <- diag(1, nrow = n)
+    eins <- rep(1, n)
+    k <- 1/n
+    Z <- E - k * eins %*% t(eins)
+    C <- t(X) %*% Z %*% Y
+    s <- svd(C)
+    f <- diag(s$d)
+    P <- s$u
+    Q <- s$v
+    T <- Q %*% t(P)
+    streck <- sum(diag((t(X) %*% Z %*% Y %*% T)))/sum(diag((t(Y) %*%
+                                                              Z %*% Y)))
+    trans <- as.vector(k * t(X - streck * Y %*% T) %*% eins)
+    Yhut <- streck * Y %*% T + eins %*% t(trans)
+    colnames(Yhut) <- rownames(T) <- colnames(T) <- names(trans) <- colnames(Y)
+    dX <- stats::dist(X)
+    dY <- stats::dist(Y)
+    dYhat <- stats::dist(Yhut)
+    cong <- sum(dX * dY)/(sqrt(sum(dX^2)) * sqrt(sum(dY^2)))
+    alien <- sqrt(1 - cong^2)
+    pairdist <- sort(sqrt(rowSums((X - Yhut)^2)))
+    res <- list(X = X, Y = Y, Yhat = Yhut, translation = trans,
+                dilation = streck, rotation = T, confdistX = dX, confdistY = dY,
+                confdistYhat = dYhat, congcoef = cong, aliencoef = alien,
+                pairdist = pairdist, call = match.call())
+    class(res) <- "procr"
+    return(res)
+  }
+
+
+
+
+
+
 

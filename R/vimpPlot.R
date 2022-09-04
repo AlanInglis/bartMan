@@ -23,9 +23,6 @@
 #' @importFrom dplyr %>%
 #' @importFrom dplyr arrange
 #' @importFrom dplyr mutate
-#' @importFrom ggforce geom_link
-#' @importFrom reshape melt
-#' @importFrom lvplot geom_lv
 #'
 #'
 #' @export
@@ -95,6 +92,12 @@ vimpPlot <- function(treeData,
         legend.key.size = unit(0.5, "cm")
       )
   } else if (plotType == "pointGrad") {
+
+    if (!requireNamespace("ggforce", quietly = TRUE)) {
+      stop("Package \"ggforce\" needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
+
     p <- vImp %>%
       arrange(imp) %>%
       mutate(Variable = factor(Variable, unique(Variable))) %>%
@@ -118,13 +121,21 @@ vimpPlot <- function(treeData,
       labs(x = "", y = "Importance") +
       theme(legend.position = "none")
   } else if (plotType == "lvp") {
-    suppressMessages(
-      dfvimp <- reshape::melt(vimp)
-    )
 
-    pal <- rev(colorRampPalette(RColorBrewer::brewer.pal(9,name = 'Blues'))(10))
+    if (!requireNamespace("lvplot", quietly = TRUE)) {
+      stop("Package \"lvplot\" needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
 
-     p <- ggplot(dfvimp, aes(reorder(variable, value), value)) +
+
+    dfvimp <- utils::stack(as.data.frame(vimp))
+    colnames(dfvimp) <- c('value', 'variable')
+
+   # pal <- rev(colorRampPalette(RColorBrewer::brewer.pal(9,name = 'Blues'))(10))
+   pal <- c("#08306B", "#084D96", "#1B69AF", "#3787C0", "#58A1CE",
+            "#81BADA", "#ABCFE5", "#CBDEF0","#E0ECF7", "#F7FBFF")
+
+     p <- ggplot(dfvimp, aes(stats::reorder(variable, value), value)) +
                # aes(x = variable, y = value)) +
       lvplot::geom_lv(aes(fill = ..LV..),
         conf = 0.5,

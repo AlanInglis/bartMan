@@ -2,7 +2,7 @@
 #'
 #' @description Creates a barplot displaying the frequency of different tree structures.
 #'
-#' @param treeList A list of trees created using the treeList function.
+#' @param treeData A list of tree attributes created using the extractTreeData function.
 #' @param topTrees integer value to show the top x variables.
 #' @param iter The selected iteration
 #' @param treeNo The selected tree number.
@@ -13,11 +13,9 @@
 #'
 #'
 #' @import ggplot2
-#' @importFrom purrr map_chr
 #' @importFrom purrr map2
 #' @importFrom tidygraph activate
 #' @importFrom tidygraph tbl_graph
-#' @importFrom tidyr separate
 #' @importFrom tidyr replace_na
 #' @importFrom dplyr as_tibble
 #' @importFrom dplyr arrange
@@ -27,8 +25,6 @@
 #' @importFrom ggraph ggraph
 #' @importFrom ggraph geom_node_tile
 #' @importFrom ggraph geom_node_text
-#' @importFrom patchwork area
-#' @importFrom patchwork plot_layout
 #' @importFrom cowplot get_legend
 #' @importFrom cowplot plot_grid
 #'
@@ -105,7 +101,7 @@ treeBarPlot <- function(treeData,
   freqDf <-  freqs %>%
     slice(1) %>%
     arrange(-val) %>%
-    rename(frequency = val)  # frequency tibble
+    dplyr::rename(frequency = val)  # frequency tibble
   freqDf$treeNum <- seq(1:nrow(freqDf)) # add tree number
 
 
@@ -155,7 +151,7 @@ treeBarPlot <- function(treeData,
 
 
   # set node colours
-  nodenames <- unique(na.omit(unlist(lapply(treeList, .%>%activate(nodes) %>% pull(var)))))
+  nodenames <- unique(stats::na.omit(unlist(lapply(treeList, .%>%activate(nodes) %>% pull(var)))))
   nodenames <- sort(nodenames)
   nodecolors <- setNames(scales::hue_pal(c(0,360)+15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 

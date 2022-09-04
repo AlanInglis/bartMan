@@ -8,6 +8,8 @@ extractTreeData(model, data)
 }
 \arguments{
 \item{model}{Model created from either the BART, dbarts or bartMachine packages.}
+
+\item{data}{a data frame used to build the BART model.}
 }
 \value{
 A list of every tree and its attributes.

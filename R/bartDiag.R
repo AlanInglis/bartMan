@@ -30,13 +30,7 @@
 #' @importFrom dplyr filter
 #' @importFrom dplyr summarise
 #' @importFrom dplyr tibble
-#' @importFrom dplyr first
-#' @importFrom tibble as_tibble
 #' @import ggplot2
-#' @importFrom ROCR prediction
-#' @importFrom ROCR performance
-#' @importFrom bartMachine investigate_var_importance
-#' @importFrom condvis2 CVpredict
 #' @export
 
 bartDiag <- function(model,
@@ -121,9 +115,6 @@ bartDiag <- function(model,
 #' @importFrom dplyr filter
 #' @importFrom dplyr summarise
 #' @importFrom dplyr tibble
-#' @importFrom dplyr first
-#' @importFrom tibble as_tibble
-#' @importFrom bartMachine investigate_var_importance
 #' @export
 
 
@@ -401,17 +392,16 @@ bartVimp <- function(model, combineFact = FALSE, data) {
 #' by default the Youden index is shown.
 #' @param pNorm apply pnorm to the y-hat data
 #' @param showInterval LOGICAL if TRUE then show 5\% and 95\% quantile intervals.
-#'
+#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
+#' inclusion proportions.
 #' @return A selection of diagnostic plots
 #'
 #' @import ggplot2
 #' @importFrom patchwork area
 #' @importFrom patchwork plot_layout
-#' @importFrom ROCR prediction
-#' @importFrom ROCR performance
-#' @importFrom bartMachine investigate_var_importance
-#' @importFrom caret confusionMatrix
-#' @importFrom condvis2 CVpredict
+#' @importFrom stats predict
 #'
 #' @export
 
@@ -422,6 +412,12 @@ bartClassifDiag <- function(model,
                             pNorm = FALSE,
                             showInterval = TRUE,
                             combineFact = FALSE){
+
+
+  if (!requireNamespace("ROCR", quietly = TRUE)) {
+    stop("Package \"ROCR\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
   responseVals <- response
 
@@ -436,19 +432,19 @@ bartClassifDiag <- function(model,
   }
 
   if(pNorm){
-    yhatTrain <- pnorm(yhatTrain)
+    yhatTrain <- stats::pnorm(yhatTrain)
   }
 
   # get prediction using ROCR package:
-  pred <- prediction(yhatTrain, responseVals)
+  pred <- ROCR::prediction(yhatTrain, responseVals)
 
   # get auc value
-  auc <- performance(pred, "auc")
+  auc <- ROCR::performance(pred, "auc")
   auc <- auc@y.values[[1]]
   aucLab <- print(paste0("AUC: ", round(auc, 5)))
 
   # get false/true positive rates
-  perfTF <- performance(pred, "tpr", "fpr")
+  perfTF <- ROCR::performance(pred, "tpr", "fpr")
 
   # create dataframe for ROC plot
   dfROC <- data.frame(fpr = perfTF@x.values[[1]],
@@ -457,8 +453,8 @@ bartClassifDiag <- function(model,
   # calculate Youden's Index
   youdenIndex <- function(pred) {
 
-    sens <- performance(pred, measure = "sens")@y.values[[1]]
-    spec <- performance(pred, measure = "spec")@y.values[[1]]
+    sens <- ROCR::performance(pred, measure = "sens")@y.values[[1]]
+    spec <- ROCR::performance(pred, measure = "spec")@y.values[[1]]
     #youdenVal <- mean(sens) + mean(spec) - 1
     youdenVal <- max(sens + spec -1)
 
@@ -486,13 +482,13 @@ bartClassifDiag <- function(model,
   dfHist$group = ifelse(dfHist$vals < threshold, "low", "high")
 
   # create data fro precision-recall plot
-  predRec <- performance(pred, "prec", "rec")
+  predRec <- ROCR::performance(pred, "prec", "rec")
 
   dfPR <- data.frame(Recall = predRec@x.values[[1]],
                      Precision = predRec@y.values[[1]])
 
   # get aucpr value
-  aucpr <- performance(pred, "aucpr")
+  aucpr <- ROCR::performance(pred, "aucpr")
   aucpr <- aucpr@y.values[[1]]
   aucprLab <- print(paste0("AUCPR: ", round(aucpr, 5)))
 
@@ -557,7 +553,7 @@ bartROC <- function(data, threshold, label){
 
 bartPrecRec <- function(data, label) {
 
-  data <- na.omit(data)
+  data <- stats::na.omit(data)
   p <- ggplot(data, aes(x = Recall, y = Precision)) +
     geom_line() +
     xlab("Recall") +
@@ -685,7 +681,11 @@ bartVimpClass <- function(model, combineFact = FALSE, data){
 confMat <- function(model, data, response){
 
   respIdx <- which(sapply(data, identical, y = response))
-  pred <- round(as.numeric(condvis2::CVpredict(model, data[, -respIdx])), 0)
+  if(class(model) == 'bart' || class(model) == 'pbart' || class(model) == 'wbart'){
+    pred <-  round(colMeans(stats::predict(model, data[, -respIdx])), 0)
+  }else{
+    pred <- round(stats::predict(model, data[, -respIdx]), 0)
+  }
 
   if(class(model) == 'pbart' || class(model) == 'bart'){
     pred <-  ifelse(pred == 2, 1, 0)

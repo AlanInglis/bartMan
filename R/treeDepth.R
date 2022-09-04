@@ -12,7 +12,7 @@
 #' @importFrom dplyr summarize
 #' @importFrom dplyr group_by
 #' @importFrom dplyr ungroup
-#' @importFrom tibble as_tibble
+#' @importFrom dplyr as_tibble
 #' @export
 
 treeDepth <- function(treeData) {

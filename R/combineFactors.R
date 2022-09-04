@@ -67,6 +67,18 @@ combineFactors <- function(treeData, data2){
 
 }
 
+#' combineFactorsDiag
+#'
+#' @description If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' These functions combine the factor levels so that the inclusion proportions
+#' are aggregated so the importance can be assessed for the the entire factor.
+#'
+#' @param data A data frame
+#' @param df2 A second data frame that has the factor split into individual levels.
+#' @param model a BART model
+#'
+#'
 #' @export
 combineFactorsDiag <- function(data, df2, model){
 
@@ -123,16 +135,36 @@ return(df2)
 
 }
 
+
+
+#' combineFactorsInt
+#'
+#' @description If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' These functions combine the factor levels so that the inclusion proportions
+#' are aggregated so the importance can be assessed for the the entire factor.
+#'
+#' @param propData A data frame
+#' @param dataOG A second data frame that has the factor split into individual levels.
+#'
+#' @importFrom dplyr %>%
+#' @importFrom stats na.omit
+#'
 #' @export
 
 # dfCompare <- vimpsTest
 combineFactorsInt <- function(propData, dataOG){
 
+  str_ext <- function(string, pattern) {
+    regmatches(string, gregexpr(pattern, string))
+  }
+
+
   propData <- propData %>%
     dplyr::as_tibble(rownames = "id") %>%
     tidyr::pivot_longer(-id) %>%
-    dplyr::mutate(name = purrr::map_chr(stringr::str_extract_all(name, paste(c(colnames(dataOG), ":"), collapse = "|")),
-                          paste0, collapse = "")) %>%
+    dplyr::mutate(name = purrr::map_chr(str_ext(name, paste(c(colnames(dataOG), ":"), collapse = "|")),
+                                        paste0, collapse = "")) %>%
     dplyr::group_by(id, name) %>%
     dplyr::summarise(value = sum(value)) |>
     dplyr::na_if("") %>%

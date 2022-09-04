@@ -20,10 +20,6 @@
 #' @importFrom dplyr %>%
 #' @importFrom dplyr arrange
 #' @importFrom dplyr mutate
-#' @importFrom ggforce geom_link
-#' @importFrom reshape melt
-#' @importFrom lvplot geom_lv
-#' @importFrom stringr str_split
 #' @importFrom purrr map
 #'
 #'
@@ -35,6 +31,7 @@ vintPlot <- function(treeData,
                       combineFact = FALSE,
                       plotType = 'barplot',
                       top = NULL){
+
 
 
   df <- treeData$structure
@@ -95,7 +92,7 @@ vintPlot <- function(treeData,
 
 
   # turn into df
-  dfVint <- as.matrix(bind_rows(listVint))
+  dfVint <- as.matrix(dplyr::bind_rows(listVint))
   dfVint[is.na(dfVint)] <- 0
 
 
@@ -124,22 +121,24 @@ vintPlot <- function(treeData,
   dfVint <- allCombMat
 
   # reorder names to make symmetrical
-  vintNames <- reshape2::melt(dfVint) %>%
-    tibble::rownames_to_column()
+  vintNames <- utils::stack(as.data.frame(dfVint))
+  colnames(vintNames) = c('value', 'Var2')
+  vintNames <- vintNames[,2:1]
 
   dfName <- data.frame(nam = unique(vintNames$Var2))
 
-
+  dfName$nam <- as.character(dfName$nam)
   newNames <- dfName %>%
     mutate(nam = map(
-      stringr::str_split(nam, pattern = ":"),
+      strsplit(nam, ":", fixed = T),
       ~ sort(.x) %>% trimws(.) %>% paste0(., collapse = ':')
     ))
+
 
   colnames(dfVint) <- newNames$nam
 
   # add symmetrical columns together
-  dfVint <- t(apply(dfVint, 1, \(x) ave(x, names(x), FUN = sum)))
+  dfVint <- t(apply(dfVint, 1, \(x) stats::ave(x, names(x), FUN = sum)))
 
   # get proportions
   propMatVint <- proportions(dfVint, 1)
@@ -152,19 +151,19 @@ vintPlot <- function(treeData,
   propMatVintMean <- colMeans(propMatVint)
 
   # turn into df
-  dfProps <- reshape2::melt(propMatVintMean)
-  dfProps$var <- names(propMatVintMean)
-  colnames(dfProps) <- c( "props", "var")
+  dfProps <- utils::stack(propMatVintMean)
+  colnames(dfProps) = c('props', 'var')
+  dfProps$var <- as.character(dfProps$var)
+
 
 
   # add counts
   countMean <- colMeans(dfVint)
 
   # turn into df
-  dfCountMean <- reshape2::melt(countMean)
-  dfCountMean$var <- names(propMatVintMean)
-  colnames(dfCountMean) <- c( "count", "var")
-
+  dfCountMean <- utils::stack(countMean)
+  colnames(dfCountMean) = c('count', 'var')
+  dfCountMean$var <- as.character(dfCountMean$var)
 
   # put together
   dfPropCount <- data.frame(
@@ -177,26 +176,35 @@ vintPlot <- function(treeData,
   # Get uncertainty metrics -------------------------------------------------
 
   vintSD <- apply(propMatVint, 2, sd)
-  vintSD <- vintSD  |>
-    reshape2::melt()  |>
-    mutate(var = names(propMatVintMean))
-  colnames(vintSD) <- c( "SD", "var")
+
+  vintSD <- utils::stack(vintSD)
+  colnames(vintSD) = c('SD', 'var')
+  vintSD$var <- as.character(vintSD$var)
 
   vintSE <- vintSD$SD/sqrt(treeData$nMCMC)
   names(vintSE) <- vintSD$var
-  vintSE <- vintSE  |>
-    reshape2::melt()  |>
-    mutate(var = names(propMatVintMean))
-  colnames(vintSE) <- c( "SE", "var")
+
+  vintSE <- utils::stack(vintSE)
+  colnames(vintSE) = c('SE', 'var')
+  vintSE$var <- as.character(vintSE$var)
+
 
   # get quantiles of proportions
   vint25 <- apply(propMatVint, 2, function(x) quantile(x, c(.25)))
   vint50 <- apply(propMatVint, 2, function(x) quantile(x, c(.50)))
   vint75 <- apply(propMatVint, 2, function(x) quantile(x, c(.75)))
 
-  vint25 <- vint25  |> reshape2::melt()  |> mutate(var = names(propMatVintMean))
-  vint50 <- vint50  |> reshape2::melt()  |> mutate(var = names(propMatVintMean))
-  vint75 <- vint75  |> reshape2::melt()  |> mutate(var = names(propMatVintMean))
+  vint25 <- utils::stack(vint25)
+  colnames(vint25) <- c('value', 'var')
+  vint25$var <- as.character(vint25$var)
+
+  vint50 <- utils::stack(vint50)
+  colnames(vint50) <- c('value', 'var')
+  vint50$var <- as.character(vint50$var)
+
+  vint75 <- utils::stack(vint75)
+  colnames(vint75) <- c('value', 'var')
+  vint75$var <- as.character(vint75$var)
 
   # put together in df
   errorDF <- data.frame(
@@ -214,7 +222,7 @@ vintPlot <- function(treeData,
   dfPropCount$Q50 <- errorDF$q50
   dfPropCount$Q75 <- errorDF$q75
 
-
+  # the matrix of values
   dfFinal <- dfPropCount %>%
     group_by(var) %>%
     mutate(count = count,
@@ -262,6 +270,11 @@ vintPlot <- function(treeData,
       )
   } else if (plotType == "pointGrad") {
 
+    if (!requireNamespace("ggforce", quietly = TRUE)) {
+      stop("Package \"ggforce\" needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
+
     propFinal <- transform(dfFinal, valToPlot = ifelse(Q25 == 0 & Q75 == 0, 0, propMean))
 
     p <- dfFinal %>%
@@ -288,16 +301,32 @@ vintPlot <- function(treeData,
 
   } else if (plotType == "lvp") {
 
+    if (!requireNamespace("lvplot", quietly = TRUE)) {
+      stop("Package \"lvplot\" needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
+
     dfVint <- as.data.frame(dfVint)
-    suppressMessages(
-      lvpVint <- reshape::melt(dfVint)
-    )
+    # suppressMessages(
+    #   lvpVint <- reshape::melt(dfVint)
+    # )
+
+    uniNames <- unique(colnames(dfVint))
+    dfVint <- dfVint[,uniNames]
+
+    lvpVint <- utils::stack(as.data.frame(dfVint))
+    colnames(lvpVint) <- c('value', 'variable')
+    lvpVint$rowID <- as.numeric(lvpVint$variable)
 
     lvpVint <- lvpVint %>%
       arrange(-value)
+
     ###
-    pal <- rev(colorRampPalette(RColorBrewer::brewer.pal(9,name = 'Blues'))(10))
-    p <- ggplot(lvpVint, aes(reorder(variable, value), value)) +
+    pal <- c("#08306B", "#084D96", "#1B69AF", "#3787C0", "#58A1CE",
+             "#81BADA", "#ABCFE5", "#CBDEF0","#E0ECF7", "#F7FBFF")
+
+
+    p <- ggplot(lvpVint, aes(stats::reorder(variable, value), value)) +
       lvplot::geom_lv(aes(fill = ..LV..),
                       conf = 0.5,
                       outlier.colour = "blue",
@@ -317,3 +346,9 @@ vintPlot <- function(treeData,
 
 return(p)
 }
+
+
+
+
+
+

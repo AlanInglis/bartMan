@@ -8,8 +8,7 @@
 #'
 #' @return A plot of proximity values.
 #'
-#' @importFrom reshape melt
-#' @importFrom ggplot2 ggplot
+#' @import ggplot2
 #' @export
 
 
@@ -19,14 +18,20 @@ plotProximity <- function(matrix,
 
   # Set the limits
   if (is.null(limit)) {
-    limit <- range(as.dist(matrix))
-    limit <- range(labeling::rpretty(limit[1], limit[2]))
+    limit <- range(stats::as.dist(matrix))
+    limit <- range(pretty(c(limit[1], limit[2])))
+      #range(labeling::rpretty(limit[1], limit[2]))
   }
 
-  # melt the matrox
-  suppressWarnings(
-    df <- reshape::melt(matrix)
-  )
+  # melt the matrix
+  # suppressWarnings(
+  #   df <- reshape::melt(matrix)
+  # )
+  df <- utils::stack(as.data.frame(matrix))
+  colnames(df) <- c('value', 'values.1')
+  df$values.1 <- as.integer(as.character(df$values.1))
+  df$values <- colnames(matrix)
+  df$values <- as.integer(df$values)
 
   # order axis names
   varNames <- unique(df$values)

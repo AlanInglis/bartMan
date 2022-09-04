@@ -15,10 +15,6 @@
 #' @return A variable selection plot using the local procedure method.
 #'
 #'
-#' @importFrom BART wbart
-#' @importFrom dbarts bart
-#' @importFrom bartMachine bartMachine
-#' @importFrom bartMachine get_var_props_over_chain
 #' @importFrom dplyr tibble
 #' @import ggplot2
 #'
@@ -46,6 +42,11 @@ lProd <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shi
 # BART --------------------------------------------------------------------
 
 lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
+
+  if (!requireNamespace("BART", quietly = TRUE)) {
+    stop("Package \"BART\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
   # get some information
   modelTrees <- model$treedraws$trees
@@ -77,7 +78,7 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <-  wbart(x.train = x,
+    bmodelPerm <-  BART::wbart(x.train = x,
                          y.train = yPerm,
                          nskip = burnIn,
                          ndpost = nMCMC, # MCMC iters
@@ -162,6 +163,11 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
 
 lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
+  if (!requireNamespace("dbarts", quietly = TRUE)) {
+    stop("Package \"dbarts\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
+
   # get some information
   nTree <- model$call$ntree
   nMCMC  <- model$call$ndpost
@@ -188,7 +194,7 @@ lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <- bart(x.train = x,
+    bmodelPerm <- dbarts::bart(x.train = x,
                        y.train = yPerm,
                        ntree = numTreesRep,
                        keeptrees = TRUE,
@@ -269,6 +275,10 @@ lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5
 
 lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
+  if (!requireNamespace("bartMachine", quietly = TRUE)) {
+    stop("Package \"bartMachine\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
   # get some information
 
   nTree <-  model$num_trees
@@ -295,7 +305,7 @@ lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alph
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
-    bmodelPerm <- bartMachine(X = x,
+    bmodelPerm <- bartMachine::bartMachine(X = x,
                               y = yPerm,
                               num_trees = numTreesRep,
                               flush_indices_to_save_RAM = FALSE,

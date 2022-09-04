@@ -10,11 +10,8 @@
 #'
 #' @return A faceted group of density plots
 #'
-#' @importFrom tidygraph activate
 #' @importFrom dplyr %>%
 #' @importFrom dplyr select
-#' @importFrom dplyr bind_rows
-#' @importFrom ggridges geom_density_ridges
 #' @import ggplot2
 #'
 #' @export
@@ -30,7 +27,7 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
   tt <- treeData$structure %>%
     ungroup() %>%
     select(var, splitValue) %>%
-    na.omit()
+    stats::na.omit()
 
   # create plotting order to match order of data
   nam <- treeData$varName
@@ -52,7 +49,7 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
   } else if (display == "ridge") {
     dPlot <- tt %>%
       ggplot(aes(x = splitValue, y = var, fill = stat(x))) +
-      geom_density_ridges(aes(fill = var, alpha = 0.1)) +
+      ggridges::geom_density_ridges(aes(fill = var, alpha = 0.1)) +
       ylab("Variable") +
       xlab("Split value") +
       theme_bw() +
@@ -68,15 +65,27 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
       theme(legend.position = "none")
   }else if(display == 'both1'){
 
+    if (!requireNamespace("ggridges", quietly = TRUE)) {
+      stop("Package \"ggridges\" needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
+
     dataIdx <- which((names(data) %in% varNames))
     dat <- data[, dataIdx]
 
-    meltDat <- melt(dat)
+    meltDat <- utils::stack(dat)
+    colnames(meltDat) <- c('value', 'variable')
     names(tt) <- c('variable', 'value')
 
     dataList <- list(meltDat, tt)
-    names(dataList)  <- c('data', 'split  \nvalue')
-    dfList <- plyr::ldply(dataList)
+    names(dataList)  <- c('data', 'split_nvalue')
+    #dfList <- plyr::ldply(dataList)
+
+    dfList <- rbind(dataList$data, dataList$split_value)
+    dfList$.id <- c(rep('data', length(dataList$data$value)),
+                 rep('split  \nvalue', length(dataList$split_value$value)))
+
+    dfList <- dfList |> select(.id, value, variable)
 
    dPlot <- ggplot(dfList) +
       geom_density(aes(x = value, fill = .id), alpha = 0.5) +
@@ -86,20 +95,31 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
       xlab("Split value") +
       theme_bw()
   }else if(display == 'both2'){
+    if (!requireNamespace("ggridges", quietly = TRUE)) {
+      stop("Package \"ggridges\" needed for this function to work. Please install it.",
+           call. = FALSE)
+    }
 
     dataIdx <- which((names(data) %in% varNames))
     dat <- data[, dataIdx]
 
-    meltDat <- reshape2::melt(dat)
+    meltDat <- utils::stack(dat)
+    colnames(meltDat) <- c('value', 'variable')
     names(tt) <- c('variable', 'value')
 
     dataList <- list(meltDat, tt)
-    names(dataList)  <- c('data', 'split  \nvalue')
-    dfList <- plyr::ldply(dataList)
+    names(dataList)  <- c('data', 'split_value')
+    #dfList <- plyr::ldply(dataList)
+
+    dfList <- rbind(dataList$data, dataList$split_value)
+    dfList$.id <- c(rep('data', length(dataList$data$value)),
+                    rep('split  \nvalue', length(dataList$split_value$value)))
+
+    dfList <- dfList |> select(.id, value, variable)
 
     dPlot <- dfList %>%
       ggplot(aes(x = value, y = .id, fill = stat(x))) +
-      geom_density_ridges(aes(fill = .id, alpha = 0.1), panel_scaling = F) +
+      ggridges::geom_density_ridges(aes(fill = .id, alpha = 0.1), panel_scaling = F) +
       facet_wrap(~variable)+
       ylab("") +
       xlab("Value") +

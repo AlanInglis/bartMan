@@ -13,17 +13,6 @@
 #'
 #' @return A list of dataframes of VIVI summaries.
 #'
-#' @importFrom dplyr %>%
-#' @importFrom dplyr group_by
-#' @importFrom dplyr ungroup
-#' @importFrom dplyr mutate
-#' @importFrom dplyr distinct
-#' @importFrom dplyr select
-#' @importFrom dplyr rename
-#' @importFrom tibble rownames_to_column
-#' @importFrom stringr str_extract_all
-#' @importFrom stringr str_glue
-#' @importFrom purrr map_chr
 #'
 #' @export
 #'

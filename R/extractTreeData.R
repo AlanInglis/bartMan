@@ -4,14 +4,10 @@
 #' created by either the BART, dbarts or bartMachine packages.
 #'
 #' @param model Model created from either the BART, dbarts or bartMachine packages.
-#'
+#' @param data a data frame used to build the BART model.
 #' @return A list of every tree and its attributes.
 #'
 #'
-#' @importFrom readr read_table
-#' @importFrom readr cols
-#' @importFrom readr col_integer
-#' @importFrom readr col_double
 #' @importFrom purrr map_df
 #' @importFrom dplyr tibble
 #' @importFrom dplyr left_join
@@ -21,25 +17,16 @@
 #' @importFrom dplyr ungroup
 #' @importFrom dplyr coalesce
 #' @importFrom stats complete.cases
-#' @importFrom dplyr one_of
-#' @importFrom dplyr group_split
 #' @importFrom dplyr filter
 #' @importFrom dplyr summarize
+#' @importFrom utils read.table
 #'
 #' @importFrom dplyr rename
 #'
-#' @importFrom bartMachine extract_raw_node_data
 #' @importFrom rrapply rrapply
-#' @importFrom purrr transpose
-#' @importFrom purrr flatten
-#' @importFrom stringr str_c
-#' @importFrom tidyr fill
 #' @importFrom tidyr pivot_longer
 #' @importFrom tidyr pivot_wider
-#' @importFrom dplyr arrange
 #' @importFrom dplyr as_tibble
-#' @importFrom data.table rowid
-#' @importFrom rJava .jcall
 #'
 #' @export
 
@@ -79,21 +66,11 @@ extractTrees.wbart <- function(model, data){
 
   # extracting tree structure
   trees <- list()
-  trees$structure <- suppressWarnings(
-    readr::read_table(
-      file = modelTrees,
-      col_names = c("node", "var", "splitValue", "leafValue"),
-      col_types =
-        readr::cols(
-          node = readr::col_integer(),
-          var = readr::col_integer(),
-          splitValue = readr::col_integer(),
-          leaf = readr::col_double()
-        ),
-      skip = 1,
-      na = c("")
-    )
-  )
+  trees$structure <- utils::read.table(text = modelTrees,
+                               skip = 1,
+                               fill = NA,
+                               col.names = c("node", "var", "splitValue", "leafValue"))
+
 
 
 
@@ -183,7 +160,7 @@ extractTrees.wbart <- function(model, data){
   # Add a label column
   trees$structure$label <- ifelse(trees$structure$isLeaf,
                                   as.character(round(trees$structure$leafValue, digits = 2)),
-                                  paste(trees$structure$var, " ≤ ", round(trees$structure$splitValue, digits = 2))
+                                  paste(trees$structure$var, " \U2264 ", round(trees$structure$splitValue, digits = 2))
   )
   # Add parent column
   trees$structure$parent <- parent(trees$structure$node)
@@ -293,7 +270,7 @@ extractTrees.bart <- function(model, data){
   trees$structure <- transform(trees$structure, splitValue = ifelse(isLeaf == FALSE, value, NA_integer_))
   trees$structure <- transform(trees$structure, varName = ifelse(var < 0, NA, var))
   trees$structure$varName <- varNames[trees$structure$varName]
-  trees$structure <- transform(trees$structure, label = ifelse(is.na(varName), value, paste(varName, value, sep = " ≤ ")))
+  trees$structure <- transform(trees$structure, label = ifelse(is.na(varName), value, paste(varName, value, sep = " \U2264 ")))
   trees$structure <-  trees$structure %>%
     mutate(value = coalesce(splitValue, leafValue))
 
@@ -303,7 +280,7 @@ extractTrees.bart <- function(model, data){
     mutate(node = row_number()) %>%
     ungroup() %>%
     mutate(var = varName) %>%
-    rename(iteration = sample, treeNum = tree) %>%
+    dplyr::rename(iteration = sample, treeNum = tree) %>%
     select( - varName)
 
   # reorder columns
@@ -397,7 +374,9 @@ extractTrees.bartMachine <- function(model, data){
     pivot_longer(cols = 3:(nCol-1), values_drop_na = TRUE, names_repair = "unique") %>%
     filter(grepl('depth|isLeaf|is_stump|string_location|y_pred|splitValue|splitAttributeM', value...5)) %>%
     select(-name) %>%
-    mutate(rn = rowid(L1, L2, value...5)) %>%
+   # mutate(rn = rowid(L1, L2, value...5)) %>%
+    group_by(L1, L2, value...5) %>% mutate(rn = row_number()) |>
+    ungroup() |>
     pivot_wider(names_from = value...5, values_from = value...3) %>%
     select(-rn) %>% as_tibble()
   )
@@ -450,7 +429,7 @@ extractTrees.bartMachine <- function(model, data){
     mutate(value = coalesce(splitValue, y_pred))
 
   # add label column
-  df <- transform(df, label = ifelse(is.na(splitValue), value, paste(var, value, sep = " ≤ ")))
+  df <- transform(df, label = ifelse(is.na(splitValue), value, paste(var, value, sep = " \U2264 ")))
 
   # add new column defining the 'to', for the nodes 'from-to'
   df <- df %>%
@@ -487,7 +466,7 @@ extractTrees.bartMachine <- function(model, data){
   df$treeNum <- as.numeric(df$treeNum)
 
   # add depth column
-  df <- rename(df, c('depthAll'= 'depth'))
+  df <- dplyr::rename(df, c('depthAll'= 'depth'))
 
   df <- df %>%
     ungroup() %>%
@@ -577,7 +556,7 @@ evalNode <- function(df, x, v) {
 extract_raw_node_dataSP <- function (bart_machine, g = 1, iter)
 {
 
-  raw_data_java = .jcall(bart_machine$java_bart_machine, "[LbartMachine/bartMachineTreeNode;",
+  raw_data_java = rJava::.jcall(bart_machine$java_bart_machine, "[LbartMachine/bartMachineTreeNode;",
                          "extractRawNodeInformation", as.integer(g - 1), simplify = TRUE)
 
   raw_data <- vector('list', iter)
@@ -586,9 +565,13 @@ extract_raw_node_dataSP <- function (bart_machine, g = 1, iter)
 }
 
 
-# recursivly go through java object
+# recursively go through java object
 bMachineNode <- function (node_java)
 {
+  if (!requireNamespace("bartMachine", quietly = TRUE)) {
+    stop("Package \"bartMachine\" needed for this function to work. Please install it.",
+         call. = FALSE)
+  }
 
   BAD_FLAG_INT = -2147483647
   BAD_FLAG_DOUBLE = -1.7976931348623157e+308
@@ -628,13 +611,13 @@ bMachineNode <- function (node_java)
   }
 
 
-  if (!is.jnull(node_java$left)) {
+  if (!rJava::is.jnull(node_java$left)) {
     node_data$left = bMachineNode(node_java$left)
   }
   else {
     node_data$left = NA
   }
-  if (!is.jnull(node_java$right)) {
+  if (!rJava::is.jnull(node_java$right)) {
     node_data$right = bMachineNode(node_java$right)
   }
   else {
@@ -648,6 +631,8 @@ bMachineNode <- function (node_java)
 #' print.hideHelper
 #' @description This function hides some columns from the print out
 #' but are still accessible via indexing.
+#' @param x A data frame of trees
+#' @param ... Extra parameters
 #' @export
 
 print.hideHelper <- function(x, ...) {

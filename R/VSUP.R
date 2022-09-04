@@ -1,31 +1,7 @@
-#' VSUP
-#'
-#' Functions from 'multiscales' package to create VSUP plots
-#'
-#'
-#' @import ggplot2
-#' @importFrom dplyr tibble
-#' @importFrom scales rescale
-#' @importFrom scales censor
-#' @importFrom purrr transpose
-#' @importFrom scales as.trans
-#' @importFrom grid is.grob
-#'
-
-
-
-
-# library(grid)
-# library(scales)
-# library(tibble)
-# library(purrr)
-# library(gtable)
-# library(reshape2)
-# library(ggplot2)
-
 
 
 # -------------------------------------------------------------------------
+
 
 zip <- function(...) purrr::transpose(list(...))
 
@@ -47,8 +23,8 @@ zip <- function(...) purrr::transpose(list(...))
 train_bivariate <- function(new, existing = NULL) {
 
   if (is.null(new)) return(existing)
-  range1 <- train_continuous(unlist(transpose(new)[[1]]), existing$range1)
-  range2 <- train_continuous(unlist(transpose(new)[[2]]), existing$range2)
+  range1 <- train_continuous(unlist(purrr::transpose(new)[[1]]), existing$range1)
+  range2 <- train_continuous(unlist(purrr::transpose(new)[[2]]), existing$range2)
   tibble(range1, range2)
 }
 
@@ -91,6 +67,8 @@ bivariate_range <- function() {
 #' @importFrom scales censor
 #' @importFrom scales identity_trans
 #' @importFrom scales zero_range
+#' @importFrom dplyr tibble
+#' @importFrom purrr transpose
 #' @export
 ScaleBivariate <- ggproto("ScaleBivariate",
                           Scale,
@@ -112,8 +90,8 @@ ScaleBivariate <- ggproto("ScaleBivariate",
                             if (!is.list(x)) {
                               stop("For bivariate scale, aesthetic needs to be a list of two data columns. Did you forget `zip()`?", call. = FALSE)
                             }
-                            x1 <- unlist(transpose(x)[[1]])
-                            x2 <- unlist(transpose(x)[[2]])
+                            x1 <- unlist(purrr::transpose(x)[[1]])
+                            x2 <- unlist(purrr::transpose(x)[[2]])
 
                             x1 <- self$trans[[1]]$transform(x1)
                             x2 <- self$trans[[2]]$transform(x2)
@@ -124,8 +102,8 @@ ScaleBivariate <- ggproto("ScaleBivariate",
 
                           map = function(self, x, limits = self$get_limits()) {
                             ## fix for data frames
-                            x1 <- unlist(transpose(x)[[1]])
-                            x2 <- unlist(transpose(x)[[2]])
+                            x1 <- unlist(purrr::transpose(x)[[1]])
+                            x2 <- unlist(purrr::transpose(x)[[2]])
 
                             x1 <- self$rescaler[[1]](self$oob(x1, range = limits[[1]]), from = limits[[1]])
                             x2 <- self$rescaler[[2]](self$oob(x2, range = limits[[2]]), from = limits[[2]])
@@ -139,14 +117,14 @@ ScaleBivariate <- ggproto("ScaleBivariate",
                           #  if scale contains a NA, use the default range for that axis, otherwise
                           #  use the user defined limit for that axis
                           get_limits = function(self) {
-                            if (self$is_empty()) return(tibble(limits1 = c(0, 1), limits2 = c(0, 1)))
+                            if (self$is_empty()) return(dplyr::tibble(limits1 = c(0, 1), limits2 = c(0, 1)))
 
                             if (is.null(self$limits)) {
-                              return(tibble(limits1 = self$range$range[[1]], limits2 = self$range$range[[2]]))
+                              return(dplyr::tibble(limits1 = self$range$range[[1]], limits2 = self$range$range[[2]]))
                             } else {
                               limits1 <- ifelse(!is.na(self$limits[[1]]), self$limits[[1]], self$range$range[[1]])
                               limits2 <- ifelse(!is.na(self$limits[[2]]), self$limits[[2]], self$range$range[[2]])
-                              return(tibble(limits1, limits2))
+                              return(dplyr::tibble(limits1, limits2))
                             }
                           },
 
@@ -168,7 +146,7 @@ ScaleBivariate <- ggproto("ScaleBivariate",
                               return(NULL)
                             } else if (identical(self$breaks[[i]], NA)) {
                               stop("Invalid breaks specification. Use NULL, not NA")
-                            } else if (zero_range(as.numeric(limits))) {
+                            } else if (scales::zero_range(as.numeric(limits))) {
                               breaks <- limits[[i]][1]
                             } else if (is.waive(self$breaks[[i]])) {
                               breaks <- self$trans[[i]]$breaks(limits)
@@ -178,7 +156,7 @@ ScaleBivariate <- ggproto("ScaleBivariate",
                               breaks <- self$breaks[[i]]
                             }
 
-                            breaks <- censor(self$trans[[i]]$transform(breaks), self$trans[[i]]$transform(limits),
+                            breaks <- scales::censor(self$trans[[i]]$transform(breaks), self$trans[[i]]$transform(limits),
                                              only.finite = FALSE)
                             breaks
                           },
@@ -231,6 +209,8 @@ ScaleBivariate <- ggproto("ScaleBivariate",
 #'   or the object itself. See [`ggplot2::continuous_scale()`] for details.
 #' @param rescaler Either one rescaling function applied to both data dimensions or list of two rescaling functions,
 #'   one for each data dimension.
+#'
+#' @importFrom scales as.trans
 #' @export
 bivariate_scale <- function(aesthetics, palette, name = waiver(),
                             breaks = waiver(), labels = waiver(), limits = NULL,
@@ -317,6 +297,8 @@ bivariatize_arg <- function(arg, name = "argument") {
 #' @param pow_desat Power exponent of desaturation
 #'
 #' @importFrom scales colour_ramp
+#' @importFrom colorspace desaturate
+#' @importFrom colorspace lighten
 #' @export
 pal_vsup <- function(values, unc_levels = 4, max_light = 0.9, max_desat = 0, pow_light = 0.8, pow_desat = 1) {
   n <- 2^(unc_levels - 1)
@@ -368,6 +350,22 @@ pal_vsup <- function(values, unc_levels = 4, max_light = 0.9, max_desat = 0, pow
 
 #' Colourfan guide
 #'
+#' @param title Title
+#' @param title.x.position Title x position
+#' @param title.y.position Title y position
+#' @param title.theme Title theme
+#' @param title.hjust Title hjust
+#' @param title.vjust Title vjust
+#' @param label Label
+#' @param label.theme Label theme
+#' @param barwidth Barwidth
+#' @param barheight Barheight
+#' @param nbin Number of bins
+#' @param reverse Reverse
+#' @param order order
+#' @param available_aes Available aesthetics
+#' @param ... Extra paramters
+#'
 #' @export
 guide_colourfan <- function(
 
@@ -395,8 +393,8 @@ guide_colourfan <- function(
 
   ...) {
 
-  if (!is.null(barwidth) && !is.unit(barwidth)) barwidth <- unit(barwidth, default.unit)
-  if (!is.null(barheight) && !is.unit(barheight)) barheight <- unit(barheight, default.unit)
+  if (!is.null(barwidth) && !grid::is.unit(barwidth)) barwidth <- unit(barwidth, default.unit)
+  if (!is.null(barheight) && !grid::is.unit(barheight)) barheight <- unit(barheight, default.unit)
 
   structure(list(
     # title
@@ -428,6 +426,7 @@ guide_colourfan <- function(
   )
 }
 
+
 #' @export
 guide_train.colourfan <- function(guide, scale, aesthetic = NULL) {
 
@@ -449,8 +448,8 @@ guide_train.colourfan <- function(guide, scale, aesthetic = NULL) {
     return()
   labels <- scale$get_labels(breaks)
 
-  guide$ticks1 <- tibble(value = breaks[[1]], label = labels[[1]])
-  guide$ticks2 <- tibble(value = breaks[[2]], label = labels[[2]])
+  guide$ticks1 <- dplyr::tibble(value = breaks[[1]], label = labels[[1]])
+  guide$ticks2 <- dplyr::tibble(value = breaks[[2]], label = labels[[2]])
 
   # needed to make guide show, even if this is not how we keep track of labels and ticks
   key <- as.data.frame(
@@ -477,7 +476,8 @@ guide_train.colourfan <- function(guide, scale, aesthetic = NULL) {
   guide$fan.x <- v1
   guide$fan.y <- v2
 
-  guide$hash <- with(guide, digest::digest(list(title, ticks1, ticks2, name)))
+  #guide$hash <- with(guide, digest::digest(list(title, ticks1, ticks2, name)))
+  guide$hash <- with(guide,  rlang::hash(list(title, ticks1, ticks2, name)))
   guide
 }
 
@@ -496,10 +496,22 @@ guide_merge.colourfan <- function(guide, new_guide) {
 #' @importFrom gtable gtable
 #' @importFrom gtable gtable_add_grob
 #'
+#'
 #' @export
 guide_geom.colourfan <- function(guide, layers, default_mapping) {
   # Layers that use this guide
-  guide_layers <- plyr::llply(layers, function(layer) {
+  # guide_layers <- plyr::llply(layers, function(layer) {
+  #   matched <- matched_aes(layer, guide, default_mapping)
+  #
+  #   if (length(matched) && ((is.na(layer$show.legend) || layer$show.legend))) {
+  #     layer
+  #   } else {
+  #     # This layer does not use this guide
+  #     NULL
+  #   }
+  # })
+
+  guide_layers <- lapply(layers, function(layer) {
     matched <- matched_aes(layer, guide, default_mapping)
 
     if (length(matched) && ((is.na(layer$show.legend) || layer$show.legend))) {
@@ -511,7 +523,8 @@ guide_geom.colourfan <- function(guide, layers, default_mapping) {
   })
 
   # Remove this guide if no layer uses it
-  if (length(plyr::compact(guide_layers)) == 0) guide <- NULL
+  #if (length(plyr::compact(guide_layers)) == 0) guide <- NULL
+  if (length(purrr::compact(guide_layers)) == 0) guide <- NULL
 
   guide
 }
@@ -551,8 +564,8 @@ guide_gengrob.colourfan <- function(guide, theme) {
   tick.y.pos <- a
 
 
-  label.x.pos <- transform_radial(tibble(x = tick.x.pos, y = 1), yoff = 0.04)
-  label.y.pos <- transform_radial(tibble(x = 1, y = tick.y.pos),
+  label.x.pos <- transform_radial(dplyr::tibble(x = tick.x.pos, y = 1), yoff = 0.04)
+  label.y.pos <- transform_radial(dplyr::tibble(x = 1, y = tick.y.pos),
                                  # yoff = 0,
                                   xoff = 0.04)
 
@@ -803,6 +816,15 @@ guide_gengrob.colourfan <- function(guide, theme) {
   gt
 }
 
+#' @importFrom grid polygonGrob
+#' @importFrom grid gpar
+#' @importFrom grid is.grob
+#' @importFrom grid convertWidth
+#' @importFrom grid grobWidth
+#' @importFrom grid is.unit
+#' @importFrom grid convertHeight
+#' @importFrom grid grobHeight
+#'
 #' @export
 #' @rdname guide_colourfan
 guide_colorfan <- guide_colourfan
