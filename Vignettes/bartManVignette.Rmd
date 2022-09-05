@@ -27,6 +27,10 @@ options(rmarkdown.html_vignette.check_title = FALSE)
 
 # Introduction
 
+<!-- badges: start -->
+<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/badge/bartmanLogo1.png" width="240" height="276" align="right" />
+<!-- badges: end -->
+
 Tree-based regression and classification has become a standard tool in modern data science. Bayesian Additive Regression Trees (BART)^[Chipman, H. A., George, E. I., & McCulloch, R. E. (2010). BART: Bayesian additive regression trees. _The Annals of Applied Statistics_, 4(1), 266-298.] has in particular gained wide popularity due its flexibility in dealing with interactions and non-linear effects. BART is a Bayesian tree-based machine learning method that can be applied to both regression and classification problems and yields competitive or superior results when compared to other predictive models. As a Bayesian model, BART allows the practitioner to explore the uncertainty around predictions through the posterior distribution. In the `bartMan` package, we present new visualization techniques for exploring BART models. We construct conventional plots to analyze a model’s performance and stability as well as create new tree-based plots to analyze variable importance, interaction, and tree structure. We employ Value Suppressing Uncertainty Palettes (VSUP)^[Correll, M., Moritz, D., & Heer, J. (2018, April). Value-suppressing uncertainty palettes. In Proceedings of the 2018 CHI Conference on Human Factors in Computing Systems (pp. 1-11).] to construct heatmaps that display variable importance and interactions jointly using color scale to represent posterior uncertainty. Our new visualizations are designed to work with the most popular BART R packages available, namely `BART`^[Sparapani R, Spanbauer C, McCulloch R (2021). Nonparametric Machine Learning and Efficient Computation with Bayesian Additive Regression Trees: The BART R Package. _Journal of Statistical Software_], `dbarts`^[Vincent Dorie, dbarts: Discrete Bayesian Additive Regression Trees Sampler, 2020], and `bartMachine`^[Adam Kapelner, Justin Bleich (2016). bartMachine: Machine Learning with Bayesian Additive Regression Trees. _Journal of Statistical Software_].
 
 In this document, we demonstrate our visualizations for evaluation of BART models using the `bartMan` (BART Model ANalysis) package.
@@ -112,7 +116,7 @@ Here we can see that `extractTreeData` gives back a data frame with 12 columns, 
 
 <table>
 
- Column Name     Description
+Column Name     Description
 -------------  ---------
 var             The name of the variable used in the splitting rule.
 splitValue      The split value.
@@ -138,7 +142,15 @@ In all of the following visualizations we use the `dbarts` model fit (unless oth
 
 ## VIVI-VSUP
 
-In Inglis et al. (2022)^[Inglis, A., Parnell, A., & Hurley, C. B. (2022). Visualizing Variable Importance and Variable Interaction Effects in Machine Learning Models. Journal of Computational and Graphical Statistics, 1-13.], the authors propose using a heatmap to display both variable importance (VImp) and variable interactions (VInt) simultaneously (together VIVI), where the importance values are on the diagonal and interaction values on the off-diagonal. We adapt the heatmap displays of importance and interactions to include the uncertainty by use of a VSUP. To begin we fist generate a list of two matrices. One containing the raw inclusion proportions and one containing the uncertainties. Here we use the coefficient of variation as our uncertainty measure. However the standard deviation or standard error is also available by setting `metricError = 'SD'` or `metricError = 'SE'`, in the code below.
+In Inglis et al. (2022)^[Inglis, A., Parnell, A., & Hurley, C. B. (2022). Visualizing Variable Importance and Variable Interaction Effects in Machine Learning Models. Journal of Computational and Graphical Statistics, 1-13.], the authors propose using a heatmap to display both variable importance (VImp) and variable interactions (VInt) simultaneously (together VIVI), where the importance values are on the diagonal and interaction values on the off-diagonal. We adapt the heatmap displays of importance and interactions to include the uncertainty by use of a VSUP. To begin we fist generate a heatmap containing the raw VIVI values without uncertainty.
+```{r std-matrix}
+stdMat <- viviBartMatrix(dbT,
+                          type = 'standard',
+                          metric = 'propMean')
+```
+
+
+Now we create a list of two matrices. One containing the raw inclusion proportions and one containing the uncertainties. Here we use the coefficient of variation as our uncertainty measure. However the standard deviation or standard error is also available by setting `metricError = 'SD'` or `metricError = 'SE'`, in the code below.
 
 ```{r vsup-matrix}
 vsupMat <- viviBartMatrix(dbT,
@@ -150,19 +162,7 @@ vsupMat <- viviBartMatrix(dbT,
 Once the matrices have been created, they can be plotted displaying a VSUP plot with the uncertainty included. For illustration purposes only we show the plot without uncertainty in Figure 1 and with uncertainty in Figure 2:
 
 ```{r vivi_plot, eval=FALSE}
-# set up colors to match the vsup
-
-colors <- scales::colour_ramp(
-  colors = c(blue = '#FFFFCC', red = '#800026')
-)((0:7)/7)
-
-newCols <- RColorBrewer::brewer.pal(9, 'GnBu')
-colors2 <- newCols[-1]
-
-
-vivid::viviHeatmap(vsupMat$actualMatrix,
-                   intPal = colors,
-                   impPal = colors2)
+viviBartPlot(stdMat, impLims = c(0, 0.16))
 
 ```
 
@@ -178,7 +178,8 @@ viviBartPlot(vsupMat,
              pow_desat = 0.6,
              max_light = 0.6,
              pow_light = 1,
-             label = 'CV')
+             label = 'CV',
+             impLims = c(0, 0.16))
 ```
 
 ```{r,  echo=FALSE}
@@ -221,7 +222,7 @@ When the number of variables or trees is large it can become harder to identify 
 plotAllTrees(treeData = dbT,
              iter = 1,
              removeStump = TRUE,
-             selectedVars = c(1:5),
+             selectedVars = c('x1','x2','x3','x4','x5'),
              cluster = 'var')
 ```
 
@@ -247,8 +248,8 @@ knitr::include_graphics("https://raw.githubusercontent.com/AlanInglis/bartMan/ma
 When viewing the trees, it can be useful to view different aspects or metrics. In Figure 7 we show some of these aspects by displaying all the trees in a selected iteration. For example, in (a) we color terminal nodes and stumps by the mean response. In (b) we color them by the terminal node parameter value. In (c) we sort the trees by structure starting with the most common tree and descending to the least common tree found (useful for identifying the most important splits). Finally, in (d) we sort the trees by depth. As the $\mu$ values in (b) are centered around zero, we use a single-hue, colorblind friendly, diverging color palette to display the values. For comparison, we use the same palette to represent the mean response values in (a).
 
 ```{r, eval=FALSE}
-plotAllTrees(treeData = dbT, iter = 1, sizeNode = T, fillBy = 'mu', pal = mypalette)
-plotAllTrees(treeData = dbT, iter = 1, sizeNode = T, fillBy = 'response', pal = mypalette)
+plotAllTrees(treeData = dbT, iter = 1, sizeNode = T, fillBy = 'mu')
+plotAllTrees(treeData = dbT, iter = 1, sizeNode = T, fillBy = 'response')
 plotAllTrees(treeData = dbT, iter = 1, cluster = "depth")
 plotAllTrees(treeData = dbT, iter = 1, cluster = "var")
 
@@ -300,11 +301,11 @@ knitr::include_graphics("https://raw.githubusercontent.com/AlanInglis/bartMan/ma
 The proximity matrix can then be visualized using classical MDS (henceforth MDS) to plot their relationship in a lower dimensional projection.
 
 
-In BART, as there is a proximity matrix for every iteration and a posterior distribution of proximity matrices. We introduce a rotational constraint so that we can similarly obtain a posterior distribution of each observation in the lower dimensional space. We first choose a target iteration (as shown above) and apply MDS. For each subsequent iteration we rotate the MDS solution matrix to match this target as closely as possible using Procrustes’ method. We end up with a point for each observation per iteration per MDS dimension.We then group the observations by the mean of each group and produce a scatterplot, where each point represents the centroid of the location of each observation across all the MDS solutions. We extend this further by displaying the 95% confidence ellipses around each observation’s posterior location in the reduced space. Since these are often overlapping we have created an interactive version that highlights an observation’s ellipse and displays the observation number when hovering the mouse pointer above the ellipse (Figure 10 shows a screenshot of this interaction in use). However, non-interactive versions are available via the `plotType` argument.
+In BART, as there is a proximity matrix for every iteration and a posterior distribution of proximity matrices. We introduce a rotational constraint so that we can similarly obtain a posterior distribution of each observation in the lower dimensional space. We first choose a target iteration (as shown above) and apply MDS. For each subsequent iteration we rotate the MDS solution matrix to match this target as closely as possible using Procrustes’ method. We end up with a point for each observation per iteration per MDS dimension.We then group the observations by the mean of each group and produce a scatterplot, where each point represents the centroid of the location of each observation across all the MDS solutions. We extend this further by displaying the 95% confidence ellipses around each observation’s posterior location in the reduced space. Since these are often overlapping we have created an interactive version that highlights an observation’s ellipse and displays the observation number when hovering the mouse pointer above the ellipse (Figure 10 shows a screenshot of this interaction in use). However, non-interactive versions are available via the `plotType` argument. To change the confidence ellipse size, adjust the `level` argument. 
 
 ```{r, eval=FALSE}
 mdsBart(treeData = dbT, data = fData, target =  bmProx,
-        plotType = 'interactive')
+        plotType = 'interactive', level = 0.95)
 ```
 
 ```{r, echo = F,  out.width = '80%'}
@@ -360,7 +361,7 @@ knitr::include_graphics("https://raw.githubusercontent.com/AlanInglis/bartMan/ma
 Figure 12 shows the densities of split values over all post burn-in iterations for each variable for both models (in green), combined with the densities of the predictor variables (labeled “data”, in red):
 
 ```{r, eval=FALSE}
-splitDensity(treeData = dbT, data = fData, display = 'both2')
+splitDensity(treeData = dbT, data = fData, display = 'dataSplit')
 
 ```
 
@@ -383,7 +384,7 @@ To visualize the inclusion proportion variable importance (with their 25\% to 75
 
 ```{r, eval=FALSE}
 # plot inclusion proportions of each variable:
-vimpPlot(treeData = dbT, plotType = 'pointGrad')
+vimpPlot(treeData = dbT, plotType = 'point')
 
 ```
 
