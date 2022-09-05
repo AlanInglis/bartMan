@@ -28,5 +28,5 @@ devtools::install_github("AlanInglis/bartMan")
 You can then load the package with:
 
 ``` r
-library(vivid)
+library(bartMan)
 ```
