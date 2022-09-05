@@ -28,11 +28,11 @@
 #' @export
 
 plotTree <- function(treeData,
-                     iter = 1,
-                     treeNo = 1,
+                     iter = NULL,
+                     treeNo = NULL,
                      plotType =  "icicle") {
 
-  p <- plotAll(treeData, iter = 1, treeNo = 1)
+  p <- plotAll(treeData, iter = iter, treeNo = treeNo)
 
   if (plotType == "dendrogram") {
     gp <- ggraph(p[[1]], "dendrogram") +

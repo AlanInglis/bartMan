@@ -6,7 +6,6 @@
 \usage{
 plotAllTreesPlotFn(
   treeList,
-  sampleSize = NULL,
   sizeNode = TRUE,
   pal = rev(colorRampPalette(c("steelblue", "#f7fcfd", "orange"))(5)),
   fillBy = NULL,
@@ -19,8 +18,6 @@ plotAllTreesPlotFn(
 }
 \arguments{
 \item{treeList}{A list of trees created by treeList function.}
-
-\item{sampleSize}{Sample the tree list.}
 
 \item{sizeNode}{Whether to size node width by the number of observations that fall into that node.}
 

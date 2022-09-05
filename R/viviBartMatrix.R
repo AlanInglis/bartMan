@@ -63,7 +63,8 @@ viviBartMatrix <- function(treeData,
                                  data = viviDf,
                                  metricError = metricError,
                                  metric = metric,
-                                 combineFact = combineFact)
+                                 combineFact = combineFact,
+                                 reorder = reorder)
   }else if(type == 'quantiles'){
     viviMat <- viviBartQuantile(treeData = treeData,
                                    data = viviDf,
@@ -103,6 +104,7 @@ viviBartInternal <- function(treeData, combineFact = FALSE){
   lowerVimp  <- vImp - 1.96 * vimpSD/sqrt(treeData$nMCMC)
   SEvimp <- sapply(as.data.frame(vimps), function(x) sd(x)/sqrt(length(x)))
   CVvimp <- vimpSD / vImp
+  CVvimp[is.nan(CVvimp)] <- 0
 
   # get quantiles of proportions
   vimp25 <- apply(vimps, 2, function(x) quantile(x, c(.25)))

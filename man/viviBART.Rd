@@ -14,8 +14,8 @@ Note that q dummies are created if q>2 and one dummy is created if q=2, where q 
 If combineFact = TRUE, then both the importance and interactions are calculated for the entire factor by aggregating the dummy variables’
 inclusion proportions.}
 
-\item{out}{Choose to either output just the variable importance ('vimp'), t
-he variable interaction ('vint'), or both ('vivi') (default).}
+\item{out}{Choose to either output just the variable importance ('vimp'),
+the variable interaction ('vint'), or both ('vivi') (default).}
 }
 \value{
 A list of dataframes of VIVI summaries.

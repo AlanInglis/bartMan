@@ -15,7 +15,7 @@ If combineFact = TRUE, then the importance is calculated for the entire factor b
 inclusion proportions.}
 
 \item{plotType}{Which type of plot to return. Either a barplot 'barplot' with the
-quantiles shown as a line, a point plot with the quantiles shown as a gradient 'pointGrad', or a
+quantiles shown as a line, a point plot with the quantiles shown as a gradient 'point', or a
 letter-value plot 'lvp'.}
 
 \item{top}{Display only the top X metrics (does not apply to the letter-value plot).}

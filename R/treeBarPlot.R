@@ -106,6 +106,9 @@ treeBarPlot <- function(treeData,
 
 
   if(!is.null(topTrees)){
+    if(length(freqDf$ids) < topTrees){
+      stop('Number of trees chosen to display is greater than available trees. Alter either the topTrees or treeNo argument.')
+    }
     freqDf <- freqDf[1:topTrees,]
   }
 

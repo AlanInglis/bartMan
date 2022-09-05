@@ -1,19 +1,18 @@
 #' plotAllTrees
 #'
-#' @description Plots all the trees. By default, it shows the last iteration. If number of
-#' trees is greater than 200, a sample of trees from that iteration will be shown.
+#' @description Plots all the trees.
 #'
 #' @param treeData A list of tree attributes created by exctractTreeData function.
 #' @param iter The selected iteration
 #' @param treeNo The selected tree number.
-#' @param sampleSize Sample the tree list.
 #' @param cluster LOGICAL. If TRUE, then cluster by tree structures.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
 #' @param fillBy Which parameter to colour the terminal nodes. Either 'response' or 'mu'.
 #' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 #' remain in plot and are coloured grey.
-#' @param selectedVars A vector of selected variables to display.
+#' @param selectedVars A vector of selected variables to display. Either a character vector of names
+#' or the variables column number.
 #' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
 #' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
 #' If combineFact = TRUE, then the dummy factors are combined into their original factor.
@@ -45,7 +44,6 @@
 plotAllTrees <- function(treeData,
                          iter = NULL,
                          treeNo = NULL,
-                         sampleSize = NULL,
                          cluster = NULL,
                          sizeNode = TRUE,
                          pal = rev(colorRampPalette(c('steelblue', '#f7fcfd', 'orange'))(5)),
@@ -71,7 +69,6 @@ plotAllTrees <- function(treeData,
 
   suppressWarnings(
     p <- plotAllTreesPlotFn(allTrees,
-                            sampleSize = sampleSize,
                             sizeNode = sizeNode,
                             pal = pal,
                             fillBy = fillBy,
@@ -120,7 +117,7 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
   if (is.null(iter) & is.null(treeNo)) {
     df <- treeData$structure
-    message("Both iter and treeNo are NULL. Not recommended for plotting all trees")
+    message("Both iter and treeNo are NULL. Recommend filtering trees")
   } else if (is.null(iter) & !is.null(treeNo)) {
     df <- treeData$structure %>%
       filter(treeNum == treeNo)
@@ -205,7 +202,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 
   if (is.null(iter) & is.null(treeNo)) {
     treeData$structure <- treeData$structure
-    message("Both iter and treeNo are NULL. Not recommended for plotting all trees")
+    message("Both iter and treeNo are NULL. Recommend filtering trees")
   } else if (is.null(iter) & !is.null(treeNo)) {
     treeData$structure <- treeData$structure %>%
       filter(treeNum == treeNo)
@@ -513,7 +510,6 @@ clusterTrees <- function(treeList) {
 #' @description This function is used to creat the plots.
 #'
 #' @param treeList A list of trees created by treeList function.
-#' @param sampleSize Sample the tree list.
 #' @param sizeNode Whether to size node width by the number of observations that fall into that node.
 #' @param pal A palette to colour the terminal nodes.
 #' @param selectedVars A vector of selected variables to display.
@@ -532,7 +528,6 @@ clusterTrees <- function(treeList) {
 #'
 
 plotAllTreesPlotFn <- function(treeList,
-                               sampleSize = NULL,
                                sizeNode = TRUE,
                                pal =  rev(colorRampPalette(c('steelblue', '#f7fcfd', 'orange'))(5)),
                                fillBy = NULL,
@@ -542,14 +537,6 @@ plotAllTreesPlotFn <- function(treeList,
                                treeData,
                                name) {
 
-
-  # plot a sample of trees
-  # if (length(treeList) > 200) {
-  #   sampleSize <- 200
-  #   treeList <- sample(treeList, sampleSize, replace = FALSE)
-  # } else if (!is.null(sampleSize)) {
-  #   treeList <- sample(treeList, sampleSize, replace = FALSE)
-  # }
 
   # remove stumps
   if(removeStump){
@@ -618,8 +605,14 @@ plotAllTreesPlotFn <- function(treeList,
 
   # set node colours
   if(!is.null(selectedVars)){
-    nodeNamesImp <- name[selectedVars]
-    nodeNamesOthers <- name[-selectedVars]
+
+    if(is.numeric(selectedVars)){
+      nodeNamesImp <- name[selectedVars]
+      nodeNamesOthers <- name[-selectedVars]
+    }else if(is.character(selectedVars)){
+      nodeNamesImp <- name[name %in% selectedVars]
+      nodeNamesOthers <- name[!(name %in% selectedVars)]
+    }
 
     if(combineFact){
       nameChange <- cFactTreesSelVars(treeData)

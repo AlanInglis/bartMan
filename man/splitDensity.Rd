@@ -4,17 +4,15 @@
 \alias{splitDensity}
 \title{splitDensity}
 \usage{
-splitDensity(treeData, data, colBy = NULL, display = "histogram")
+splitDensity(treeData, data, display = "histogram")
 }
 \arguments{
 \item{treeData}{A list of trees created using the treeData function.}
 
 \item{data}{Data frame containing variables from the model.}
 
-\item{colBy}{A parameter used to control the colour of the density plots.}
-
 \item{display}{Choose how to display the plot. Either histogram, facet wrap, ridges
-or display both the split value and density of the predictor by using either both1 or both2.}
+or display both the split value and density of the predictor by using dataSplit.}
 }
 \value{
 A faceted group of density plots

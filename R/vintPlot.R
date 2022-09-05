@@ -5,7 +5,7 @@
 #'
 #' @param treeData A data frame created by treeData function.
 #' @param plotType Which type of plot to return. Either a barplot 'barplot' with the
-#' quantiles shown as a line, a point plot with the quantiles shown as a gradient 'pointGrad', or a
+#' quantiles shown as a line, a point plot with the quantiles shown as a gradient 'point', or a
 #' letter-value plot 'lvp'.
 #' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
 #' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
@@ -32,7 +32,9 @@ vintPlot <- function(treeData,
                       plotType = 'barplot',
                       top = NULL){
 
-
+  if (!(plotType %in% c("barplot", "point"))) {
+    stop("type must be \"barplot\" or \"point\"")
+  }
 
   df <- treeData$structure
   nam <- treeData$varName
@@ -268,7 +270,7 @@ vintPlot <- function(treeData,
         axis.title.y = element_text(angle = 90, vjust = 0.5),
         legend.key.size = unit(0.5, "cm")
       )
-  } else if (plotType == "pointGrad") {
+  } else if (plotType == "point") {
 
     if (!requireNamespace("ggforce", quietly = TRUE)) {
       stop("Package \"ggforce\" needed for this function to work. Please install it.",

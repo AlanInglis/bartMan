@@ -167,11 +167,6 @@ mdsBart <- function(
   suppressMessages(
     suppressWarnings(
       if(plotType == 'interactive'){
-        # set the limits
-        rangeRot <- rbind(dfRotateAll$x, dfRotateAll$y)
-        limitsRotInt <- range(rangeRot)
-        limitsRotInt <- range(pretty(c(limitsRotInt[1], limitsRotInt[2])))
-         # range(labeling::rpretty(limitsRotInt[1], limitsRotInt[2]))
 
         p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
           #geom_text(label = dfRotateAll$rowNo) +
@@ -181,10 +176,19 @@ mdsBart <- function(
           xlab("Dimension 1") +
           ylab("Dimension 2") +
           theme_bw() +
-          theme(legend.position = 'none') +
+          theme(legend.position = 'none')
+
+
+        yLims <- layer_scales(p)$y$range$range
+        xLims <- layer_scales(p)$x$range$range
+
+        rangeRot <- rbind(yLims, xLims)
+        limitsRotInt <- range(rangeRot)
+        limitsRotInt <- range(pretty(c(limitsRotInt[1], limitsRotInt[2])))
+
+        p <- p  +
           scale_x_continuous(limits = limitsRotInt) +
           scale_y_continuous(limits = limitsRotInt)
-
 
         build <- ggplot_build(p)$data
         ell <- build[[2]]
@@ -192,26 +196,26 @@ mdsBart <- function(
         levels(ell$group) <- levels(as.factor(dfM$rowNo))
 
         pp <- p + ggiraph::geom_polygon_interactive(data = ell,
-                                           aes(x, y,
-                                               group = group,
-                                               fill  = group,
-                                               tooltip = group,
-                                               data_id = group),
-                                           fill = ell$group,
-                                           alpha = 0.3)
+                                                    aes(x, y,
+                                                        group = group,
+                                                        fill  = group,
+                                                        tooltip = group,
+                                                        data_id = group),
+                                                    fill = ell$group,
+                                                    alpha = 0.3)
 
 
         pFinal <- ggiraph::ggiraph(ggobj = pp,
-                          options = list(
-                            ggiraph::opts_hover_inv(css = "opacity:0.05;"),
-                            ggiraph::opts_hover(ggiraph::girafe_css(
-                              css = "fill:blue;stroke:gray;",
-                              line = "fill:blue",
-                              area = "stroke-width:10px",
-                              point = "stroke-width:10px",
-                              image = "outline:2px red"
-                            ))
-                          )
+                                   options = list(
+                                     ggiraph::opts_hover_inv(css = "opacity:0.05;"),
+                                     ggiraph::opts_hover(ggiraph::girafe_css(
+                                       css = "fill:blue;stroke:gray;",
+                                       line = "fill:blue",
+                                       area = "stroke-width:10px",
+                                       point = "stroke-width:10px",
+                                       image = "outline:2px red"
+                                     ))
+                                   )
         )
       }else{
         if(showGroup){

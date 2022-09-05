@@ -4,9 +4,8 @@
 #'
 #' @param treeData A list of trees created using the treeData function.
 #' @param data Data frame containing variables from the model.
-#' @param colBy A parameter used to control the colour of the density plots.
 #' @param display Choose how to display the plot. Either histogram, facet wrap, ridges
-#' or display both the split value and density of the predictor by using either both1 or both2.
+#' or display both the split value and density of the predictor by using dataSplit.
 #'
 #' @return A faceted group of density plots
 #'
@@ -17,10 +16,10 @@
 #' @export
 
 
-splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
+splitDensity <- function(treeData, data, display = "histogram") {
 
-  if (!(display %in% c("histogram", "ridge", "density", 'both1', 'both2'))) {
-    stop("display must be \"histogram\", \"ridge\", \"density\", \"both1\", or \"both2\"")
+  if (!(display %in% c("histogram", "ridge", "density", 'dataSplit'))) {
+    stop("display must be \"histogram\", \"ridge\", \"density\", or \"dataSplit\"")
   }
 
   # get just the variable and split value
@@ -63,38 +62,7 @@ splitDensity <- function(treeData, data, colBy = NULL, display = "histogram") {
       ylab("Density") +
       xlab("Split value") +
       theme(legend.position = "none")
-  }else if(display == 'both1'){
-
-    if (!requireNamespace("ggridges", quietly = TRUE)) {
-      stop("Package \"ggridges\" needed for this function to work. Please install it.",
-           call. = FALSE)
-    }
-
-    dataIdx <- which((names(data) %in% varNames))
-    dat <- data[, dataIdx]
-
-    meltDat <- utils::stack(dat)
-    colnames(meltDat) <- c('value', 'variable')
-    names(tt) <- c('variable', 'value')
-
-    dataList <- list(meltDat, tt)
-    names(dataList)  <- c('data', 'split_nvalue')
-    #dfList <- plyr::ldply(dataList)
-
-    dfList <- rbind(dataList$data, dataList$split_value)
-    dfList$.id <- c(rep('data', length(dataList$data$value)),
-                 rep('split  \nvalue', length(dataList$split_value$value)))
-
-    dfList <- dfList |> select(.id, value, variable)
-
-   dPlot <- ggplot(dfList) +
-      geom_density(aes(x = value, fill = .id), alpha = 0.5) +
-      facet_wrap(~variable) +
-      scale_fill_discrete(name = "", labels = c("Data", "Split Value")) +
-      ylab('Density') +
-      xlab("Split value") +
-      theme_bw()
-  }else if(display == 'both2'){
+  }else if(display == 'dataSplit'){
     if (!requireNamespace("ggridges", quietly = TRUE)) {
       stop("Package \"ggridges\" needed for this function to work. Please install it.",
            call. = FALSE)

@@ -19,7 +19,7 @@ vimpPlot(
 or the proportions 'prop' averaged over iterations.}
 
 \item{plotType}{Which type of plot to return. Either a barplot 'barplot' with the
-quantiles shown as a line, a point plot with the quantiles shown as a gradient 'pointGrad', or a
+quantiles shown as a line, a point plot with the quantiles shown as a gradient 'point', or a
 letter-value plot 'lvp'.}
 
 \item{metric}{Whether to show the 'mean' or 'median' importance values. Note, this has

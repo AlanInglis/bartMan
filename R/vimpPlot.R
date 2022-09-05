@@ -7,7 +7,7 @@
 #' @param type What value to return. Either the raw count 'count'
 #' or the proportions 'prop' averaged over iterations.
 #' @param plotType Which type of plot to return. Either a barplot 'barplot' with the
-#' quantiles shown as a line, a point plot with the quantiles shown as a gradient 'pointGrad', or a
+#' quantiles shown as a line, a point plot with the quantiles shown as a gradient 'point', or a
 #' letter-value plot 'lvp'.
 #' @param metric Whether to show the 'mean' or 'median' importance values. Note, this has
 #' no effect when using plotType = 'lvp'.
@@ -40,8 +40,12 @@ vimpPlot <- function(treeData,
   }
 
 
-  if (!(plotType %in% c("barplot", "pointGrad", "lvp"))) {
-    stop("type must be \"barplot\", \"pointGrad\"  or \"lvp\"")
+  if (!(plotType %in% c("barplot", "point", "lvp"))) {
+    stop("type must be \"barplot\", \"point\"  or \"lvp\"")
+  }
+
+  if (!(metric %in% c("mean", "median"))) {
+    stop("metric must be \"mean\"  or \"median\"")
   }
 
   vimp <- vimpBart(treeData, type = type)
@@ -91,7 +95,7 @@ vimpPlot <- function(treeData,
         axis.title.y = element_text(angle = 90, vjust = 0.5),
         legend.key.size = unit(0.5, "cm")
       )
-  } else if (plotType == "pointGrad") {
+  } else if (plotType == "point") {
 
     if (!requireNamespace("ggforce", quietly = TRUE)) {
       stop("Package \"ggforce\" needed for this function to work. Please install it.",

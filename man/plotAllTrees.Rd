@@ -8,7 +8,6 @@ plotAllTrees(
   treeData,
   iter = NULL,
   treeNo = NULL,
-  sampleSize = NULL,
   cluster = NULL,
   sizeNode = TRUE,
   pal = rev(colorRampPalette(c("steelblue", "#f7fcfd", "orange"))(5)),
@@ -25,8 +24,6 @@ plotAllTrees(
 
 \item{treeNo}{The selected tree number.}
 
-\item{sampleSize}{Sample the tree list.}
-
 \item{cluster}{LOGICAL. If TRUE, then cluster by tree structures.}
 
 \item{sizeNode}{Whether to size node width by the number of observations that fall into that node.}
@@ -35,7 +32,8 @@ plotAllTrees(
 
 \item{fillBy}{Which parameter to colour the terminal nodes. Either 'response' or 'mu'.}
 
-\item{selectedVars}{A vector of selected variables to display.}
+\item{selectedVars}{A vector of selected variables to display. Either a character vector of names
+or the variables column number.}
 
 \item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 remain in plot and are coloured grey.}
@@ -48,6 +46,5 @@ If combineFact = TRUE, then the dummy factors are combined into their original f
 A list containing vectors of the indices of observations from leaf nodes.
 }
 \description{
-Plots all the trees. By default, it shows the last iteration. If number of
-trees is greater than 200, a sample of trees from that iteration will be shown.
+Plots all the trees.
 }
