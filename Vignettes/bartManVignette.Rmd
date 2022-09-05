@@ -170,6 +170,7 @@ viviBartPlot(stdMat, impLims = c(0, 0.16))
 ```{r,  echo=FALSE}
 knitr::include_graphics("https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vivi.png")
 ```
+
 <caption><span id="fig1:fig1">Figure 1: </span> Variable importance and interaction plot without uncertainty. The interaction between $x_1$ and $x_2$ is clear. The five important variables ($x_1$ to $x_5$) are highlighted. We can also see spurious importance and interaction values among the noise variables.</caption>
 
 ```{r vsup_plot, eval = FALSE}
