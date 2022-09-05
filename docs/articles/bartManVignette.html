@@ -91,6 +91,8 @@
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
+<!-- badges: start -->
+<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/badge/bartmanLogo1.png" width="240" height="276" align="right"><!-- badges: end --></p>
 <p>Tree-based regression and classification has become a standard tool
 in modern data science. Bayesian Additive Regression Trees (BART)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> has in
 particular gained wide popularity due its flexibility in dealing with
@@ -200,60 +202,60 @@ frame with 12 columns, which are outlined below.</p>
 <table class="table">
 <table class="table">
 <thead><tr class="header">
-<th align="center">Column Name</th>
+<th align="left">Column Name</th>
 <th align="right">Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="center">var</td>
+<td align="left">var</td>
 <td align="right">The name of the variable used in the splitting
 rule.</td>
 </tr>
 <tr class="even">
-<td align="center">splitValue</td>
+<td align="left">splitValue</td>
 <td align="right">The split value.</td>
 </tr>
 <tr class="odd">
-<td align="center">node</td>
+<td align="left">node</td>
 <td align="right">The number of the node in the tree (following
 left-side traversal).</td>
 </tr>
 <tr class="even">
-<td align="center">isLeaf</td>
+<td align="left">isLeaf</td>
 <td align="right">Is the node a leaf node or not.</td>
 </tr>
 <tr class="odd">
-<td align="center">leafValue</td>
+<td align="left">leafValue</td>
 <td align="right">The leaf node value.</td>
 </tr>
 <tr class="even">
-<td align="center">iteration</td>
+<td align="left">iteration</td>
 <td align="right">The iteration number.</td>
 </tr>
 <tr class="odd">
-<td align="center">treeNum</td>
+<td align="left">treeNum</td>
 <td align="right">The tree number per iteration.</td>
 </tr>
 <tr class="even">
-<td align="center">label</td>
+<td align="left">label</td>
 <td align="right">Displays the split rule.</td>
 </tr>
 <tr class="odd">
-<td align="center">value</td>
+<td align="left">value</td>
 <td align="right">The value in a node (i.e., either the split value or
 leaf value).</td>
 </tr>
 <tr class="even">
-<td align="center">depthMax</td>
+<td align="left">depthMax</td>
 <td align="right">The maximum depth of the tree.</td>
 </tr>
 <tr class="odd">
-<td align="center">obsNode</td>
+<td align="left">obsNode</td>
 <td align="right">A list containing the observations contained in each
 node.</td>
 </tr>
 <tr class="even">
-<td align="center">noObs</td>
+<td align="left">noObs</td>
 <td align="right">The number of observations in a particular node.</td>
 </tr>
 </tbody>
@@ -276,13 +278,19 @@ display both variable importance (VImp) and variable interactions (VInt)
 simultaneously (together VIVI), where the importance values are on the
 diagonal and interaction values on the off-diagonal. We adapt the
 heatmap displays of importance and interactions to include the
-uncertainty by use of a VSUP. To begin we fist generate a list of two
-matrices. One containing the raw inclusion proportions and one
-containing the uncertainties. Here we use the coefficient of variation
-as our uncertainty measure. However the standard deviation or standard
-error is also available by setting <code>metricError = 'SD'</code> or
-<code>metricError = 'SE'</code>, in the code below.</p>
+uncertainty by use of a VSUP. To begin we fist generate a heatmap
+containing the raw VIVI values without uncertainty.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">stdMat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBartMatrix.html">viviBartMatrix</a></span><span class="op">(</span><span class="va">dbT</span>,
+                          type <span class="op">=</span> <span class="st">'standard'</span>,
+                          metric <span class="op">=</span> <span class="st">'propMean'</span><span class="op">)</span></code></pre></div>
+<p>Now we create a list of two matrices. One containing the raw
+inclusion proportions and one containing the uncertainties. Here we use
+the coefficient of variation as our uncertainty measure. However the
+standard deviation or standard error is also available by setting
+<code>metricError = 'SD'</code> or <code>metricError = 'SE'</code>, in
+the code below.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">vsupMat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBartMatrix.html">viviBartMatrix</a></span><span class="op">(</span><span class="va">dbT</span>,
                           type <span class="op">=</span> <span class="st">'vsup'</span>,
                           metric <span class="op">=</span> <span class="st">'propMean'</span>,
@@ -291,33 +299,22 @@ error is also available by setting <code>metricError = 'SD'</code> or
 VSUP plot with the uncertainty included. For illustration purposes only
 we show the plot without uncertainty in Figure 1 and with uncertainty in
 Figure 2:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># set up colors to match the vsup</span>
-
-<span class="va">colors</span> <span class="op">&lt;-</span> <span class="fu">scales</span><span class="fu">::</span><span class="fu"><a href="https://scales.r-lib.org/reference/colour_ramp.html">colour_ramp</a></span><span class="op">(</span>
-  colors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span>blue <span class="op">=</span> <span class="st">'#FFFFCC'</span>, red <span class="op">=</span> <span class="st">'#800026'</span><span class="op">)</span>
-<span class="op">)</span><span class="op">(</span><span class="op">(</span><span class="fl">0</span><span class="op">:</span><span class="fl">7</span><span class="op">)</span><span class="op">/</span><span class="fl">7</span><span class="op">)</span>
-
-<span class="va">newCols</span> <span class="op">&lt;-</span> <span class="fu">RColorBrewer</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html">brewer.pal</a></span><span class="op">(</span><span class="fl">9</span>, <span class="st">'GnBu'</span><span class="op">)</span>
-<span class="va">colors2</span> <span class="op">&lt;-</span> <span class="va">newCols</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span>
-
-
-<span class="fu">vivid</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/vivid/man/viviHeatmap.html">viviHeatmap</a></span><span class="op">(</span><span class="va">vsupMat</span><span class="op">$</span><span class="va">actualMatrix</span>,
-                   intPal <span class="op">=</span> <span class="va">colors</span>,
-                   impPal <span class="op">=</span> <span class="va">colors2</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/viviBartPlot.html">viviBartPlot</a></span><span class="op">(</span><span class="va">stdMat</span>, impLims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.16</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vivi.png"><!-- --><caption>
 <span id="fig1:fig1">Figure 1: </span> Variable importance and
 interaction plot without uncertainty. The interaction between <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> is clear. The five important
 variables (<span class="math inline">\(x_1\)</span> to <span class="math inline">\(x_5\)</span>) are highlighted. We can also see
 spurious importance and interaction values among the noise variables.
 </caption>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/viviBartPlot.html">viviBartPlot</a></span><span class="op">(</span><span class="va">vsupMat</span>,
              max_desat <span class="op">=</span> <span class="fl">1</span>,
              pow_desat <span class="op">=</span> <span class="fl">0.6</span>,
              max_light <span class="op">=</span> <span class="fl">0.6</span>,
              pow_light <span class="op">=</span> <span class="fl">1</span>,
-             label <span class="op">=</span> <span class="st">'CV'</span><span class="op">)</span></code></pre></div>
+             label <span class="op">=</span> <span class="st">'CV'</span>,
+             impLims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.16</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vsup.png"><!-- --></p>
 <caption>
 <span id="fig2:fig2">Figure 2: </span> Variable importance and
@@ -340,7 +337,7 @@ the fitting algorithm’s stability.</p>
 <p>To plot an individual tree, we can choose to display it either in
 dendrogram format, or icicle format. Additionally, we can choose which
 tree number or iteration to display:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plotTree.html">plotTree</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, treeNo <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">1</span>, plotType <span class="op">=</span> <span class="st">"dendrogram"</span><span class="op">)</span>
 <span class="fu"><a href="../reference/plotTree.html">plotTree</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, treeNo <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">1</span>, plotType <span class="op">=</span> <span class="st">"icicle"</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/dendice.png" width="100%"><caption>
@@ -352,7 +349,7 @@ Leaf (terminal) nodes are colored grey.
 <p>The <code>plotAllTrees</code> function allows for a few different
 options when plotting. For example, we can chose to display all the
 trees from a selected iteration:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/allTrees.png" width="100%"><caption>
 <span id="fig4:fig4">Figure 4: </span>All trees from a single iteration.
@@ -364,11 +361,11 @@ highlight interesting features by accentuating selected variables by
 coloring them brightly while uniformly coloring the remaining variables
 a light grey. We can then couple this with a sorting step to order the
 trees by the most frequent tree structure.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>,
              iter <span class="op">=</span> <span class="fl">1</span>,
              removeStump <span class="op">=</span> <span class="cn">TRUE</span>,
-             selectedVars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span>,
+             selectedVars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'x1'</span>,<span class="st">'x2'</span>,<span class="st">'x3'</span>,<span class="st">'x4'</span>,<span class="st">'x5'</span><span class="op">)</span>,
              cluster <span class="op">=</span> <span class="st">'var'</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/allTreesFilter.png" width="100%"><caption>
 <span id="fig5:fig5">Figure 5: </span>All trees from a single iteration.
@@ -379,7 +376,7 @@ and the trees have been sorted according to their structure.
 selecting a tree vis the <code>treeNo</code> argument. This shows us
 visually BART’s <em>grow, prune, change, swap</em> mechanisms in
 action.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, treeNo <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/treeNo.png" width="100%"><caption>
 <span id="fig6:fig6">Figure 6: </span>A single tree over all iterations.
@@ -395,9 +392,9 @@ in (d) we sort the trees by depth. As the <span class="math inline">\(\mu\)</spa
 zero, we use a single-hue, colorblind friendly, diverging color palette
 to display the values. For comparison, we use the same palette to
 represent the mean response values in (a).</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'mu'</span>, pal <span class="op">=</span> <span class="va">mypalette</span><span class="op">)</span>
-<span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'response'</span>, pal <span class="op">=</span> <span class="va">mypalette</span><span class="op">)</span>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'mu'</span><span class="op">)</span>
+<span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span>
 <span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, cluster <span class="op">=</span> <span class="st">"depth"</span><span class="op">)</span>
 <span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, cluster <span class="op">=</span> <span class="st">"var"</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/treesmet.png" width="100%"><caption>
@@ -414,7 +411,7 @@ Here we choose to display the top 10 most frequent tree structures,
 however displaying a single tree across iterations or displaying all
 trees in a single iteration is possible via the <code>iter</code> and
 <code>treeNo</code> arguments.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/treeBarPlot.html">treeBarPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, topTrees <span class="op">=</span> <span class="fl">10</span>, iter <span class="op">=</span> <span class="cn">NULL</span>, treeNo <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/barplot.png" width="80%"></p>
 <caption>
@@ -441,7 +438,7 @@ divide the proximity scores by the total number of trees. Additionally,
 we can choose to get the proximity matrix for a single iteration (as
 shown below) or over all iterations, the latter is achieved by setting
 <code>iter = NUll</code>.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">bmProx</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proximityMatrix.html">proximityMatrix</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>,
                           data <span class="op">=</span> <span class="va">fData</span>,
                           reorder <span class="op">=</span> <span class="cn">TRUE</span>,
@@ -450,7 +447,7 @@ shown below) or over all iterations, the latter is achieved by setting
 <p>We can then visualize the proximity matrix using the
 <code>plotProximity</code> function. In the interest of space, we only
 display the first 50 rows and columns of the proximity matrix.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/plotProximity.html">plotProximity</a></span><span class="op">(</span>matrix <span class="op">=</span> <span class="va">bmProx</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">50</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">90</span>,<span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/prox.png" width="80%"></p>
@@ -478,10 +475,11 @@ interactive version that highlights an observation’s ellipse and
 displays the observation number when hovering the mouse pointer above
 the ellipse (Figure 10 shows a screenshot of this interaction in use).
 However, non-interactive versions are available via the
-<code>plotType</code> argument.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code>plotType</code> argument. To change the confidence ellipse size,
+adjust the <code>level</code> argument.</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/mdsBart.html">mdsBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, data <span class="op">=</span> <span class="va">fData</span>, target <span class="op">=</span>  <span class="va">bmProx</span>,
-        plotType <span class="op">=</span> <span class="st">'interactive'</span><span class="op">)</span></code></pre></div>
+        plotType <span class="op">=</span> <span class="st">'interactive'</span>, level <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/mds.png" width="80%"></p>
 <caption>
 <span id="fig10:fig10">Figure 10: </span>Interactive MDS plot. Each 95%
@@ -501,7 +499,7 @@ general diagnostics to assess the stability of the model fit. The
 <code>burnIn</code> argument should be set to the burn-in value selected
 when building the model and indicates the separation between the pre and
 post burn-in period in the plot.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/bartDiag.html">bartDiag</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, response <span class="op">=</span> <span class="va">fData</span><span class="op">$</span><span class="va">y</span>, burnIn <span class="op">=</span> <span class="fl">100</span>, data <span class="op">=</span> <span class="va">fData</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/diag.png" width="80%"></p>
 <caption>
@@ -521,7 +519,7 @@ shown.
 also be visualized, where each point represents a single iteration. A
 regression line is shown to indicate the changes in acceptance rate
 across iterations and to identify the mean rate.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/acceptRate.html">acceptRate</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/accept.png" width="50%" style="display: block; margin: auto;"></p>
 <caption>
@@ -540,7 +538,7 @@ stability. Figure 11 displays these two metrics. A locally estimated
 scatterplot smoothing (LOESS) regression line is shown to indicate the
 changes in both the average tree depth and the average number of nodes
 across iterations:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/treeDepth.html">treeDepth</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span><span class="op">)</span>
 <span class="fu"><a href="../reference/treeNodes.html">treeNodes</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/treeDepthNode.png" width="100%"></p>
@@ -558,8 +556,8 @@ and number of nodes across iterations.
 <p>Figure 12 shows the densities of split values over all post burn-in
 iterations for each variable for both models (in green), combined with
 the densities of the predictor variables (labeled “data”, in red):</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/splitDensity.html">splitDensity</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, data <span class="op">=</span> <span class="va">fData</span>, display <span class="op">=</span> <span class="st">'both2'</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/splitDensity.html">splitDensity</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, data <span class="op">=</span> <span class="va">fData</span>, display <span class="op">=</span> <span class="st">'dataSplit'</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/splitDens.png" width="100%"></p>
 <caption>
 <span id="fig14:fig14">Figure 14: </span> Split values densities (in
@@ -580,15 +578,15 @@ interactions (and associated error metrics) we can use the
 just the interactions, we set the <code>out</code> argument to ‘vimp’ or
 vint’ respectively. The <code>combineFact</code> argument is discussed
 in greater detail below.</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># show both vimp and vint</span>
 <span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, combineFact <span class="op">=</span> <span class="cn">F</span>, out <span class="op">=</span> <span class="st">'vivi'</span><span class="op">)</span></code></pre></div>
 <p>To visualize the inclusion proportion variable importance (with their
 25% to 75% quantile interval included) we use the <code>vimpPlot</code>
 function.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># plot inclusion proportions of each variable:</span>
-<span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, plotType <span class="op">=</span> <span class="st">'pointGrad'</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, plotType <span class="op">=</span> <span class="st">'point'</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vimp1.png" width="60%" style="display: block; margin: auto;"></p>
 <caption>
 <span id="fig15:fig15">Figure 15: </span> Inclusion proportions for each
@@ -605,7 +603,7 @@ section is drawn at incremental steps of upper and lower eights,
 sixteenths and so on until a stopping rule has been reached. The color
 of each box corresponds to the density of the data with darker shades
 indicating higher data density.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, plotType <span class="op">=</span> <span class="st">'lvp'</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html">coord_flip</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/lvp.png" width="60%" style="display: block; margin: auto;"></p>
 <caption>
@@ -615,7 +613,7 @@ inclusion proportions for each variable.
 <p>Similarly, we provide a function for viewing the inclusion
 proportions for interactions (this time displayed as a barplot, again
 with 25% to 75% quantile interval included):</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># plot inclusion proportions of each variable pair:</span>
 <span class="fu"><a href="../reference/vintPlot.html">vintPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, top <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vint1.png" width="60%" style="display: block; margin: auto;"></p>
@@ -648,7 +646,7 @@ inclusion proportion exceeds the 1 − <span class="math inline">\(\alpha\)</spa
 distribution. If setting <code>shift = TRUE</code>, the inclusion
 proportions are shifted by the difference in distance between the
 quantile and the value of the inclusion proportion point.</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/localProcedure.html">localProcedure</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>,
                data <span class="op">=</span> <span class="va">fData</span>,
                numRep <span class="op">=</span> <span class="fl">5</span>,
@@ -675,7 +673,7 @@ the model, and calculating the inclusion proportion on the null model.
 The final result displayed is the original model’s inclusion proportion
 minus the null inclusion proportion. This function is available for both
 the importance and the interactions.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/permVimp.html">permVimp</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">fData</span>, response <span class="op">=</span> <span class="st">'y'</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/permvimp.png" width="60%" style="display: block; margin: auto;"><caption>
 <span id="fig19:fig19">Figure 19: </span> Variable importance calculated
@@ -685,7 +683,7 @@ null inclusion proportion
 </caption>
 <p>For assessing the interactions using the single permutation method we
 have:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/permVint.html">permVint</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>,model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">fData</span>, response <span class="op">=</span> <span class="st">'y'</span>, top <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/permvint.png" width="60%" style="display: block; margin: auto;"><caption>
 <span id="fig20:fig20">Figure 20: </span> Variable interactions
@@ -708,7 +706,7 @@ factor, rather than that associated with individual factor levels.</p>
 <p>In the following example, we build a BART model using the
 <code>BART</code> package where one of the covariates is a factor and
 extract the tree data.</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">BART</span><span class="op">)</span>
 <span class="co">#&gt; Loading required package: nlme</span>
 <span class="co">#&gt; Loading required package: nnet</span>
@@ -730,21 +728,21 @@ dummy variables when building the model. For a practical example of what
 this looks like, we examine the variable importance inclusion
 proportions both before and after aggregating over the factor
 levels.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># extract the vimp data</span>
 <span class="va">vimpData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">FALSE</span>, out <span class="op">=</span> <span class="st">'vimp'</span><span class="op">)</span>
 <span class="va">vimpData</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span> <span class="co"># looking at the relevant columns</span>
-<span class="co">#&gt;       variable count   propMean</span>
-<span class="co">#&gt; 1  Sepal.Width  4242 0.17806077</span>
-<span class="co">#&gt; 2 Petal.Length  8474 0.35732883</span>
-<span class="co">#&gt; 3  Petal.Width  2312 0.09563009</span>
-<span class="co">#&gt; 4     Species1  3647 0.15492454</span>
-<span class="co">#&gt; 5     Species2  2751 0.11552589</span>
-<span class="co">#&gt; 6     Species3  2324 0.09852989</span></code></pre></div>
+<span class="co">#&gt;                  variable count   propMean</span>
+<span class="co">#&gt; Sepal.Width   Sepal.Width  4242 0.17806077</span>
+<span class="co">#&gt; Petal.Length Petal.Length  8474 0.35732883</span>
+<span class="co">#&gt; Petal.Width   Petal.Width  2312 0.09563009</span>
+<span class="co">#&gt; Species1         Species1  3647 0.15492454</span>
+<span class="co">#&gt; Species2         Species2  2751 0.11552589</span>
+<span class="co">#&gt; Species3         Species3  2324 0.09852989</span></code></pre></div>
 <p>In the above output we can see that species has been split into three
 dummy variables. Plotting the data now would include each dummy
 factor.</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vimpDum.png" width="60%" style="display: block; margin: auto;"><caption>
 <span id="fig21:fig21">Figure 21: </span>Variable inclusion proportions
@@ -753,18 +751,18 @@ with dummy factors included.
 <p>However, if we set <code>combineFact = TRUE</code>, we then apply our
 adjustment and aggregate over the factor levels. Applying the same
 process as above now yields:</p>
-<div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># extract the vimp data</span>
 <span class="va">vimpData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">TRUE</span>, out <span class="op">=</span> <span class="st">'vimp'</span><span class="op">)</span>
 <span class="va">vimpData</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span> <span class="co"># looking at the relevant columns</span>
-<span class="co">#&gt;       variable count   propMean</span>
-<span class="co">#&gt; 1  Sepal.Width  4242 0.17806077</span>
-<span class="co">#&gt; 2 Petal.Length  8474 0.35732883</span>
-<span class="co">#&gt; 3  Petal.Width  2312 0.09563009</span>
-<span class="co">#&gt; 4      Species  8722 0.36898032</span></code></pre></div>
+<span class="co">#&gt;                  variable count   propMean</span>
+<span class="co">#&gt; Sepal.Width   Sepal.Width  4242 0.17806077</span>
+<span class="co">#&gt; Petal.Length Petal.Length  8474 0.35732883</span>
+<span class="co">#&gt; Petal.Width   Petal.Width  2312 0.09563009</span>
+<span class="co">#&gt; Species           Species  8722 0.36898032</span></code></pre></div>
 <p>In the above output species has been combined into a single variable.
 Plotting the variable importance now looks like:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vimpDum2.png" width="60%" style="display: block; margin: auto;"><caption>
 <span id="fig22:fig22">Figure 22: </span>Variable inclusion proportions
@@ -823,7 +821,7 @@ regulation. The Annals of Applied Statistics, 8(3), 1750-1781.<a href="#fnref10"
 
 
       <footer><div class="copyright">
-  <p>Developed by .</p>
+  <p>Developed by Alan Inglis, Andrew Parnell, Catherine Hurley, Claus Wilke.</p>
 </div>
 
 <div class="pkgdown">

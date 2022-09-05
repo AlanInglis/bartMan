@@ -40,8 +40,7 @@
 
 
 <meta property="og:title" content="plotAllTrees — plotAllTrees" />
-<meta property="og:description" content="Plots all the trees. By default, it shows the last iteration. If number of
-trees is greater than 200, a sample of trees from that iteration will be shown." />
+<meta property="og:description" content="Plots all the trees." />
 
 
 
@@ -122,18 +121,16 @@ trees is greater than 200, a sample of trees from that iteration will be shown."
     </div>
 
     <div class="ref-description">
-    <p>Plots all the trees. By default, it shows the last iteration. If number of
-trees is greater than 200, a sample of trees from that iteration will be shown.</p>
+    <p>Plots all the trees.</p>
     </div>
 
     <pre class="usage"><span class='fu'>plotAllTrees</span><span class='op'>(</span>
   <span class='va'>treeData</span>,
   iter <span class='op'>=</span> <span class='cn'>NULL</span>,
   treeNo <span class='op'>=</span> <span class='cn'>NULL</span>,
-  sampleSize <span class='op'>=</span> <span class='cn'>NULL</span>,
   cluster <span class='op'>=</span> <span class='cn'>NULL</span>,
   sizeNode <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  pal <span class='op'>=</span> <span class='fu'>RColorBrewer</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/RColorBrewer/man/ColorBrewer.html'>brewer.pal</a></span><span class='op'>(</span><span class='fl'>9</span>, <span class='st'>"Purples"</span><span class='op'>)</span>,
+  pal <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rev.html'>rev</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/grDevices/colorRamp.html'>colorRampPalette</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"steelblue"</span>, <span class='st'>"#f7fcfd"</span>, <span class='st'>"orange"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span><span class='op'>)</span>,
   fillBy <span class='op'>=</span> <span class='cn'>NULL</span>,
   selectedVars <span class='op'>=</span> <span class='cn'>NULL</span>,
   removeStump <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -156,10 +153,6 @@ trees is greater than 200, a sample of trees from that iteration will be shown.<
       <td><p>The selected tree number.</p></td>
     </tr>
     <tr>
-      <th>sampleSize</th>
-      <td><p>Sample the tree list.</p></td>
-    </tr>
-    <tr>
       <th>cluster</th>
       <td><p>LOGICAL. If TRUE, then cluster by tree structures.</p></td>
     </tr>
@@ -174,6 +167,11 @@ trees is greater than 200, a sample of trees from that iteration will be shown.<
     <tr>
       <th>fillBy</th>
       <td><p>Which parameter to colour the terminal nodes. Either 'response' or 'mu'.</p></td>
+    </tr>
+    <tr>
+      <th>selectedVars</th>
+      <td><p>A vector of selected variables to display. Either a character vector of names
+or the variables column number.</p></td>
     </tr>
     <tr>
       <th>removeStump</th>
@@ -203,7 +201,7 @@ If combineFact = TRUE, then the dummy factors are combined into their original f
 
       <footer>
       <div class="copyright">
-  <p>Developed by .</p>
+  <p>Developed by Alan Inglis, Andrew Parnell, Catherine Hurley, Claus Wilke.</p>
 </div>
 
 <div class="pkgdown">

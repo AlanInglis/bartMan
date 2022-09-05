@@ -162,6 +162,13 @@ by default the Youden index is shown.</p></td>
       <th>showInterval</th>
       <td><p>LOGICAL if TRUE then show 5% and 95% quantile intervals.</p></td>
     </tr>
+    <tr>
+      <th>combineFact</th>
+      <td><p>If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+Note that q dummies are created if q&gt;2 and one dummy is created if q=2, where q is the number of levels of the factor.
+If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
+inclusion proportions.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
@@ -179,7 +186,7 @@ by default the Youden index is shown.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by .</p>
+  <p>Developed by Alan Inglis, Andrew Parnell, Catherine Hurley, Claus Wilke.</p>
 </div>
 
 <div class="pkgdown">

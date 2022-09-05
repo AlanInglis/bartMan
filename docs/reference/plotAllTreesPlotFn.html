@@ -126,9 +126,8 @@
 
     <pre class="usage"><span class='fu'>plotAllTreesPlotFn</span><span class='op'>(</span>
   <span class='va'>treeList</span>,
-  sampleSize <span class='op'>=</span> <span class='cn'>NULL</span>,
   sizeNode <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  pal <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rev.html'>rev</a></span><span class='op'>(</span><span class='fu'>colorspace</span><span class='fu'>::</span><span class='fu'><a href='https://colorspace.R-Forge.R-project.org/reference/hcl_palettes.html'>sequential_hcl</a></span><span class='op'>(</span>palette <span class='op'>=</span> <span class='st'>"Purples 3"</span>, n <span class='op'>=</span> <span class='fl'>100</span><span class='op'>)</span><span class='op'>)</span>,
+  pal <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rev.html'>rev</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/grDevices/colorRamp.html'>colorRampPalette</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"steelblue"</span>, <span class='st'>"#f7fcfd"</span>, <span class='st'>"orange"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span><span class='op'>)</span>,
   fillBy <span class='op'>=</span> <span class='cn'>NULL</span>,
   selectedVars <span class='op'>=</span> <span class='cn'>NULL</span>,
   removeStump <span class='op'>=</span> <span class='cn'>FALSE</span>,
@@ -145,10 +144,6 @@
       <td><p>A list of trees created by treeList function.</p></td>
     </tr>
     <tr>
-      <th>sampleSize</th>
-      <td><p>Sample the tree list.</p></td>
-    </tr>
-    <tr>
       <th>sizeNode</th>
       <td><p>Whether to size node width by the number of observations that fall into that node.</p></td>
     </tr>
@@ -161,10 +156,23 @@
       <td><p>Which parameter to colour the terminal nodes. Either 'response' or 'mu'.</p></td>
     </tr>
     <tr>
+      <th>selectedVars</th>
+      <td><p>A vector of selected variables to display.</p></td>
+    </tr>
+    <tr>
+      <th>removeStump</th>
+      <td><p>LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
+remain in plot and are coloured grey.</p></td>
+    </tr>
+    <tr>
       <th>combineFact</th>
       <td><p>If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
 Note that q dummies are created if q&gt;2 and one dummy is created if q=2, where q is the number of levels of the factor.
 If combineFact = TRUE, then the dummy factors are combined into their original factor.</p></td>
+    </tr>
+    <tr>
+      <th>treeData</th>
+      <td><p>A list of tree attributes created by exctractTreeData function.</p></td>
     </tr>
     <tr>
       <th>name</th>
@@ -187,7 +195,7 @@ If combineFact = TRUE, then the dummy factors are combined into their original f
 
       <footer>
       <div class="copyright">
-  <p>Developed by .</p>
+  <p>Developed by Alan Inglis, Andrew Parnell, Catherine Hurley, Claus Wilke.</p>
 </div>
 
 <div class="pkgdown">
