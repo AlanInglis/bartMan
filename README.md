@@ -3,6 +3,11 @@
 
 # bartMan
 
+<!-- badges: start -->
+
+<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/badge/bartmanLogo1.png" width="240" height="276" align="right" />
+<!-- badges: end -->
+
 bartMan is an R-package for investigating and visualising Bayesian
 Additive Regression Tree (BART) model fits. We construct conventional
 plots to analyze a model’s performance and stability as well as create
