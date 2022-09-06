@@ -12,8 +12,7 @@
 
 combineFactors <- function(dataCombine, treeData){
 
-  #df  <- treeData$data
-  df <- treeData
+  df  <- treeData$data
   factorColNam <- names(which(!(sapply(df[colnames(df)], is.numeric))))
   factorCols <- which((colnames(df) %in% factorColNam))
   dfnew <- list()

@@ -33,7 +33,7 @@
 viviBartMatrix <- function(treeData,
                            type = "standard",
                            metric = "propMean",
-                           metricError = "SD",
+                           metricError = "CV",
                            reorder = FALSE,
                            combineFact = FALSE){
 
@@ -91,8 +91,8 @@ viviBartInternal <- function(treeData, combineFact = FALSE){
   vimpsVal <- bartMan::vimpBart(treeData, type = 'val')
 
   if(combineFact){
-    vimps <- combineFactors(treeData, vimps)
-    vimpsVal <- combineFactors(treeData, vimpsVal)
+    vimps <- combineFactors(treeData = treeData, dataCombine = vimps)
+    vimpsVal <- combineFactors(treeData = treeData, dataCombine =  vimpsVal)
   }
 
   vImp <- colMeans(vimps)
@@ -415,7 +415,7 @@ viviBartStd <- function(treeData,
   vars2  <- t(simplify2array(strsplit(as.character(propFinal[["var"]]), ":")))
   if(combineFact){
     vimps <- bartMan::vimpBart(treeData, type = 'prop')
-    vimps <- combineFactors(treeData, vimps)
+    vimps <- combineFactors(treeData = treeData, dataCombine = vimps)
     ovars <- names(vimps)
   }else{
     ovars <- treeData$varName
@@ -425,9 +425,6 @@ viviBartStd <- function(treeData,
   mat[vars2] <- propFinal[[metric]] # set values
   mat <- mat[lower.tri(mat, diag = T)[nrow(mat):1], ] + t(mat)[lower.tri(mat, diag = T)[nrow(mat):1], ]
 
-  if(metric == 'count'){
-    mat[lower.tri(mat)] <- t(mat)[lower.tri(mat)] # make symmetrical
-  }
 
   if(metric == 'adjusted'){
     vimps <- data$Vimp$propMean
@@ -459,7 +456,7 @@ viviBartStd <- function(treeData,
 viviBartVSUP <- function(treeData,
                          data,
                          reorder = FALSE,
-                         metricError = 'SD',
+                         metricError = 'CV',
                          metric = "propMean",
                          combineFact = FALSE){
 
@@ -469,7 +466,7 @@ viviBartVSUP <- function(treeData,
 
   if(combineFact){
     vimps <- bartMan::vimpBart(treeData, type = 'prop')
-    vimps <- combineFactors(treeData, vimps)
+    vimps <- combineFactors(treeData = treeData, dataCombine = vimps)
     ovars <- names(vimps)
   }else{
     ovars <- treeData$varName
@@ -479,7 +476,7 @@ viviBartVSUP <- function(treeData,
   rownames(mat) <- colnames(mat) <- ovars # set names
   mat[vars2] <- propFinal[[metricError]] # set values
   mat <- (mat[lower.tri(mat, diag = T)[nrow(mat):1], ] +
-            t(mat)[lower.tri(mat, diag = T)[nrow(mat):1], ]) / 2  # get average of symmetric values
+            t(mat)[lower.tri(mat, diag = T)[nrow(mat):1], ])
 
 
 

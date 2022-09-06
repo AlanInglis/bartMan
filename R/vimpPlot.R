@@ -53,7 +53,7 @@ vimpPlot <- function(treeData,
 
   # combine factor variables
   if(combineFact){
-    vimp <- combineFactors(treeData, vimp)
+    vimp <- combineFactors(treeData = treeData, dataCombine = vimp)
   }
 
   # get quantiles of proportions

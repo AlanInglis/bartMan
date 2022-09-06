@@ -333,7 +333,7 @@ bartVimp <- function(model, combineFact = FALSE, data) {
 
   vImpProps <- proportions(vImp, 1)
   if(combineFact){
-    vImpProps <- combineFactorsDiag(data = data, df2 = vImpProps, model = model)
+    vImpProps <- combineFactorsDiag(data = data, dataCombine = vImpProps, model = model)
   }
   vImp <- colMeans(vImpProps)
 
@@ -631,7 +631,7 @@ bartVimpClass <- function(model, combineFact = FALSE, data){
 
   vImpProps <- proportions(vImp, 1)
   if(combineFact){
-    vImpProps <- combineFactorsDiag(data = data, df2 = vImpProps, model = model)
+    vImpProps <- combineFactorsDiag(data = data, dataCombine = vImpProps, model = model)
   }
   vImp <- colMeans(vImpProps)
 
