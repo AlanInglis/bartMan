@@ -4,12 +4,12 @@
 \alias{combineFactorsDiag}
 \title{combineFactorsDiag}
 \usage{
-combineFactorsDiag(data, df2, model)
+combineFactorsDiag(data, dataCombine, model)
 }
 \arguments{
 \item{data}{A data frame}
 
-\item{df2}{A second data frame that has the factor split into individual levels.}
+\item{dataCombine}{A data frame with dummy factors to be combined into single factors.}
 
 \item{model}{a BART model}
 }

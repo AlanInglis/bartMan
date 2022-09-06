@@ -4,17 +4,16 @@
 \alias{combineFactors}
 \title{combineFactors}
 \usage{
-combineFactors(treeData, data2)
+combineFactors(dataCombine, treeData)
 }
 \arguments{
-\item{treeData}{A data frame created by extractTreeData function.}
+\item{dataCombine}{A data frame with dummy factors to be combined into single factors.}
 
-\item{data2}{A second data frame that has the factor split into individual levels.
-Used to compare the split data frame with the original data frame.}
+\item{treeData}{A data frame created by extractTreeData function.}
 }
 \description{
 If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
 Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-These functions combine the factor levels so that the inclusion proportions
+This function combines the factor levels so that the inclusion proportions
 are aggregated so the importance can be assessed for the the entire factor.
 }

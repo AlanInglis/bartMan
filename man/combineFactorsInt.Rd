@@ -4,12 +4,12 @@
 \alias{combineFactorsInt}
 \title{combineFactorsInt}
 \usage{
-combineFactorsInt(propData, dataOG)
+combineFactorsInt(dataInt, data)
 }
 \arguments{
-\item{propData}{A data frame}
+\item{dataInt}{A data frame of interactions}
 
-\item{dataOG}{A second data frame that has the factor split into individual levels.}
+\item{data}{Original data frame used to build model.}
 }
 \description{
 If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
