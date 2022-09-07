@@ -8,6 +8,9 @@
 #' @param treeNo The selected tree number.
 #' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 #' remain in plot and are coloured grey.
+#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+#' If combineFact = TRUE, then the dummy factors are combined into their original factor.
 #'
 #' @return A barplot plot.
 #'
@@ -35,9 +38,13 @@ treeBarPlot <- function(treeData,
                         iter = NULL,
                         treeNo = NULL,
                         topTrees = NULL,
-                        removeStump = FALSE){
+                        removeStump = FALSE,
+                        combineFact = FALSE){
 
 
+  if(combineFact){
+    treeData <- cFactTrees(treeData)
+  }
   treeList <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = NULL)
 
   # remove stumps
