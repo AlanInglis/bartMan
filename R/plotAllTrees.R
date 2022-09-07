@@ -890,13 +890,26 @@ cFactTrees <- function(treeData){
   # find out which columns in my original data are factors
   factorColNam <- names(which(!(sapply(dfOG[colnames(dfOG)], is.numeric))))
   factorCols <- which((colnames(dfOG) %in% factorColNam))
-
+  dfnew <- list()
 
   # create a list of the variables split into their factors
-  dfnew <- list()
-  for (i in 1:length(factorCols)) {
-    facLevels <- unique(dfOG[ ,factorCols[i]])
-    dfnew[[i]] <- paste0(factorColNam[i],  as.numeric(facLevels))
+  if(any(class(treeData) == 'bart')){
+    for (i in 1:length(factorCols)) {
+      facLevels <- unique(dfOG[ ,factorCols[i]])
+      dfnew[[i]] <- paste0(factorColNam[i],  as.numeric(facLevels))
+    }
+  }else if(any(class(treeData) ==  'bartMach')){
+
+    for (i in 1:length(factorCols)) {
+      facLevels <- unique(dfOG[,factorCols[i]])
+      dfnew[[i]] <- paste0(factorColNam[i], "_", facLevels)
+    }
+  }else if(any(class(treeData) == 'dbarts')){
+
+    for (i in 1:length(factorCols)) {
+      facLevels <- unique(dfOG[,factorCols[i]])
+      dfnew[[i]] <- paste0(factorColNam[i], ".", facLevels)
+    }
   }
 
 
@@ -908,6 +921,7 @@ cFactTrees <- function(treeData){
   return(treeData)
 }
 
+
 cFactTreesSelVars <- function(treeData){
   dfOG <- treeData$data
   # find out which columns in my original data are factors
@@ -917,9 +931,23 @@ cFactTreesSelVars <- function(treeData){
 
   # create a list of the variables split into their factors
   dfnew <- list()
-  for (i in 1:length(factorCols)) {
-    facLevels <- unique(dfOG[ ,factorCols[i]])
-    dfnew[[i]] <- paste0(factorColNam[i],  as.numeric(facLevels))
+  if(any(class(treeData) == 'bart')){
+    for (i in 1:length(factorCols)) {
+      facLevels <- unique(dfOG[ ,factorCols[i]])
+      dfnew[[i]] <- paste0(factorColNam[i],  as.numeric(facLevels))
+    }
+  }else if(any(class(treeData) ==  'bartMach')){
+
+    for (i in 1:length(factorCols)) {
+      facLevels <- unique(dfOG[,factorCols[i]])
+      dfnew[[i]] <- paste0(factorColNam[i], "_", facLevels)
+    }
+  }else if(any(class(treeData) == 'dbarts')){
+
+    for (i in 1:length(factorCols)) {
+      facLevels <- unique(dfOG[,factorCols[i]])
+      dfnew[[i]] <- paste0(factorColNam[i], ".", facLevels)
+    }
   }
 
   myList <- list(dfnew = dfnew, factorColNam = factorColNam)
