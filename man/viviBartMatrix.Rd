@@ -8,7 +8,7 @@ viviBartMatrix(
   treeData,
   type = "standard",
   metric = "propMean",
-  metricError = "SD",
+  metricError = "CV",
   reorder = FALSE,
   combineFact = FALSE
 )

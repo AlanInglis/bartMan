@@ -9,7 +9,8 @@ treeBarPlot(
   iter = NULL,
   treeNo = NULL,
   topTrees = NULL,
-  removeStump = FALSE
+  removeStump = FALSE,
+  combineFact = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,10 @@ treeBarPlot(
 
 \item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
 remain in plot and are coloured grey.}
+
+\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
+Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
+If combineFact = TRUE, then the dummy factors are combined into their original factor.}
 }
 \value{
 A barplot plot.
