@@ -6,8 +6,9 @@ library(ggplot2)
 
 
 # read data
-sbd <- read.csv('/Users/alaninglis/Desktop/SeoulBikeData.csv', sep = ',', check.names = F)
-
+sbd <- read.csv("https://raw.githubusercontent.com/AlanInglis/bartMan/master/paperCode/SeoulBikeData.csv",
+                sep=",",
+                check.names = F)
 
 # data manipulation
 sbd <- sbd |>
