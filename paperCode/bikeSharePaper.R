@@ -87,9 +87,6 @@ bartDiag(model = bt, response = dd$Count, burnIn = 100, combineFact = T, data = 
 
 # tree df
 btDF <- extractTreeData(model = bt, data = dd)
-toneR::picR(1)
-toneR::tone(2)
-
 
 
 # -------------------------------------------------------------------------
@@ -112,8 +109,8 @@ myMat <- viviBartMatrix(btDF,
                         reorder = T)
 
 # vsup
-viviBartPlot(myMat, label = 'CV')  +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(hjust = 0, angle = 45))
+viviBartPlot(myMat, label = 'CV', angle = 45)  +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(hjust = 0))
 
 # -------------------------------------------------------------------------
 # tree plot
