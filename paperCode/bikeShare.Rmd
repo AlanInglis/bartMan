@@ -13,6 +13,13 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,  fig.width = 6, fig.height = 5, fig.align = "center", fig.path = "bikeShareFigs/", fig.show='hold')
 ```
 
+This script is to recreate FIGURES 12-15:
+
+```{r, install_bartMan_from_GitHub}
+# install.packages("devtools")
+#devtools::install_github("AlanInglis/bartMan")
+```
+
 ## Load libraries:
 
 ```{r load_libraries}
@@ -103,7 +110,6 @@ bt <- wbart(x.train = xData,
 
 ## Figure 12:
 ```{r diagnostic_plot}
-
 # diagnostic plot
 bartDiag(model = bt, 
          response = dd$Count,
@@ -116,7 +122,7 @@ bartDiag(model = bt,
 ## Create dataframe of trees
 
 ```{r extractTrees}
-# tree df
+# tree df (may take several minutes)
 btDF <- extractTreeData(model = bt, data = dd)
 ```
 
@@ -127,7 +133,8 @@ btDF <- extractTreeData(model = bt, data = dd)
 # plot standard heatmap
 myMatStd <- viviBartMatrix(btDF,
                            type = 'standard',
-                           metric = 'propMean', reorder = T,
+                           metric = 'propMean', 
+                           reorder = T,
                            combineFact = TRUE)
 
 viviBartPlot(myMatStd, angle = 45)
@@ -140,8 +147,8 @@ myMat <- viviBartMatrix(btDF,
                         reorder = T)
 
 # vsup
-viviBartPlot(myMat, label = 'CV')  +
-  ggplot2::theme(axis.text.x = ggplot2::element_text(hjust = 0, angle = 45))
+viviBartPlot(myMat, label = 'CV', angle = 45)  +
+  ggplot2::theme(axis.text.x = ggplot2::element_text(hjust = 0))
 
 ```
 
@@ -190,7 +197,8 @@ bmProx <- proximityMatrix(btDF,
                           normalize = T, 
                           iter = lowRes)
 
-# mds plot
+# (as this is interactive and is plotted in the 'Viewer' window, 
+# it will not display in markdown)
 mdsBart(treeData = btDF, 
         data = dd, 
         target = bmProx, 

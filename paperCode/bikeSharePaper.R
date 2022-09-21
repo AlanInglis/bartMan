@@ -70,7 +70,7 @@ dd <- as.data.frame(dd)
 xData <- dd[,-3]
 yData <- dd[, 3]
 
-#246
+
 set.seed(8642)
 bt <- wbart(x.train = xData,
             y.train = yData,
@@ -148,18 +148,11 @@ plotAllTrees(btDF,
 # proximity matrix and MDS plots
 bmProx <- proximityMatrix(btDF, dd, reorder = T, normalize = T, iter = 996)
 
-mdsBart(treeData = btDF, data = dd, target = bmProx, plotType = 'interactive')
+mdsP <- mdsBart(treeData = btDF, data = dd, target = bmProx, plotType = 'interactive')
+mdsP
 
 
-
-
-
-targetFit <- cmdscale(1 - bmProx, eig = TRUE, k = 2)
-
-treeData = btDF
-data= dd
-
-save.image(file='sbdDailys.RData')
+#save.image(file='sbdDailys.RData')
 
 
 # -------------------------------------------------------------------------

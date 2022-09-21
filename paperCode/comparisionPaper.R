@@ -4,7 +4,8 @@ library(dbarts) # for model
 library(bartMan) # for visualizations
 library(vivid) # for agnostic visualizations
 library(ggplot2) # for visualizations
-
+library(scales) # for selecting colours
+library(RColorBrewer) # for selecting colours
 
 
 ## Read in and setup data:
@@ -128,8 +129,8 @@ viviHeatmap(mat,
 
 
 
-rm(data, fData,x, colors, colors2, Ey, n, newOrder, response, responseIdx,sigma, y, f, pFun)
-save.image(file='compare20.RData')
+#rm(data, fData,x, colors, colors2, Ey, n, newOrder, response, responseIdx,sigma, y, f, pFun)
+#save.image(file='compare20.RData')
 
 
 # -------------------------------------------------------------------------
@@ -195,8 +196,8 @@ viviHeatmap(mat,
 
 
 
-rm(data, fData,x, colors, colors2, Ey, n, newOrder, response, responseIdx,sigma, y, f, pFun)
-save.image(file='compare100.RData')
+#rm(data, fData,x, colors, colors2, Ey, n, newOrder, response, responseIdx,sigma, y, f, pFun)
+#save.image(file='compare100.RData')
 
 # -------------------------------------------------------------------------
 # 200 trees ---------------------------------------------------------------
@@ -254,8 +255,8 @@ viviHeatmap(mat,
             impPal = colors2)
 
 
-rm(data, fData,x, colors, colors2, Ey, n, newOrder, response, responseIdx,sigma, y, f, pFun)
-save.image(file='compare200.RData')
+#rm(data, fData,x, colors, colors2, Ey, n, newOrder, response, responseIdx,sigma, y, f, pFun)
+#save.image(file='compare200.RData')
 
 
 

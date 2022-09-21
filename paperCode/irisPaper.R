@@ -123,7 +123,7 @@ mdsBart(treeData = bmDF, data = iris2, target =  bmProx,
 # -------------------------------------------------------------------------
 
 
-save.image(file = 'iris.Rdata')
+#save.image(file = 'iris.Rdata')
 
 
 

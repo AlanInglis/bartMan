@@ -13,6 +13,16 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,  fig.width = 9, fig.height = 7, fig.align = "center", fig.path = "irisFigs/", fig.show='hold')
 ```
 
+
+This script is to recreate FIGURES 2-10:
+
+
+```{r, install_bartMan_from_GitHub}
+# install.packages("devtools")
+#devtools::install_github("AlanInglis/bartMan")
+```
+
+
 ## Load libraries:
 
 ```{r load_libraries}
@@ -133,7 +143,8 @@ treeBarPlot(treeData = bmDF, topTrees = 10)
 ```{r fig7_mds}
 # first get target proximity matrix
 bmProx <- proximityMatrix(bmDF, iris2, reorder = T, normalize = T, iter = 736)
-# plot MDS
+# plot MDS  (as this is interactive and is plotted in the 'Viewer' window, 
+# it will not display in markdown)
 mdsBart(treeData = bmDF, data = iris2, target =  bmProx,
         plotType = 'interactive', showGroup = F)
 ```
@@ -158,7 +169,7 @@ treeNodes(dbDF) + ylim(c(2.3, 4.3))
 
 ## Figure 10:
 ```{r fig10}
-# split density (Need to change both2)
+# split density
 splitDensity(treeData = bmDF, data = iris2, display = 'dataSplit')
 splitDensity(dbDF, data = iris2, display = 'dataSplit')
 ```

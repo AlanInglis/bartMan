@@ -13,6 +13,15 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,  fig.width = 5, fig.height = 5, fig.align = "center", fig.path = "compareFigs/", fig.show='hold')
 ```
 
+Note: As this script builds multiple large data frames and has to calculate Friedman's H-statistics numerous times (which is a slow calculation), this script may take some time to complete execution. 
+
+This script is to recreate all individual panels in FIGURE 11:
+
+```{r, install_bartMan_from_GitHub}
+# install.packages("devtools")
+#devtools::install_github("AlanInglis/bartMan")
+```
+
 ## Load libraries:
 
 ```{r load_libraries}
@@ -27,7 +36,7 @@ library(ggplot2) # for visualizations
 ## Read in and setup data:
 
 ```{r create_data}
-# Create some data
+# Create Friedman data
 f <- function(x) {
   10 * sin(pi * x[, 1] * x[, 2]) + 20 * (x[, 3] - 0.5)^2 +
     10 * x[, 4] + 5 * x[, 5]
@@ -51,6 +60,7 @@ y <- fData$y
 ## Build models
 
 ```{r build_all_models}
+# 20 Trees model
 set.seed(1701)
 dB20 <- bart(x.train = x,
              y.train = y,
@@ -60,6 +70,7 @@ dB20 <- bart(x.train = x,
              ndpost = 1000
 )
 
+# 100 Trees model
 set.seed(1701)
 dB100 <- bart(x.train = x,
               y.train = y,
@@ -69,6 +80,7 @@ dB100 <- bart(x.train = x,
               ndpost = 1000
 )
 
+# 200 Trees model
 set.seed(1701)
 dB200 <- bart(x.train = x,
               y.train = y,
