@@ -697,7 +697,16 @@ plotAllTreesPlotFn <- function(treeList,
     themeMargin <- theme(legend.box.margin = margin(100, 15, 80, 20))
     legend <- cowplot::get_legend(pLeg + themeMargin)
   }else{
-    legend <- cowplot::get_legend(allPlots[[1]])
+    ggdf <- data.frame(x = names(nodecolors), y = c(1:length(nodecolors)))
+    ggLegend <- ggplot(ggdf, aes(x=x, y=y))+
+                 geom_point(aes(color = nodecolors), shape = 15, size = 10) +
+                 scale_color_manual(values = unname(nodecolors),
+                                    label = names(nodecolors),
+                                    name = 'Variable') +
+                 theme_void() +
+                 theme(legend.position = 'right')
+    legend <- cowplot::get_legend(ggLegend)
+    #legend <- cowplot::get_legend(allPlots[[1]])
   }
 
 
@@ -715,7 +724,7 @@ plotAllTreesPlotFn <- function(treeList,
 
   treesPlot <- cowplot::plot_grid(plotlist = allPlots)
   legendPlot <- cowplot::plot_grid(legend)
-  cowplot::plot_grid(treesPlot, legendPlot, rel_widths = c(0.9, 0.13))
+  cowplot::plot_grid(treesPlot, legendPlot,  rel_widths = c(0.5, 0.13))
 
 
 }

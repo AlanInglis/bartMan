@@ -191,7 +191,17 @@ treeBarPlot <- function(treeData,
   allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors)
 
   # get legend
-  legend <- cowplot::get_legend(allPlots[[1]])
+  ggdf <- data.frame(x = names(nodecolors), y = c(1:length(nodecolors)))
+   # create a plot to ensure all vars are included in legend
+  ggLegend <- ggplot(ggdf, aes(x=x, y=y))+
+                geom_point(aes(color = nodecolors), shape = 15, size = 8) +
+                scale_color_manual(values = unname(nodecolors),
+                                   label = names(nodecolors),
+                                   name = 'Variable') +
+                theme_bw() +
+                theme(legend.position = 'bottom')
+  legend <- cowplot::get_legend(ggLegend)
+  #legend <- cowplot::get_legend(allPlots[[1]])
 
   # remove legends from individual plots
   allPlots <- lapply(allPlots, function(x) x + theme(legend.position = "none"))
