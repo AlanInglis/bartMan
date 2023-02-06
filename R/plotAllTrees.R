@@ -699,13 +699,21 @@ plotAllTreesPlotFn <- function(treeList,
   }else{
     ggdf <- data.frame(x = names(nodecolors), y = c(1:length(nodecolors)))
     ggLegend <- ggplot(ggdf, aes(x=x, y=y))+
-                 geom_point(aes(color = nodecolors), shape = 15, size = 10) +
-                 scale_color_manual(values = unname(nodecolors),
+                 geom_point(aes(fill = nodecolors), shape = 22, size = 10) +
+                 scale_fill_manual(values = unname(nodecolors),
                                     label = names(nodecolors),
-                                    name = 'Variable') +
+                                    name = 'Variable'
+                                    ) +
                  theme_void() +
                  theme(legend.position = 'right')
-    legend <- cowplot::get_legend(ggLegend)
+    legend_vars <- cowplot::get_legend(ggLegend)
+    if(!is.null(fillBy)){
+      legend_meas_A <- cowplot::get_legend(allPlots[[1]])
+      legend_meas <- legend_meas_A[3]
+      legend <- plot_grid(legend_meas, legend_vars, ncol = 1)
+    }else{
+      legend <- legend_vars
+    }
     #legend <- cowplot::get_legend(allPlots[[1]])
   }
 
