@@ -4,6 +4,12 @@
 #'
 #' @param treeData A list of trees created using the treeData function.
 #' @param data Data frame containing variables from the model.
+#' @param bandWidth Bandwidth used for density calculation. If not provided, is estimated from the data.
+#' @param panelScale If TRUE, the default, relative scaling is calculated separately for each panel.
+#'  If FALSE, relative scaling is calculated globally.
+#'  @param scaleFactor A scaling factor to scale the height of the ridgelines relative to the spacing between them.
+#'   A value of 1 indicates that the maximum point of any ridgeline touches the baseline right above,
+#'   assuming even spacing between baselines.
 #' @param display Choose how to display the plot. Either histogram, facet wrap, ridges
 #' or display both the split value and density of the predictor by using dataSplit.
 #'
@@ -16,7 +22,12 @@
 #' @export
 
 
-splitDensity <- function(treeData, data, display = "histogram") {
+splitDensity <- function(treeData,
+                         data,
+                         bandWidth = NULL,
+                         panelScale = NULL,
+                         scaleFactor = NULL,
+                         display = "histogram") {
 
   if (!(display %in% c("histogram", "ridge", "density", 'dataSplit'))) {
     stop("display must be \"histogram\", \"ridge\", \"density\", or \"dataSplit\"")
@@ -85,9 +96,25 @@ splitDensity <- function(treeData, data, display = "histogram") {
 
     dfList <- dfList |> select(.id, value, variable)
 
+    if(is.null(bandWidth)){
+      bandWidth = 0.2
+    }else{
+      bandWidth = bandWidth
+    }
+
+    if(is.null(scaleFactor)){
+      scaleFactor = 0.5
+    }else{
+      scaleFactor = scaleFactor
+    }
+
     dPlot <- dfList %>%
       ggplot(aes(x = value, y = .id, fill = stat(x))) +
-      ggridges::geom_density_ridges(aes(fill = .id, alpha = 0.1), panel_scaling = F) +
+      ggridges::geom_density_ridges(bandwidth = bandWidth,
+                                    scale = scaleFactor,
+                                    aes(fill = .id,
+                                        alpha = 0.1),
+                                    panel_scaling = panelScale) +
       facet_wrap(~variable)+
       ylab("") +
       xlab("Value") +

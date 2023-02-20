@@ -4,12 +4,27 @@
 \alias{splitDensity}
 \title{splitDensity}
 \usage{
-splitDensity(treeData, data, display = "histogram")
+splitDensity(
+  treeData,
+  data,
+  bandWidth = NULL,
+  panelScale = NULL,
+  scaleFactor = NULL,
+  display = "histogram"
+)
 }
 \arguments{
 \item{treeData}{A list of trees created using the treeData function.}
 
 \item{data}{Data frame containing variables from the model.}
+
+\item{bandWidth}{Bandwidth used for density calculation. If not provided, is estimated from the data.}
+
+\item{panelScale}{If TRUE, the default, relative scaling is calculated separately for each panel.
+If FALSE, relative scaling is calculated globally.
+@param scaleFactor A scaling factor to scale the height of the ridgelines relative to the spacing between them.
+ A value of 1 indicates that the maximum point of any ridgeline touches the baseline right above,
+ assuming even spacing between baselines.}
 
 \item{display}{Choose how to display the plot. Either histogram, facet wrap, ridges
 or display both the split value and density of the predictor by using dataSplit.}
