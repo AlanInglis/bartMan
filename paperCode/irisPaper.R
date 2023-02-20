@@ -14,7 +14,8 @@ iris2$Species <- ifelse(iris2$Species == "setosa", 0, 1)
 set.seed(100)
 bm <-  bartMachine(X = iris2[,1:4],
                    y = iris2[,5],
-                   num_trees = 20,
+                   num_trees = 5,
+                   num_iterations_after_burn_in = 10,
                    seed = 100)
 
 
@@ -81,9 +82,10 @@ plotAllTrees(bmDF, iter = 736, sizeNode = T, fillBy = 'mu')
 plotAllTrees(bmDF, iter = 736, sizeNode = T, fillBy = 'response')
 plotAllTrees(bmDF, iter = 736, cluster = "depth")
 plotAllTrees(bmDF, iter = 736, cluster = "var")
+plotAllTrees(bmDF, iter =736, sizeNode = F)
 
 
-treeBarPlot(bmDF, topTrees = 10)
+treeBarPlot(bmDF, topTrees = 10, iter = 1)
 
 
 
@@ -106,7 +108,7 @@ treeNodes(dbDF) + ylim(c(2.3, 4.3))
 
 # split density
 splitDensity(bmDF, data = iris2, display = 'dataSplit')
-splitDensity(dbDF, data = iris2, display = 'both2')
+splitDensity(dbDF, data = iris2, display = 'dataSplit')
 
 
 
