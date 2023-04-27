@@ -55,7 +55,6 @@ bm <-  bartMachine(X = iris2[,1:4],
 
 
 
-# dbarts
 set.seed(100)
 dB <- bart(x.train = iris2[,1:4],
            y.train = iris2[,5],

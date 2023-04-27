@@ -2,7 +2,7 @@
 title: "bartMan"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{vivid}
+  %\VignetteIndexEntry{bartMan}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options:

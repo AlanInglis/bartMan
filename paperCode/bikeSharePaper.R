@@ -3,7 +3,7 @@ library(BART)
 library(bartMan)
 library(dplyr)
 library(ggplot2)
-
+#library(tidy)
 
 # read data
 sbd <- read.csv("https://raw.githubusercontent.com/AlanInglis/bartMan/master/paperCode/SeoulBikeData.csv",
@@ -135,7 +135,9 @@ plotAllTrees(btDF,
              selectedVars = c(15:26, 1:4, 7, 12, 13),
              cluster = 'var',
              removeStump = F,
-             combineFact = T)
+             combineFact = T
+             )
+
 
 
 

@@ -10,12 +10,11 @@ iris2 = iris[1:100,]
 iris2$Species <- factor(iris2$Species)
 iris2$Species <- ifelse(iris2$Species == "setosa", 0, 1)
 
-# bartMachine
 set.seed(100)
 bm <-  bartMachine(X = iris2[,1:4],
                    y = iris2[,5],
-                   num_trees = 5,
-                   num_iterations_after_burn_in = 10,
+                   num_burn_in = 250,
+                   num_trees = 20,
                    seed = 100)
 
 
@@ -29,7 +28,6 @@ dB <- bart(x.train = iris2[,1:4],
            nskip = 250,
            ndpost = 1000
 )
-
 
 # -------------------------------------------------------------------------
 # Create data frame of trees ---------------------------------------------
@@ -78,14 +76,15 @@ which.min(finalRes)
 # plot all trees
 plotAllTrees(bmDF, treeNo = 20)
 
-plotAllTrees(bmDF, iter = 736, sizeNode = T, fillBy = 'mu')
-plotAllTrees(bmDF, iter = 736, sizeNode = T, fillBy = 'response')
-plotAllTrees(bmDF, iter = 736, cluster = "depth")
-plotAllTrees(bmDF, iter = 736, cluster = "var")
-plotAllTrees(bmDF, iter =736, sizeNode = F)
+plotAllTrees(bmDF, iter = 836, sizeNode = T, fillBy = 'mu')
+plotAllTrees(bmDF, iter = 836, sizeNode = T, fillBy = 'response')
+plotAllTrees(bmDF, iter = 836, cluster = "depth")
+plotAllTrees(bmDF, iter = 836, cluster = "var")
 
 
-treeBarPlot(bmDF, topTrees = 10, iter = 1)
+
+treeBarPlot(bmDF, topTrees = 10)
+
 
 
 
@@ -116,7 +115,7 @@ splitDensity(dbDF, data = iris2, display = 'dataSplit')
 # -------------------------------------------------------------------------
 
 # mds plot
-bmProx <- proximityMatrix(bmDF, iris2, reorder = T, normalize = T, iter = 736)
+bmProx <- proximityMatrix(bmDF, iris2, reorder = T, normalize = T, iter = 836)
 mdsBart(treeData = bmDF, data = iris2, target =  bmProx,
         plotType = 'interactive', showGroup = F)
 
@@ -125,7 +124,7 @@ mdsBart(treeData = bmDF, data = iris2, target =  bmProx,
 # -------------------------------------------------------------------------
 
 
-#save.image(file = 'iris.Rdata')
+save.image(file = 'iris.Rdata')
 
 
 
