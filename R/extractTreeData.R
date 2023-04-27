@@ -165,7 +165,7 @@ extractTrees.wbart <- function(model, data){
   # Add parent column
   trees$structure$parent <- parent(trees$structure$node)
   # Add value column
-  trees$structure <- trees$structure %>%
+  trees$structure <- trees$structure  |>
     dplyr::mutate(value = dplyr::coalesce(splitValue, leafValue))
 
   # reordering the data and removing unnecessary columns
@@ -199,12 +199,12 @@ extractTrees.wbart <- function(model, data){
     vals & (l1_vals | (l2_vals & cumsum(vals) %% 2L == 0L))
   }
 
-  tDepth <- trees$structure %>%
-    group_by(iteration, treeNum) %>%
+  tDepth <- trees$structure  |>
+    group_by(iteration, treeNum) |>
     summarize(Depth = sum(treeDepth(var))+1)
 
-  lengthDepth <- trees$structure %>%
-    group_by(iteration, treeNum) %>%
+  lengthDepth <- trees$structure |>
+    group_by(iteration, treeNum) |>
     summarise(depth = n())
 
   trees$structure$depthMax <- rep(tDepth$Depth, times = lengthDepth$depth)
@@ -215,8 +215,8 @@ extractTrees.wbart <- function(model, data){
   dat <- BART::bartModelMatrix(dataNew)
   dat <- as.data.frame(dat)
 
-  dfObs <-  trees$structure %>%
-    group_by(iteration, treeNum) %>%
+  dfObs <-  trees$structure |>
+    group_by(iteration, treeNum) |>
     mutate(obsList = evalNode(dat, var, splitValue))
 
   obsIndex <- lapply(dfObs$obsList, function(x) {
@@ -271,20 +271,20 @@ extractTrees.bart <- function(model, data){
   trees$structure <- transform(trees$structure, varName = ifelse(var < 0, NA, var))
   trees$structure$varName <- varNames[trees$structure$varName]
   trees$structure <- transform(trees$structure, label = ifelse(is.na(varName), value, paste(varName, value, sep = " \U2264 ")))
-  trees$structure <-  trees$structure %>%
+  trees$structure <-  trees$structure |>
     mutate(value = coalesce(splitValue, leafValue))
 
 
-  trees$structure <- trees$structure %>%
-    group_by(tree, sample) %>%
-    mutate(node = row_number()) %>%
-    ungroup() %>%
-    mutate(var = varName) %>%
-    dplyr::rename(iteration = sample, treeNum = tree) %>%
+  trees$structure <- trees$structure |>
+    group_by(tree, sample) |>
+    mutate(node = row_number()) |>
+    ungroup() |>
+    mutate(var = varName) |>
+    dplyr::rename(iteration = sample, treeNum = tree) |>
     select( - varName)
 
   # reorder columns
-  trees$structure <- trees$structure %>%
+  trees$structure <- trees$structure |>
     select(
       var,
       splitValue,
@@ -307,12 +307,12 @@ extractTrees.bart <- function(model, data){
     vals & (l1_vals | (l2_vals & cumsum(vals) %% 2L == 0L))
   }
 
-  tDepth <- trees$structure %>%
-    group_by(iteration, treeNum) %>%
+  tDepth <- trees$structure |>
+    group_by(iteration, treeNum) |>
     summarize(Depth = sum(treeDepth(var))+1)
 
-  lengthDepth <- trees$structure %>%
-    group_by(iteration, treeNum) %>%
+  lengthDepth <- trees$structure |>
+    group_by(iteration, treeNum) |>
     summarise(depth = n())
 
   trees$structure$depthMax <- rep(tDepth$Depth, times = lengthDepth$depth)
@@ -321,8 +321,8 @@ extractTrees.bart <- function(model, data){
 
   dat <- as.data.frame(model$fit$data@x)
 
-  dfObs <-  trees$structure %>%
-    group_by(iteration, treeNum) %>%
+  dfObs <-  trees$structure |>
+    group_by(iteration, treeNum) |>
     mutate(obsList = evalNode(dat, var, splitValue))
 
   obsIndex <- lapply(dfObs$obsList, function(x) {
@@ -370,15 +370,15 @@ extractTrees.bartMachine <- function(model, data){
   nCol <- ncol(df)
 
   suppressMessages(
-  df <- df %>%
-    pivot_longer(cols = 3:(nCol-1), values_drop_na = TRUE, names_repair = "unique") %>%
-    filter(grepl('depth|isLeaf|is_stump|string_location|y_pred|splitValue|splitAttributeM', value...5)) %>%
-    select(-name) %>%
-   # mutate(rn = rowid(L1, L2, value...5)) %>%
-    group_by(L1, L2, value...5) %>% mutate(rn = row_number()) |>
+  df <- df |>
+    pivot_longer(cols = 3:(nCol-1), values_drop_na = TRUE, names_repair = "unique") |>
+    filter(grepl('depth|isLeaf|is_stump|string_location|y_pred|splitValue|splitAttributeM', value...5)) |>
+    select(-name) |>
+   # mutate(rn = rowid(L1, L2, value...5)) |>
+    group_by(L1, L2, value...5) |>  mutate(rn = row_number()) |>
     ungroup() |>
-    pivot_wider(names_from = value...5, values_from = value...3) %>%
-    select(-rn) %>% as_tibble()
+    pivot_wider(names_from = value...5, values_from = value...3) |>
+    select(-rn) |>  as_tibble()
   )
 
   # convert to correct types
@@ -400,13 +400,13 @@ extractTrees.bartMachine <- function(model, data){
   df$treeNumID <-cumsum(df$string_location=="P")
 
   # define node number sequentially
-  df <- df %>%
-    group_by(treeNumID) %>%
+  df <- df |>
+    group_by(treeNumID) |>
     mutate(node = row_number())
 
   # get the parent node
-  df <- df %>%
-    group_by(treeNumID) %>%
+  df <- df |>
+    group_by(treeNumID) |>
     mutate(parentNode = substr(string_location, 0, nchar(string_location)-1))
 
   # # define parent node of P as NA
@@ -416,8 +416,8 @@ extractTrees.bartMachine <- function(model, data){
   df$parentNode[df$parentNode==""] <- "P"
 
   # Match parent node names to node numbers
-  df <- df %>%
-    group_by(treeNumID) %>%
+  df <- df |>
+    group_by(treeNumID) |>
     mutate(parentNodeNo = match(parentNode, string_location))
 
   # round values
@@ -425,14 +425,14 @@ extractTrees.bartMachine <- function(model, data){
   df$y_pred <- round(as.numeric(df$y_pred),  4)
 
   # add value column
-  df <-  df %>%
+  df <-  df |>
     mutate(value = coalesce(splitValue, y_pred))
 
   # add label column
   df <- transform(df, label = ifelse(is.na(splitValue), value, paste(var, value, sep = " \U2264 ")))
 
   # add new column defining the 'to', for the nodes 'from-to'
-  df <- df %>%
+  df <- df |>
     mutate(to = node)
   df <- transform(df, to = ifelse(is.na(parentNode), NA, to))
 
@@ -443,7 +443,7 @@ extractTrees.bartMachine <- function(model, data){
   names(df) <- c("iteration", "treeNum", "depth", "isLeaf", "isStump", "direction",
                  "splitAtt", "splitValue", "leafValue", "var", "treeNumID",
                  "node", "parentNode", "from", "value", "label", "to")
-  df <- df %>%
+  df <- df |>
     select(
       "var",
       "splitValue",
@@ -468,9 +468,9 @@ extractTrees.bartMachine <- function(model, data){
   # add depth column
   df <- dplyr::rename(df, c('depthAll'= 'depth'))
 
-  df <- df %>%
-    ungroup() %>%
-    group_by(iteration, treeNum) %>%
+  df <- df |>
+    ungroup() |>
+    group_by(iteration, treeNum) |>
     mutate(depthMax = max(depthAll))
 
   # get which observations
@@ -480,8 +480,8 @@ extractTrees.bartMachine <- function(model, data){
   dat <- as.data.frame(dat)
   dat <- dat[,-(length(dat))]
 
-  dfObs <-  df %>%
-    group_by(iteration, treeNum) %>%
+  dfObs <-  df |>
+    group_by(iteration, treeNum) |>
     mutate(obsList = evalNode(dat, var, splitValue))
 
   obsIndex <- lapply(dfObs$obsList, function(x) {

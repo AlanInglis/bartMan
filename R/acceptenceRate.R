@@ -8,7 +8,6 @@
 #' @return A plot of acceptance rate.
 #'
 #' @importFrom dplyr filter
-#' @importFrom dplyr %>%
 #' @importFrom dplyr group_by
 #' @importFrom dplyr summarise
 #' @importFrom dplyr mutate
@@ -23,14 +22,14 @@ acceptRate <- function(treeData) {
 
   maxIter <- max(df$iteration)
 
-  acceptance <- df %>%
-    filter(!is.na(var)) %>%
-    group_by(iteration, treeNum) %>%
-    summarise(values = paste0(sort(unique(label)), collapse = ",")) %>%
-    group_by(treeNum) %>%
-    mutate(changed = values != lag(values)) %>%
-    replace_na(list(changed = TRUE)) %>%
-    group_by(iteration) %>%
+  acceptance <- df |>
+    filter(!is.na(var)) |>
+    group_by(iteration, treeNum) |>
+    summarise(values = paste0(sort(unique(label)), collapse = ",")) |>
+    group_by(treeNum) |>
+    mutate(changed = values != lag(values)) |>
+    replace_na(list(changed = TRUE)) |>
+    group_by(iteration) |>
     summarise(percent_change = mean(changed))
 
   p <- ggplot(acceptance, aes(x = iteration, y = percent_change)) +

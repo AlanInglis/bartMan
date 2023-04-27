@@ -38,6 +38,7 @@
 #' @importFrom stats setNames
 #' @importFrom rlang :=
 #' @importFrom grDevices colorRampPalette
+#' @importFrom gridExtra arrangeGrob
 #'
 #' @export
 
@@ -697,20 +698,25 @@ plotAllTreesPlotFn <- function(treeList,
     themeMargin <- theme(legend.box.margin = margin(100, 15, 80, 20))
     legend <- cowplot::get_legend(pLeg + themeMargin)
   }else{
-    ggdf <- data.frame(x = names(nodecolors), y = c(1:length(nodecolors)))
-    ggLegend <- ggplot(ggdf, aes(x=x, y=y))+
-                 geom_point(aes(fill = nodecolors), shape = 22, size = 10) +
-                 scale_fill_manual(values = unname(nodecolors),
-                                    label = names(nodecolors),
-                                    name = 'Variable'
-                                    ) +
-                 theme_void() +
-                 theme(legend.position = 'right')
+    ggdf <- data.frame(x = names(nodecolors), y = c(1:length(nodecolors)), col = nodecolors)
+    ggLegend <- ggplot(ggdf, aes(x=x,y=y, fill = x))+
+      geom_bar(stat = 'identity') +
+      scale_fill_manual(values = ggdf$col, name = 'Variable')
+
+      # ggplot(ggdf, aes(x=x, y=y))+
+      #            geom_point(aes(fill = nodecolors), shape = 22, size = 10) +
+      #            scale_fill_manual(values = unname(nodecolors),
+      #                               label = names(nodecolors),
+      #                               name = 'Variable'
+      #                               ) +
+      #            theme_void() +
+      #            theme(legend.position = 'right')
     legend_vars <- cowplot::get_legend(ggLegend)
     if(!is.null(fillBy)){
       legend_meas_A <- cowplot::get_legend(allPlots[[1]])
       legend_meas <- legend_meas_A[3]
-      legend <- plot_grid(legend_meas, legend_vars, ncol = 1)
+
+      legend <- plot_grid(legend_meas, legend_vars, ncol = 1, align = 'v')
     }else{
       legend <- legend_vars
     }
@@ -725,14 +731,14 @@ plotAllTreesPlotFn <- function(treeList,
       allPlots[[i]]$data <- allPlots[[i]]$data[-2, ]
     }
   }
-  # n <- length(allPlots)
-  # nRow <- floor(sqrt(n))
-  # allTreesPlot <- arrangeGrob(grobs=allPlots, nrow=nRow)
-  # cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(0.9, 0.13), ncol = 2)
+ n <- length(allPlots)
+ nRow <- floor(sqrt(n))
+ allTreesPlot <- gridExtra::arrangeGrob(grobs=allPlots, nrow=nRow)
+ cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(0.9, 0.13), ncol = 2)
 
-  treesPlot <- cowplot::plot_grid(plotlist = allPlots)
-  legendPlot <- cowplot::plot_grid(legend)
-  cowplot::plot_grid(treesPlot, legendPlot,  rel_widths = c(0.5, 0.13))
+   # treesPlot <- cowplot::plot_grid(plotlist = allPlots)
+   # legendPlot <- cowplot::plot_grid(legend)
+   # cowplot::plot_grid(treesPlot, legendPlot,  rel_widths = c(3, 1), align = 'v')
 
 
 }

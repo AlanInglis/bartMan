@@ -150,7 +150,7 @@ mdsBart <- function(
   factorLevel <- as.factor(dfRotateAll$factResponse)
   nlevs <- nlevels(factorLevel)
   suppressWarnings(
-    pal <-  grDevices::rainbow(length(nlevs))#RColorBrewer::brewer.pal(nlevs, "Set1")
+    pal <-  grDevices::rainbow(nlevs)#RColorBrewer::brewer.pal(nlevs, "Set1")
   )
   pal <- pal[as.numeric(dfRotateAll$factResponse)]
   pal <- pal[as.numeric(dfM$rowNo)]
@@ -170,7 +170,7 @@ mdsBart <- function(
 
         p <- ggplot(dfRotateAll, aes(x = x, y = y)) +
           #geom_text(label = dfRotateAll$rowNo) +
-          geom_point(data = dfM, aes(x = mX, y = mY), col = 'steelblue') +
+          geom_point(data = dfM, aes(x = mX, y = mY), col = pal) +
           #geom_text(data = dfM, aes(x = mX, y = mY, label = rowNo)) +
           stat_ellipse(alpha = 0, aes(col = rowNo), level = level)+
           xlab("Dimension 1") +
