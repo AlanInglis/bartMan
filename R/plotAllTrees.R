@@ -52,7 +52,7 @@ plotAllTrees <- function(treeData,
                          selectedVars = NULL,
                          removeStump = FALSE,
                          combineFact = FALSE
-                         ) {
+) {
 
   # ONLY FOR BART ATM:
   if(combineFact){
@@ -60,28 +60,30 @@ plotAllTrees <- function(treeData,
   }
 
 
-
+  # Check is selectedVars is of correct size
   if(length(selectedVars) > length(treeData$varName)){
     message("SelectedVars is longer than number of available variables. Selecting all variables")
     selectedVars <- c(1:length(treeData$varName))
   }
 
+  # Create list of trees
   allTrees <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = cluster)
 
+  # Create plot of all trees
   suppressWarnings(
-    p <- plotAllTreesPlotFn(allTrees,
-                            sizeNode = sizeNode,
-                            pal = pal,
-                            fillBy = fillBy,
-                            name = treeData$varName,
-                            selectedVars = selectedVars,
-                            removeStump = removeStump,
-                            combineFact = combineFact,
-                            treeData = treeData
-                            )
+    plotAllTreesPlotFn(allTrees,
+                       sizeNode = sizeNode,
+                       pal = pal,
+                       fillBy = fillBy,
+                       name = treeData$varName,
+                       selectedVars = selectedVars,
+                       removeStump = removeStump,
+                       combineFact = combineFact,
+                       treeData = treeData
+    )
 
   )
-  return(p)
+
 }
 
 
@@ -95,26 +97,12 @@ plotAll <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
 
 
-# BART --------------------------------------------------------------------
-
+# --------------------------------------------------------------------
+# BART Method
 
 #' @export
 plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
   maxIter <- treeData$nMCMC
-
-  # if (is.null(iter) & is.null(treeNo)) {
-  #   df <- treeData$structure %>%
-  #     filter(iteration == maxIter)
-  # } else if (is.null(iter) & !is.null(treeNo)) {
-  #   df <- treeData$structure %>%
-  #     filter(treeNum == treeNo)
-  # } else if (!is.null(iter) & is.null(treeNo)) {
-  #   df <- treeData$structure %>%
-  #     filter(iteration == iter)
-  # } else {
-  #   df <- treeData$structure %>%
-  #     filter(iteration == iter, treeNum == treeNo)
-  # }
 
   if (is.null(iter) & is.null(treeNo)) {
     df <- treeData$structure
@@ -132,7 +120,7 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
 
   # add mean response per node:
-  respNode <- df$obsNode #apply(df, 1, function(x) {y[x$obsNode]})
+  respNode <- df$obsNode
   respNode <- lapply(respNode, mean)
   df$respNode <- unlist(respNode)
 
@@ -194,8 +182,9 @@ plotAll.bart <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 }
 
 
-# dbarts ------------------------------------------------------------------
 # -------------------------------------------------------------------------
+
+# DBARTS method
 #' @export
 plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
@@ -220,10 +209,9 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
   treeData$structure <- treeData$structure %>%
     group_by(iteration, treeNum)
 
-  # -------------------------------------------------------------------------
 
   # add mean response per node:
-  respNode <- treeData$structure$noObs #apply(treeData$structure, 1, function(x) {y[x$obsNode]})
+  respNode <- treeData$structure$noObs
   respNode <- lapply(respNode, mean)
   treeData$structure$respNode <- unlist(respNode)
 
@@ -248,9 +236,6 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
   treeData$structure <- treeData$structure %>%
     tibble()
 
-
-  # treesSplit <- treeData$structure %>%
-  #   group_split(cumsum(noObs == noObservations))
   treesSplit <- treeData$structure %>%
     ungroup() %>%
     group_split(cumsum(noObs == noObservations))
@@ -275,9 +260,6 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
   dS <- as.vector(sapply(treesSplit, treeDepth)[1, ])
   treesSplit <- mapply(cbind, treesSplit, "depthNEW" = dS, SIMPLIFY = F)
 
-
-
-  # Get Nodes and Edges -----------------------------------------------------
 
   # Get all the edges
   getEdges <- function(trees) {
@@ -376,9 +358,9 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 }
 
 
-
-# bartMachine -------------------------------------------------------------
 # -------------------------------------------------------------------------
+# BARTMACHINE method
+
 #' @export
 plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL) {
 
@@ -389,8 +371,6 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
   if (is.null(iter) & is.null(treeNo)) {
     df <- df
     message("Both iter and treeNo are NULL. Recommend filtering trees")
-    #%>%
-     # filter(iteration == maxIter)
   } else if (is.null(iter) & !is.null(treeNo)) {
     df <- df %>%
       filter(treeNum == treeNo)
@@ -408,7 +388,7 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
   # -------------------------------------------------------------------------
 
   # add mean response per node:
-  respNode <- df$obsNode #apply(df, 1, function(x) {y[x$obsNode]})
+  respNode <- df$obsNode
   respNode <- lapply(respNode, mean)
   df$respNode <- unlist(respNode)
 
@@ -416,25 +396,25 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
 
   # cluster trees
   suppressWarnings(
-  if (!is.null(cluster)) {
-    if (cluster == "depth") {
-      df <- df[with(df, order(-depthMax)), ]
+    if (!is.null(cluster)) {
+      if (cluster == "depth") {
+        df <- df[with(df, order(-depthMax)), ]
 
-      # split the dataframe into a list of dfs, one for each tree
-      list_edges <- df %>%
-        ungroup() %>%
-        group_split(cumsum(noObs == noObservations))
+        # split the dataframe into a list of dfs, one for each tree
+        list_edges <- df %>%
+          ungroup() %>%
+          group_split(cumsum(noObs == noObservations))
+      }
     }
-  }
   )
 
   suppressWarnings(
-  if(cluster == 'var' || is.null(cluster)){
-    # split the dataframe into a list of dfs, one for each tree
-    list_edges <- df %>%
-      group_split(cumsum(noObs == noObservations))
-  }
-)
+    if(cluster == 'var' || is.null(cluster)){
+      # split the dataframe into a list of dfs, one for each tree
+      list_edges <- df %>%
+        group_split(cumsum(noObs == noObservations))
+    }
+  )
 
 
   # remove unnecessary columns
@@ -472,39 +452,48 @@ plotAll.bartMach <- function(treeData, iter = NULL, treeNo = NULL, cluster = NUL
 
 
 # -------------------------------------------------------------------------
-# cluster function by variable --------------------------------------------
 # -------------------------------------------------------------------------
+
+####################
+# Cluster Function #
+####################
 
 clusterTrees <- function(treeList) {
 
   #df <- data
-    indIDS <- map(treeList, function(x) {
-      x %>%
-        pull(var) %>%
-        replace_na("a") %>%
-        paste0(collapse = "")
-    }) %>%
-      unlist(use.names = F) %>%
-      as_tibble() %>%
-      mutate(ids = 1:n()) %>%
-      group_by(value) %>%
-      mutate(count = n():1) %>%
-      arrange(value)
+  indIDS <- map(treeList, function(x) {
+    x %>%
+      pull(var) %>%
+      replace_na("a") %>%
+      paste0(collapse = "")
+  }) %>%
+    unlist(use.names = F) %>%
+    as_tibble() %>%
+    mutate(ids = 1:n()) %>%
+    group_by(value) %>%
+    mutate(count = n():1) %>%
+    arrange(value)
 
-    ind <- indIDS %>%
-      group_by(value) %>%
-      mutate(valrank = max(count)) %>%
-      ungroup() %>%
-      arrange(-valrank, value, -count) %>%
-      pull(ids)
+  ind <- indIDS %>%
+    group_by(value) %>%
+    mutate(valrank = max(count)) %>%
+    ungroup() %>%
+    arrange(-valrank, value, -count) %>%
+    pull(ids)
 
 
-    treeList <- treeList[ind]
+  treeList <- treeList[ind]
 
   return(treeList)
 }
 
 # -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
+
+
+##################
+# Plot All Trees #
+##################
 
 #' plotAllTreesplotFn
 #'
@@ -539,7 +528,9 @@ plotAllTreesPlotFn <- function(treeList,
                                name) {
 
 
-  # remove stumps
+
+# Remove stumps -----------------------------------------------------------
+
   if(removeStump){
     treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
     stumpIdx <- NULL
@@ -551,70 +542,76 @@ plotAllTreesPlotFn <- function(treeList,
     }
     stumpIdx <- which(whichStump == 1)
 
-    if(length(stumpIdx >=1)){
-    # create new tree list
-    newTrees <- treeList[stumpIdx]
+    # create new tree list with stumps appropriatly named
+    if(length(stumpIdx) >=1){
+      newTrees <- treeList[stumpIdx]
 
-    # create df of tree stumps
-    newTreesDF <- NULL
-    for(i in 1:length(newTrees)){
-      newTreesDF[[i]] <- newTrees[[i]] %>%
-        activate(nodes) %>%
-        data.frame()
-      if(is.null(fillBy)){
-        newTreesDF[[i]]$var <- "Stump/Leaf"
-      }else{
-        newTreesDF[[i]]$var <- "Stump"
+      newTreesDF <- NULL
+      for(i in 1:length(newTrees)){
+        newTreesDF[[i]] <- newTrees[[i]] %>%
+          activate(nodes) %>%
+          data.frame()
+        if(is.null(fillBy)){
+          newTreesDF[[i]]$var <- "Stump/Leaf"
+        }else{
+          newTreesDF[[i]]$var <- "Stump"
+        }
       }
-    }
 
 
-    # create edge data for stumps
-    newDF_Nodes <- newDF_Edges <- NULL
-    for(i in 1:length(newTreesDF)){
-      newDF_Nodes[[i]] <- rbind(newTreesDF[[i]], newTreesDF[[i]][rep(1), ])
-      newDF_Edges[[i]] <- data.frame(from = c(1,1), to = c(1,1))
-    }
+      # create edge data for stumps
+      newDF_Nodes <- newDF_Edges <- NULL
+      for(i in 1:length(newTreesDF)){
+        newDF_Nodes[[i]] <- rbind(newTreesDF[[i]], newTreesDF[[i]][rep(1), ])
+        newDF_Edges[[i]] <- data.frame(from = c(1,1), to = c(1,1))
+      }
 
-    # turn into tidygraph trees
-    newTree <- NULL
-    for(i in 1:length(newDF_Nodes)){
-      newTree[[i]] <- tbl_graph(nodes = newDF_Nodes[[i]], edges = newDF_Edges[[i]])
-    }
-    # replace stumps with new stumps
-    treeList[stumpIdx] <- newTree
+      # turn into tidygraph trees
+      newTree <- NULL
+      for(i in 1:length(newDF_Nodes)){
+        newTree[[i]] <- tbl_graph(nodes = newDF_Nodes[[i]], edges = newDF_Edges[[i]])
+      }
+      # replace stumps with new stumps
+      treeList[stumpIdx] <- newTree
     }
   }
 
 
-  # get limits
+
+# Set Limits and Labels ---------------------------------------------------
+
   if(!is.null(fillBy)){
-  if(fillBy == 'response'){
-    lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode))))
-    lims <- pretty(c(lims[1], lims[2]))
-    lims <- c(min(lims), max(lims))
-    nam <- 'Mean \nResponse'
-  } else if(fillBy == "mu"){
-    lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))))
-    lims <- c(-max(abs(lims)), max(abs(lims)))
-    nam <- 'Mu'
-  }
+    if(fillBy == 'response'){
+      lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(respNode))))
+      lims <- pretty(c(lims[1], lims[2]))
+      lims <- c(min(lims), max(lims))
+      nam <- 'Mean \nResponse'
+    } else if(fillBy == "mu"){
+      lims <- range(unlist(lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))))
+      lims <- c(-max(abs(lims)), max(abs(lims)))
+      nam <- 'Mu'
+    }
   }else{
     nam <- 'Variable'
-    }
+  }
 
 
-  # set node colours
+
+# Set the node colours ----------------------------------------------------
+
+  # Set the node colours when selecting certain variables to display
   if(!is.null(selectedVars)){
 
     if(is.numeric(selectedVars)){
       nodeNamesImp <- name[selectedVars]
       nodeNamesOthers <- name[-selectedVars]
+      selVar <- nodeNamesOthers # used in plot function
     }else if(is.character(selectedVars)){
       nodeNamesImp <- name[name %in% selectedVars]
       nodeNamesOthers <- name[!(name %in% selectedVars)]
     }
 
+    # Used to combine dummy factors
     if(combineFact){
       nameChange <- cFactTreesSelVars(treeData)
       for (i in 1:length(nameChange$dfnew)) {
@@ -625,39 +622,35 @@ plotAllTreesPlotFn <- function(treeList,
       nodeNamesOthers <- unique(nodeNamesOthers)
     }
 
-
+    # set the colours
     nodeColorsImp <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNamesImp)), nodeNamesImp)
     nodeColorsOth <- setNames(rep('#e6e6e6', length(nodeNamesOthers)), nodeNamesOthers)
     nodecolors <- c(nodeColorsImp, nodeColorsOth)
-
     namedOthers <- setNames('#e6e6e6',  "Others")
-    legColours <- c(nodeColorsImp, namedOthers)
-    # dfLegend <- reshape::melt(legColours) %>%
-    #   tibble::rownames_to_column(var = 'varName')
+    nodecolors <- c(nodeColorsImp, namedOthers)
 
-    dfLegend <- utils::stack(legColours)
-    colnames(dfLegend) <- c('value', 'varName')
-    dfLegend$varName <- as.character(dfLegend$varName)
-
-    dfLegend$val <- rep(1, times = length(dfLegend$varName))
-    dfLegend$varName <- factor(dfLegend$varName, levels = names(legColours))
-    pLeg <- ggplot(dfLegend, aes(x = varName, y = val, fill = varName)) +
-      geom_bar(stat = 'identity') +
-      scale_fill_manual(values = dfLegend$value, name = 'Variable')
+    # set leaf node colours appropriately
     if(is.null(fillBy)){
       if(length(stumpIdx) >=  1){
-        nodecolors[["Stump/Leaf"]] <- '#e6e6e6'
+        nodecolors[["Stump/Leaf"]] <- '#808080'
       }
     }else{
-      if(length(stumpIdx) >=  1){
-        nodecolors[["Stump"]] <- '#e6e6e6'
-      }
+        if(length(stumpIdx) >=  1){
+          if(is.null(fillBy)){
+            nodecolors[["Stump/Leaf"]] <- '#808080'
+          }else if(fillBy == 'response'){
+            nodecolors[["Stump"]] <- pal[ceiling(length(pal)/2)]
+          }else if(fillBy == 'mu'){
+            nodecolors[["Stump"]] <- pal[ceiling(length(pal)/2)]
+          }
+        }
     }
   }else{
+    # set the node colours when displaying all variables (default)
     nodeNames <- unique(stats::na.omit(unlist(lapply(treeList, . %>% activate(nodes) %>% pull(var)))))
     nodeNames <- sort(nodeNames)
     nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNames)), nodeNames)
-
+    selVar <- NULL
     # colour stumps grey
     if(length(stumpIdx) >=  1){
       if(is.null(fillBy)){
@@ -665,63 +658,71 @@ plotAllTreesPlotFn <- function(treeList,
       }else if(fillBy == 'response'){
         nodecolors[["Stump"]] <- pal[ceiling(length(pal)/2)]
       }else if(fillBy == 'mu'){
-        # stumpVal <- lapply(treeList, . %>% activate(nodes) %>% filter(is.na(var) | var == "Stump") %>% pull(value))
-        # sv  <- as.data.frame(stumpVal[stumpIdx])
-        # cdfLims <- ecdf(lims)
-        # cdfVal <- cdfLims(sv[1,1])
-        # nodecolors[["Stump"]] <-  pal[abs(length(pal) * cdfVal)]
         nodecolors[["Stump"]] <- pal[ceiling(length(pal)/2)]
       }
+    }else{
+      nodecolors[["Stump/Leaf"]] <- '#808080'
     }
   }
 
+
+
+
+# Create tree plots -------------------------------------------------------
+
+  # Create plots of individual trees
+  message('Creating trees...')
   suppressMessages(
-  allPlots <- lapply(treeList,
-                     plotFun,
-                     n = length(treeList),
-                     color = nodecolors,
-                     sizeNode = sizeNode,
-                     pal = pal,
-                     range = lims,
-                     name = nam,
-                     fill = fillBy)
+    allPlots <- lapply(treeList,
+                       plotFun,
+                       n = length(treeList),
+                       color = nodecolors,
+                       sizeNode = sizeNode,
+                       pal = pal,
+                       range = lims,
+                       name = nam,
+                       fill = fillBy,
+                       selectedVars = selVar
+    )
   )
 
 
-  # get legend
-  if(!is.null(selectedVars) & !is.null(fillBy)){
-    themeMargin <- theme(legend.box.margin = margin(100, 15, 80, 20))
-    legend1 <- cowplot::get_legend(pLeg + themeMargin)
-    legend <- cowplot::get_legend(allPlots[[1]] + themeMargin)
-    legend$grobs[[2]] <- legend1
-  }else if(!is.null(selectedVars) & is.null(fillBy)){
-    themeMargin <- theme(legend.box.margin = margin(100, 15, 80, 20))
-    legend <- cowplot::get_legend(pLeg + themeMargin)
-  }else{
-    ggdf <- data.frame(x = names(nodecolors), y = c(1:length(nodecolors)), col = nodecolors)
-    ggLegend <- ggplot(ggdf, aes(x=x,y=y, fill = x))+
-      geom_bar(stat = 'identity') +
-      scale_fill_manual(values = ggdf$col, name = 'Variable')
+# Create legend plot ------------------------------------------------------
 
-      # ggplot(ggdf, aes(x=x, y=y))+
-      #            geom_point(aes(fill = nodecolors), shape = 22, size = 10) +
-      #            scale_fill_manual(values = unname(nodecolors),
-      #                               label = names(nodecolors),
-      #                               name = 'Variable'
-      #                               ) +
-      #            theme_void() +
-      #            theme(legend.position = 'right')
-    legend_vars <- cowplot::get_legend(ggLegend)
-    if(!is.null(fillBy)){
-      legend_meas_A <- cowplot::get_legend(allPlots[[1]])
-      legend_meas <- legend_meas_A[3]
+    # Create legend for main plot
+    namex <- names(nodecolors)
 
-      legend <- plot_grid(legend_meas, legend_vars, ncol = 1, align = 'v')
-    }else{
-      legend <- legend_vars
-    }
-    #legend <- cowplot::get_legend(allPlots[[1]])
-  }
+    # Create node data for legend plot
+    legend_data_node <- data.frame(
+      var = c(namex, rep(NA, length.out = length(namex))),
+      val = rep(0, length(namex))
+    )
+
+    # Create edge data for legend plot
+    legend_data_edge <- data.frame(
+      from = c(rep(1, times = length(legend_data_node$var) - 1)),
+      to = c(2:length(legend_data_node$var))
+    )
+
+    # turn into graph object
+    legend_data <- tidygraph::tbl_graph(legend_data_node, legend_data_edge)
+
+    # create plot
+    legend_plot <- legendPlot(data = legend_data,
+                              pal = pal,
+                              range = lims,
+                              name = nam,
+                              color = nodecolors,
+                              fillName = nam,
+                              fillBy = fillBy)
+
+
+
+    # Get legend
+    legend <- cowplot::get_legend(legend_plot)
+
+
+# Tidy-up -----------------------------------------------------------------
 
 
   # remove legends from individual plots
@@ -731,22 +732,38 @@ plotAllTreesPlotFn <- function(treeList,
       allPlots[[i]]$data <- allPlots[[i]]$data[-2, ]
     }
   }
- n <- length(allPlots)
- nRow <- floor(sqrt(n))
- allTreesPlot <- gridExtra::arrangeGrob(grobs=allPlots, nrow=nRow)
- cowplot::plot_grid(allTreesPlot, legend, rel_widths = c(0.9, 0.13), ncol = 2)
 
-   # treesPlot <- cowplot::plot_grid(plotlist = allPlots)
-   # legendPlot <- cowplot::plot_grid(legend)
-   # cowplot::plot_grid(treesPlot, legendPlot,  rel_widths = c(3, 1), align = 'v')
+
+# Plot all trees ----------------------------------------------------------
+
+
+  n <- length(allPlots)
+  nRow <- floor(sqrt(n))
+  message('Building grid of trees...')
+  allTreesPlot <- gridExtra::arrangeGrob(grobs=allPlots, nrow=nRow)
+  message('Drawing graphic...')
+  suppressMessages(
+  gridExtra::grid.arrange(allTreesPlot,
+                          legend,
+                          ncol = 2,
+                          widths = c(10, 1))
+  )
 
 
 }
 
 
 
-# Plot function -----------------------------------------------------------
+# -------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
+
+
+##########################
+# Tree plotting function #
+##########################
+
+# Define plot function
 plotFun <- function(List,
                     color = NULL,
                     n,
@@ -754,148 +771,69 @@ plotFun <- function(List,
                     pal = rev(colorRampPalette(c('steelblue', '#f7fcfd', 'orange'))(5)),
                     range,
                     name,
-                    fill) {
+                    fill,
+                    selectedVars) {
 
   if(is.null(pal)){
     pal = "grey"
   }
 
-  if(!is.null(fill)){
-  if (fill == "response") {
-  if (sizeNode) {
+  selVar <- selectedVars
+
+  List <- List %N>%
+    mutate(var = ifelse(var %in% selVar, 'Others', var))
+
+  # Size the nodes
+  if(sizeNode){
     plot <- ggraph(List, "partition", weight = noObs) +
       geom_node_tile(aes(fill = var), size = 0.25) +
-      geom_node_text(aes(label = ""), size = 4) +
       scale_y_reverse() +
-      theme_void()
-    if (!is.null(colors)) {
-      plot <- plot + scale_fill_manual(values = color, name = "Variable") +
-        ggnewscale::new_scale_fill() +
-        ggnewscale::new_scale_color() +
-        geom_node_tile(
-          size = 0.15,
-          data = . %>% filter(is.na(var)),
-          aes(fill = respNode)
-        ) +
-        scale_fill_gradientn(
-          colours = pal,
-          limits = range,
-          name = name,
-          guide = guide_colorbar(
-            frame.colour = "black",
-            ticks.colour = "black",
-            order = 2
-          )
-        )
-    }
-  } else {
-    plot <- ggraph(List, "partition") +
+      theme_void() +
+      theme(aspect.ratio = 1)
+  }else{
+    plot <- ggraph(List, "partition", weight = NULL) +
       geom_node_tile(aes(fill = var), size = 0.25) +
-      geom_node_text(aes(label = ""), size = 4) +
       scale_y_reverse() +
-      theme_void()
-    if (!is.null(colors)) {
-      plot <- plot + scale_fill_manual(values = color, name = "Variable") +
-        ggnewscale::new_scale_fill() +
-        ggnewscale::new_scale_color() +
-        geom_node_tile(
-          size = 0.15,
-          data = . %>% filter(is.na(var)),
-          aes(fill = respNode)
-        ) +
-        scale_fill_gradientn(
-          colours = pal,
-          limits = range,
-          name = name,
-          guide = guide_colorbar(
-            frame.colour = "black",
-            ticks.colour = "black",
-            order = 2
-          )
-        )
-    }
-  }
-  }
+      theme_void() +
+      theme(aspect.ratio = 1)
   }
 
-  if(!is.null(fill)){
-  if (fill == "mu") {
-    if (sizeNode) {
-      plot <- ggraph(List, "partition", weight = noObs) +
-        geom_node_tile(aes(fill = var), size = 0.25) +
-        geom_node_text(aes(label = ""), size = 4) +
-        scale_y_reverse() +
-        theme_void()
-      if (!is.null(colors)) {
-        plot <- plot + scale_fill_manual(values = color, name = "Variable") +
-          ggnewscale::new_scale_fill() +
-          ggnewscale::new_scale_color() +
-          geom_node_tile(
-            size = 0.15,
-            data = . %>% filter(is.na(var)),
-            aes(fill = value)
-          ) +
-          scale_fill_gradientn(
-            colours = pal,
-            limits = range,
-            name = name,
-            guide = guide_colorbar(
-              frame.colour = "black",
-              ticks.colour = "black",
-              order = 2
-            )
-          )
-      }
-    } else {
-      plot <- ggraph(List, "partition") +
-        geom_node_tile(aes(fill = var), size = 0.25) +
-        geom_node_text(aes(label = ""), size = 4) +
-        scale_y_reverse() +
-        theme_void()
-      if (!is.null(colors)) {
-        plot <- plot + scale_fill_manual(values = color, name = "Variable") +
-          ggnewscale::new_scale_fill() +
-          ggnewscale::new_scale_color() +
-          geom_node_tile(
-            size = 0.15,
-            data = . %>% filter(is.na(var)),
-            aes(fill = value)
-          ) +
-          scale_fill_gradientn(
-            colours = pal,
-            limits = range,
-            name = name,
-            guide = guide_colorbar(
-              frame.colour = "black",
-              ticks.colour = "black",
-              order = 2
-            )
-          )
-      }
-    }
-  }
+
+  if (!is.null(color)) {
+    plot <- plot + scale_fill_manual(values = color,
+                                     name = "Variable",
+                                     na.value = "#808080")
   }
 
-  if(is.null(fill)){
-    if (sizeNode) {
-      plot <- ggraph(List, "partition", weight = noObs) +
-        geom_node_tile(aes(fill = var), size = 0.25) +
-        geom_node_text(aes(label = ""), size = 4) +
-        scale_y_reverse() +
-        theme_void()
-      if (!is.null(colors)) {
-        plot <- plot + scale_fill_manual(values = color, name = "Variable")
-      }
-    } else {
-      plot <- ggraph(List, "partition") +
-        geom_node_tile(aes(fill = var), size = 0.25) +
-        geom_node_text(aes(label = ""), size = 4) +
-        scale_y_reverse() +
-        theme_void()
-      if (!is.null(colors)) {
-        plot <- plot + scale_fill_manual(values = color, name = "Variable")
+  if(!is.null(fill) && !is.null(color)){
+    plot <- plot +
+      ggnewscale::new_scale_fill() +
+      ggnewscale::new_scale_color()
+
+    if (fill == "response") {
+      plot <- plot + geom_node_tile(
+        size = 0.15,
+        data = . %>% filter(is.na(var)),
+        aes(fill = respNode)
+      )
+    } else if (fill == "mu") {
+      plot <- plot + geom_node_tile(
+        size = 0.15,
+        data = . %>% filter(is.na(var)),
+        aes(fill = value)
+      )
     }
-    }
+
+    plot <- plot + scale_fill_gradientn(
+      colours = pal,
+      limits = range,
+      name = name,
+      guide = guide_colorbar(
+        frame.colour = "black",
+        ticks.colour = "black",
+        order = 2
+      )
+    )
   }
 
   return(plot)
@@ -903,10 +841,55 @@ plotFun <- function(List,
 
 
 
+# Legend plot -------------------------------------------------------------
+
+legendPlot <- function(data, pal, range, name, color, fillName, fillBy){
+
+  legend_data <- data
+  suppressWarnings(
+    suppressMessages(
+      legend_plot <- ggraph(legend_data, "partition", weight = 1) +
+        geom_node_tile(aes(fill = var), size = 0.25) +
+        scale_y_reverse() +
+        theme_void() +
+        scale_fill_manual(values = color, name = "Variable")
+    ))
+
+  if(!is.null(fillBy)){
+    suppressWarnings(
+      suppressMessages(
+        legend_plot <- legend_plot +
+          ggnewscale::new_scale_fill() +
+          geom_node_tile(
+            size = 0.15,
+            data = subset(legend_data$nodes, is.na(var)),
+            aes(fill = val)
+          ) +
+          scale_fill_gradientn(
+            colours = pal,
+            limits = range,
+            name = fillName,
+            guide = guide_colorbar(
+              frame.colour = "black",
+              ticks.colour = "black",
+              order = 2
+            )
+          )
+      ))
+  }
+
+  return(legend_plot)
+}
+
+
+
 # -------------------------------------------------------------------------
-
-
 # Combine factor function for trees ---------------------------------------
+
+#########################
+# Combine dummy factors #
+#########################
+
 
 cFactTrees <- function(treeData){
   dfOG <- treeData$data
@@ -976,7 +959,4 @@ cFactTreesSelVars <- function(treeData){
   myList <- list(dfnew = dfnew, factorColNam = factorColNam)
   return(myList)
 }
-
-
-
 
