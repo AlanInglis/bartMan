@@ -609,6 +609,7 @@ plotAllTreesPlotFn <- function(treeList,
     }else if(is.character(selectedVars)){
       nodeNamesImp <- name[name %in% selectedVars]
       nodeNamesOthers <- name[!(name %in% selectedVars)]
+      selVar <- nodeNamesOthers # used in plot function
     }
 
     # Used to combine dummy factors
@@ -780,7 +781,7 @@ plotFun <- function(List,
 
   selVar <- selectedVars
 
-  List <- List %N>%
+  List <- List %>%
     mutate(var = ifelse(var %in% selVar, 'Others', var))
 
   # Size the nodes

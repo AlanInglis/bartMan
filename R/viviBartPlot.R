@@ -287,7 +287,7 @@ viviPlot.vsup <- function(matrix,
       limits = vintLims,
       breaks = vintBreaks,
       labels = vintBreaksLabel,
-      #oob = scales::squish,
+      oob = scales::squish,
       palette = pal_vsup(
         values = intPal,
         unc_levels = unc_levels,

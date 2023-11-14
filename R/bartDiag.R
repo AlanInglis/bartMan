@@ -42,18 +42,18 @@ bartDiag <- function(model,
                      showInterval = TRUE,
                      combineFact = FALSE){
 
-  if(class(model) == 'pbart'){
+  if(any(class(model) == 'pbart')){
 
     output <- bartClassifDiag(model = model, data = data, response = response,
                     threshold = threshold, pNorm = pNorm, showInterval = showInterval,
                     combineFact = combineFact)
 
-  }else if(class(model) == 'wbart'){
+  }else if(any(class(model) == 'wbart')){
 
     output <- bartRegrDiag(model = model, data = data, response = response,
                            burnIn = burnIn, combineFact = combineFact)
 
-  }else if(class(model) == 'bart'){
+  }else if(any(class(model) == 'bart')){
 
     if(model$fit$control@binary == TRUE){
 
@@ -66,7 +66,7 @@ bartDiag <- function(model,
                              burnIn = burnIn, combineFact = combineFact)
     }
 
-  }else if(class(model) == 'bartMachine'){
+  }else if(any(class(model) == 'bartMachine')){
 
     if(model$pred_type == 'classification'){
 
@@ -150,7 +150,7 @@ bartRegrDiag <- function(model,
 # QQ plot -----------------------------------------------------------------
 
 bartQQ <- function(model, response) {
-  if (class(model) == "wbart" || class(model) == "bartMachine") {
+  if (any(class(model) == "wbart") || any(class(model) == "bartMachine")) {
     res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
     res <- res %>% summarise(.residual = mean(.residual))
   } else {
