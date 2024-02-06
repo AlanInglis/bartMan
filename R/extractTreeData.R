@@ -192,6 +192,17 @@ extractTrees.wbart <- function(model, data){
 
 
   # add tree depth
+  calculate_depth <- function(node_id) {
+    depth = 0
+    while(node_id > 1) {
+      node_id = node_id %/% 2
+      depth = depth + 1
+    }
+    return(depth)
+  }
+
+  trees$structure$depth <- sapply(trees$structure$node, calculate_depth)
+
   treeDepth <- function(x) {
     vals <- !is.na(x)
     l1_vals <- !is.na(lag(x))
