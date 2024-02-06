@@ -262,34 +262,89 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
 
 
   # Get all the edges
+  # getEdges <- function(trees) {
+  #   maxDepth <- trees$depthNEW[1]
+  #
+  #   if (maxDepth > 2) {
+  #     # Set the edge value:
+  #     # this gets the 1st group of edges
+  #     edgeSet1 <- do.call(rbind, lapply(
+  #       split(trees, ~ cumsum(!isLeaf)),
+  #       function(x) {
+  #         with(x, expand.grid(from = node[!isLeaf], to = node[isLeaf]))
+  #       }
+  #     ))
+  #
+  #     # get second group of edges
+  #     edgeSet2 <- setNames(rev(data.frame(stats::embed(trees$node[!trees$isLeaf], 2))), c("from", "to"))
+  #
+  #     # bind them together
+  #     edges <- rbind(edgeSet1, edgeSet2)
+  #
+  #     # If any number in the to column appears more than twice then
+  #     # replace with n-(number of times it appears-2)
+  #     newFrom <- edges %>%
+  #       group_by(from) %>%
+  #       transmute(from := from - c(rep(0, 2), row_number())[row_number()]) %>%
+  #       ungroup()
+  #
+  #     # add to edges df
+  #     edges$from <- pull(newFrom)
+  #
+  #     # Change to right side of tree
+  #     backToRoot <- edges %>%
+  #       group_by(from) %>%
+  #       filter(n() == 1)
+  #
+  #     backToRoot$from <- 1
+  #     edges <- rbind(edges, backToRoot)
+  #
+  #     # remove duplicated rows and single row entries
+  #     edges <- edges[!duplicated(edges), ]
+  #     dups <- edges$from[duplicated(edges$from)]
+  #     edges$unique <- edges$from %in% dups
+  #     edgeIndex <- which(edges$unique == F)
+  #     if (length(edgeIndex == 0)) {
+  #       edges <- edges[-edgeIndex, ]
+  #     }
+  #     drops <- c("unique")
+  #     edges <- edges[, !(names(edges) %in% drops)]
+  #
+  #     # reorder
+  #     "edges" <- `row.names<-`(edges[with(edges, order(from, to)), ], NULL)
+  #     edges <- edges[order(edges$to), ]
+  #   } else {
+  #     edges <- do.call(rbind, lapply(
+  #       split(trees, ~ cumsum(!isLeaf)),
+  #       function(x) {
+  #         with(x, expand.grid(from = node[!isLeaf], to = node[isLeaf]))
+  #       }
+  #     ))
+  #   }
+  # }
+
+  # Thanks to DriWater for spotting and fixing the coding error here!
   getEdges <- function(trees) {
     maxDepth <- trees$depthNEW[1]
 
     if (maxDepth > 2) {
       # Set the edge value:
       # this gets the 1st group of edges
-      edgeSet1 <- do.call(rbind, lapply(
-        split(trees, ~ cumsum(!isLeaf)),
-        function(x) {
-          with(x, expand.grid(from = node[!isLeaf], to = node[isLeaf]))
+      edgecnt <- data.frame(node = trees$node, edgenum = 2)
+      edgecnt[trees$isLeaf, ]$edgenum <- 0
+
+      edges <- NULL
+      for(i in 2:nrow(edgecnt)){
+        for(j in (i-1):1){
+          if(edgecnt[j, ]$edgenum > 0){
+            edges <- rbind(edges, c(edgecnt[j, ]$node, edgecnt[i, ]$node))
+            edgecnt[j, ]$edgenum = edgecnt[j, ]$edgenum - 1
+            break
+          }
         }
-      ))
+      }
 
-      # get second group of edges
-      edgeSet2 <- setNames(rev(data.frame(stats::embed(trees$node[!trees$isLeaf], 2))), c("from", "to"))
-
-      # bind them together
-      edges <- rbind(edgeSet1, edgeSet2)
-
-      # If any number in the to column appears more than twice then
-      # replace with n-(number of times it appears-2)
-      newFrom <- edges %>%
-        group_by(from) %>%
-        transmute(from := from - c(rep(0, 2), row_number())[row_number()]) %>%
-        ungroup()
-
-      # add to edges df
-      edges$from <- pull(newFrom)
+      edges <- data.frame(from = edges[,1], to =  edges[,2])
 
       # Change to right side of tree
       backToRoot <- edges %>%
@@ -304,7 +359,7 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
       dups <- edges$from[duplicated(edges$from)]
       edges$unique <- edges$from %in% dups
       edgeIndex <- which(edges$unique == F)
-      if (length(edgeIndex == 0)) {
+      if (!length(edgeIndex) == 0) {
         edges <- edges[-edgeIndex, ]
       }
       drops <- c("unique")
@@ -323,16 +378,17 @@ plotAll.dbarts <- function(treeData, iter = NULL, treeNo = NULL, cluster = NULL)
     }
   }
 
+
   allEdges <- sapply(treesSplit, getEdges)
 
   #  for single type of tree
-  needLe <- paste0("\\b", paste(c(1, 1, 1, 4, 4, 6, 6, 1), collapse = ","), "\\b")
-  changeTo <- paste(c(1, 1, 3, 4, 4, 6, 6, 3), collapse = ",")
-  allEdges <- lapply(
-    strsplit(sapply(allEdges, function(L) gsub(needLe, changeTo, paste(L, collapse = ","))), ","),
-    as.integer)
-  allEdges <- matrix(allEdges, nrow = 2)
-  rownames(allEdges) <- c('from', 'to')
+  # needLe <- paste0("\\b", paste(c(1, 1, 1, 4, 4, 6, 6, 1), collapse = ","), "\\b")
+  # changeTo <- paste(c(1, 1, 3, 4, 4, 6, 6, 3), collapse = ",")
+  # allEdges <- lapply(
+  #   strsplit(sapply(allEdges, function(L) gsub(needLe, changeTo, paste(L, collapse = ","))), ","),
+  #   as.integer)
+  # allEdges <- matrix(allEdges, nrow = 2)
+  # rownames(allEdges) <- c('from', 'to')
 
 
   # remove unnecessary columns
