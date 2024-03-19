@@ -11,7 +11,7 @@ bartClassifDiag(
   threshold = "Youden",
   pNorm = FALSE,
   showInterval = TRUE,
-  combineFact = FALSE
+  combineFactors = FALSE
 )
 }
 \arguments{
@@ -28,10 +28,7 @@ by default the Youden index is shown.}
 
 \item{showInterval}{LOGICAL if TRUE then show 5\% and 95\% quantile intervals.}
 
-\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-inclusion proportions.}
+\item{combineFactors}{Whether or not to combine dummy variables (if present) in display.}
 }
 \value{
 A selection of diagnostic plots

@@ -7,10 +7,6 @@
 #' @param plotType Which type of plot to return. Either a barplot 'barplot' with the
 #' quantiles shown as a line, a point plot with the quantiles shown as a gradient 'point', or a
 #' letter-value plot 'lvp'.
-#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-#' inclusion proportions.
 #' @param top Display only the top X metrics (does not apply to the letter-value plot).
 #'
 #' @return A plot of variable importance.
@@ -28,7 +24,6 @@
 
 
 vintPlot <- function(treeData,
-                      combineFact = FALSE,
                       plotType = 'barplot',
                       top = NULL){
 
@@ -146,10 +141,6 @@ vintPlot <- function(treeData,
   propMatVint <- proportions(dfVint, 1)
   propMatVint[is.nan(propMatVint)] <- 0
 
-  if(combineFact){
-    propMatVint <- combineFactorsInt(propMatVint, treeData$data)
-    dfVint <- combineFactorsInt(dfVint, treeData$data)
-  }
   propMatVintMean <- colMeans(propMatVint)
 
   # turn into df
@@ -285,13 +276,13 @@ vintPlot <- function(treeData,
       ggplot(aes(x = Variable, y = propMean)) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = Q75,
-        colour = "gray50", alpha = rev(stat(index))
+        colour = "gray50", alpha = rev(after_stat(index))
       ),
       size = 5, n = 1000
       ) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = Q25,
-        colour = 'gray50', alpha = rev(stat(index))
+        colour = 'gray50', alpha = rev(after_stat(index))
       ),
       size = 5, n = 1000
       ) +
@@ -329,7 +320,8 @@ vintPlot <- function(treeData,
 
 
     p <- ggplot(lvpVint, aes(stats::reorder(variable, value), value)) +
-      lvplot::geom_lv(aes(fill = ..LV..),
+      #lvplot::geom_lv(aes(fill = ..LV..),
+      lvplot::geom_lv(aes(fill = after_stat(LV)),
                       conf = 0.5,
                       outlier.colour = "blue",
                       outlier.shape = 5,

@@ -4,10 +4,6 @@
 #' and a dataframe of variable interaction summaries.
 #'
 #' @param treeData A data frame created by extractTreeData function.
-#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-#' If combineFact = TRUE, then both the importance and interactions are calculated for the entire factor by aggregating the dummy variables’
-#' inclusion proportions.
 #' @param out Choose to either output just the variable importance ('vimp'),
 #' the variable interaction ('vint'), or both ('vivi') (default).
 #'
@@ -17,9 +13,9 @@
 #' @export
 #'
 
-viviBart <- function(treeData, combineFact = FALSE, out = 'vivi'){
+viviBart <- function(treeData, out = 'vivi'){
 
-  vivis <- viviBartInternal(treeData = treeData, combineFact = combineFact)
+  vivis <- viviBartInternal(treeData = treeData)
 
   if (!(out %in% c("vimp", "vint", "vivi"))) {
     stop("out must be \"vimp\", \"vint\"  or \"vivi\"")

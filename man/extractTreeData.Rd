@@ -12,7 +12,7 @@ extractTreeData(model, data)
 \item{data}{a data frame used to build the BART model.}
 }
 \value{
-A list of every tree and its attributes.
+A list containing the extracted and processed tree data, including dataframe of trees and attributes.
 }
 \description{
 Creates a list of all tree attributes for a model

@@ -1,250 +1,172 @@
-#' treeBarPlot
+#' Plot Frequency of Tree Structures
 #'
-#' @description Creates a barplot displaying the frequency of different tree structures.
+#' Generates a bar plot showing the frequency of different tree structures
+#' represented in a list of tree graphs. Optionally, it can filter to show only the top N trees
+#' and handle stump trees specially.
 #'
-#' @param treeData A list of tree attributes created using the extractTreeData function.
-#' @param topTrees integer value to show the top x variables.
-#' @param iter The selected iteration
-#' @param treeNo The selected tree number.
-#' @param removeStump LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
-#' remain in plot and are coloured grey.
-#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-#' If combineFact = TRUE, then the dummy factors are combined into their original factor.
+#' @param trees A list of tree graphs to display
+#' @param iter Optional; specifies the iteration to display.
+#' @param topTrees Optional; the number of top tree structures to display. If NULL, displays all.
+#' @param removeStump Logical; if TRUE, trees with no edges (stumps) are excluded from the display
 #'
-#' @return A barplot plot.
+#' @details
+#' This function processes a list of tree structures to compute the frequency of each unique structure,
+#' represented by a bar plot. It has options to exclude stump trees (trees with no edges) and to limit
+#' the plot to the top N most frequent structures.
 #'
+#' @return A `ggplot` object representing the bar plot of tree frequencies.
 #'
-#' @import ggplot2
-#' @importFrom purrr map2
-#' @importFrom tidygraph activate
-#' @importFrom tidygraph tbl_graph
+#' @examples
+#' plot <- treeBarPlot(trees = treeList, topTrees = 10, removeStump = TRUE)
+#' print(plot)
+#'
+#' @importFrom dplyr mutate pull group_by arrange filter slice n
+#' @importFrom purrr map imap
 #' @importFrom tidyr replace_na
-#' @importFrom dplyr as_tibble
-#' @importFrom dplyr arrange
-#' @importFrom dplyr mutate
-#' @importFrom dplyr slice
-#' @importFrom igraph gsize
-#' @importFrom ggraph ggraph
-#' @importFrom ggraph geom_node_tile
-#' @importFrom ggraph geom_node_text
-#' @importFrom cowplot get_legend
-#' @importFrom cowplot plot_grid
-#'
-#'
+#' @import ggplot2
+#' @import ggraph
+#' @import patchwork
+#' @importFrom cowplot plot_grid get_legend
+#' @importFrom tidygraph activate bind_nodes bind_edges
+
+
+
 #' @export
 
-treeBarPlot <- function(treeData,
-                        iter = NULL,
-                        treeNo = NULL,
-                        topTrees = NULL,
-                        removeStump = FALSE,
-                        combineFact = FALSE){
+treeBarPlot <- function(trees, iter = NULL, topTrees = NULL, removeStump = FALSE) {
+  # Create list of trees
+  treeList <- treeList(treeData = trees, iter = iter, treeNo = NULL)
 
-
-  if(combineFact){
-    treeData <- cFactTrees(treeData)
-  }
-  treeList <- plotAll(treeData, iter = iter, treeNo = treeNo, cluster = NULL)
-
-  # remove stumps
-  #treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
-
-  if(removeStump){
+  # Optionally remove stumps
+  if (removeStump) {
     treeList <- Filter(function(x) igraph::gsize(x) > 0, treeList)
-    stumpIdx <- NULL
-  }else{
-    # get the stump index
-    whichStump = NULL
-    for(i in 1:length(treeList)){
-      whichStump[[i]] <-  which(igraph::gsize(treeList[[i]]) == 0)
-    }
-    stumpIdx <- which(whichStump == 1)
-
-    if(length(stumpIdx >=1)){
-      # create new tree list
-      newTrees <- treeList[stumpIdx]
-
-      # create df of tree stumps
-      newTreesDF <- NULL
-      for(i in 1:length(newTrees)){
-        newTreesDF[[i]] <- newTrees[[i]] %>%
-          activate(nodes) %>%
-          data.frame()
-        newTreesDF[[i]]$var <- "Stump"
-      }
-      # create edge data for stumps
-      newDF_Nodes <- newDF_Edges <- NULL
-      for(i in 1:length(newTreesDF)){
-        newDF_Nodes[[i]] <- rbind(newTreesDF[[i]], newTreesDF[[i]][rep(1), ])
-        newDF_Edges[[i]] <- data.frame(from = c(1,1), to = c(1,1))
-      }
-      # turn into tidygraph trees
-      newTree <- NULL
-      for(i in 1:length(newDF_Nodes)){
-        newTree[[i]] <- tbl_graph(nodes = newDF_Nodes[[i]], edges = newDF_Edges[[i]])
-      }
-      # replace stumps with new stumps
-      treeList[stumpIdx] <- newTree
-    }
   }
 
-
-
-  # get the frequency of similar trees:
-  freqs <- map(treeList, function(x){
-    x %>%
-      pull(var) %>%
-      tidyr::replace_na("..") %>%
+  # Get frequencies of similar trees
+  freqs <- purrr::map(treeList, function(x) {
+    x |>
+      dplyr::pull(var) |>
+      tidyr::replace_na("..") |>
       paste0(collapse = "")
-  }) %>%
-    unlist(use.names = F) %>%
-    as_tibble() %>%
-    mutate(ids = 1:n()) %>%
-    group_by(value) %>%
-    mutate(val = n():1)
+  }) |>
+    unlist(use.names = F) |>
+    dplyr::as_tibble() |>
+    dplyr::mutate(ids = 1:dplyr::n()) |>
+    dplyr::group_by(value) |>
+    dplyr::mutate(val = dplyr::n():1)
 
+  # Sort frequency data frame and rename columns
+  freqDf <- freqs |>
+    dplyr::slice(1) |>
+    dplyr::arrange(-val) |>
+    dplyr::rename(frequency = val)
+  freqDf$treeNum <- seq(1:nrow(freqDf))
 
-  freqDf <-  freqs %>%
-    slice(1) %>%
-    arrange(-val) %>%
-    dplyr::rename(frequency = val)  # frequency tibble
-  freqDf$treeNum <- seq(1:nrow(freqDf)) # add tree number
-
-
-  if(!is.null(topTrees)){
-    if(length(freqDf$ids) < topTrees){
-      stop('Number of trees chosen to display is greater than available trees. Alter either the topTrees or treeNo argument.')
+  # Limit to top trees if specified
+  if (!is.null(topTrees)) {
+    if (length(freqDf$ids) < topTrees) {
+      stop("Number of trees chosen to display is greater than available trees. Alter the topTrees argument.")
     }
-    freqDf <- freqDf[1:topTrees,]
+    freqDf <- freqDf[1:topTrees, ]
   }
 
-  lengthFreq <- length(freqDf$value)
+  # Update frequencies and filter tree list
   ids <- freqDf$ids
-  #ids <- freqs %>% slice(1) %>% pull(ids) # remove duplicates
-  freqs <- freqs[ids,] %>% pull(val) # get frequencies
-
-
+  freqs <- freqs[ids, ] |> dplyr::pull(val)
   treeList <- treeList[ids]
-  treeListNew <- purrr::imap(treeList, ~.x %>%
-                               mutate(frequency = freqs[.y]) %>%
-                               select(var, frequency))
+  treeList <- purrr::imap(treeList, ~ .x |> dplyr::mutate(frequency = freqs[.y]) |> dplyr::select(var, frequency))
 
-  # # return new list of trees
-  # treeList <- treeListNew[sort(ids)]
-    treeList <- treeListNew
-
-  # add plot name as number
-  # for(i in 1:(length(treeList))){
-  #   treeList[[i]] <- treeList[[i]] %>%
-  #     activate(nodes) %>%
-  #     mutate(name = c(i, rep("", length.out = igraph::gsize(treeList[[i]]))))
-  # }
-
-
-  # Create barplot of frequency ---------------------------------------------
+  # Generate barplot of tree frequencies
   names <- factor(freqDf$value, levels = freqDf$value)
-
-  bp <- freqDf %>%
+  bp <- freqDf |>
     ggplot() +
-    geom_bar(aes(x = value, y = frequency), fill = 'steelblue', stat = "identity") +
+    geom_bar(aes(x = value, y = frequency), fill = "steelblue", stat = "identity") +
     scale_x_discrete(limits = rev(levels(names))) +
-    ggtitle("") +
     ylab("Count") +
     xlab("") +
     theme_bw() +
     theme(legend.position = "none") +
     coord_flip()
 
+  # find if any stumps
+  is_stump <- which(sapply(treeList, function(tree) igraph::gsize(tree) == 0))
+  # Optional stump processing
+  if(length(is_stump) >= 1){
+    if (!removeStump) {
+      tree_stumps <- treeList[is_stump]
+      frequencies <- tree_stumps[[1]] |> tidygraph::activate(nodes) |> dplyr::pull(frequency)
+      tree_stumps[[1]] <- tree_stumps[[1]] |> tidygraph::activate(nodes) |> dplyr::mutate(var = "Stump") |>
+        tidygraph::bind_nodes(data.frame(var = "Stump", frequency = frequencies)) |>
+        tidygraph::bind_edges(data.frame(from = c(1, 1), to = c(1, 1)))
+      treeList[[is_stump]] <- tree_stumps[[1]]
+      }
+    }
 
-  # ggraph plotting funtion -------------------------------------------------
-
-
-  # set node colours
-  nodenames <- unique(stats::na.omit(unlist(lapply(treeList, .%>%activate(nodes) %>% pull(var)))))
+  # Set node colors
+  nodenames <- unique(stats::na.omit(unlist(lapply(treeList, function(tree) {
+    tree |>
+      tidygraph::activate(nodes) |>
+      dplyr::pull(var)
+  }))))
   nodenames <- sort(nodenames)
-  nodecolors <- setNames(scales::hue_pal(c(0,360)+15, 100, 64, 0, 1)(length(nodenames)), nodenames)
+  nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodenames)), nodenames)
 
-  if(length(stumpIdx) >=  1){
-      nodecolors[["Stump"]] <- '#808080'
+  # Optional stump color setting
+  if (!removeStump && length(is_stump) >= 1) {
+    nodecolors[["Stump"]] <- '#808080'
   }
 
-
-
-  # plotting function
+  # Define plot function
   plotFun <- function(List, colors = NULL, n) {
-
-    plot <- ggraph(List, "partition") +
-      geom_node_tile(aes(fill = var), size = 0.25) +
-      geom_node_text(aes(label = ''), size = 4) +
+    ggraph(List, "partition") +
+      geom_node_tile(aes(fill = var), linewidth = 0.25) +
+      geom_node_text(aes(label = ""), size = 4) +
       theme(legend.position = "bottom") +
       scale_y_reverse() +
-      theme_void()
-    if (!is.null(colors)) {
-      plot <- plot + scale_fill_manual(values = colors, name = "Variable") +
-        scale_color_manual(values = colors, na.value = "grey")  +
-        theme(legend.position = "bottom")
+      theme_void() +
+      scale_fill_manual(values = colors, name = "Variable", na.value = "#808080") +
+      scale_color_manual(values = colors, na.value = "grey") +
+      theme(aspect.ratio = 1)
+  }
+
+  # Generate plots for each tree
+  allPlots <- lapply(treeList, plotFun, n = length(treeList), colors = nodecolors)
+
+  # Create common legend
+  ggdf <- data.frame(x = names(nodecolors), y = 1:length(nodecolors))
+  ggLegend <- ggplot(ggdf, aes(x = x, y = y)) +
+    geom_point(aes(color = x), shape = 15, size = 8) +
+    scale_color_manual(values = unname(nodecolors), labels = names(nodecolors), name = "Variable") +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  legend <- cowplot::get_legend(ggLegend)
+
+  # Remove legends from individual plots
+  allPlots <- lapply(allPlots, function(x) x + theme(legend.position = "none"))
+
+  # Remove vertical line from stump if not removed
+  if(length(is_stump) >= 1){
+    if (!removeStump) {
+      allPlots[[is_stump]]$data <- allPlots[[is_stump]]$data[-2, ]
     }
   }
 
-
-  allPlots <- lapply(treeList, plotFun, n = length(treeList), color = nodecolors)
-
-  # get legend
-  ggdf <- data.frame(x = names(nodecolors), y = c(1:length(nodecolors)))
-   # create a plot to ensure all vars are included in legend
-  ggLegend <- ggplot(ggdf, aes(x=x, y=y))+
-                geom_point(aes(color = nodecolors), shape = 15, size = 8) +
-                scale_color_manual(values = unname(nodecolors),
-                                   label = names(nodecolors),
-                                   name = 'Variable') +
-                theme_bw() +
-                theme(legend.position = 'bottom')
-  legend <- cowplot::get_legend(ggLegend)
-  #legend <- cowplot::get_legend(allPlots[[1]])
-
-  # remove legends from individual plots
-  allPlots <- lapply(allPlots, function(x) x + theme(legend.position = "none"))
-
-   if(removeStump == FALSE){
-
-    whichStumpData = NULL
-    for(i in 1:length(allPlots)){
-      whichStumpData[[i]] <-  which(allPlots[[i]]$data$leaf[1] == TRUE)
-    }
-
-    stumpIdxNew <- which(whichStumpData == 1)
-    for(i in stumpIdxNew){
-      allPlots[[i]]$data <- allPlots[[i]]$data[-2, ]
-    }
-   }
-
-  # filter top X% of plots
-  if(!is.null(topTrees)){
+  # Filter top plots if specified
+  if (!is.null(topTrees)) {
     allPlots <- allPlots[1:topTrees]
   }
 
-  # Create final barplot ----------------------------------------------------
-  width = 1
+  # Combine barplot and tree plots
+  width <- 1
   p_axis <- ggplot(freqDf) +
     geom_blank(aes(y = value)) +
-    purrr::map2(allPlots,
-                rev(seq_along(allPlots)),
-                ~ annotation_custom(ggplotGrob(.x),
-                                    ymin = .y - width / 2,
-                                    ymax = .y + width / 2,
-                                    )) +
+    purrr::map2(allPlots, rev(seq_along(allPlots)), ~ annotation_custom(ggplotGrob(.x), ymin = .y - width / 2, ymax = .y + width / 2)) +
     theme_void()
 
   bp1 <- bp + theme(axis.text.y = element_blank())
   ppp <- p_axis + theme(aspect.ratio = 10)
-  px <- ppp|bp1
-
+  px <- ppp | bp1
   bpFinal <- cowplot::plot_grid(px, legend, rel_heights = c(1, .1), ncol = 1)
 
   return(bpFinal)
-
 }
-
-
-

@@ -4,15 +4,10 @@
 \alias{viviBart}
 \title{viviBart}
 \usage{
-viviBart(treeData, combineFact = FALSE, out = "vivi")
+viviBart(treeData, out = "vivi")
 }
 \arguments{
 \item{treeData}{A data frame created by extractTreeData function.}
-
-\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-If combineFact = TRUE, then both the importance and interactions are calculated for the entire factor by aggregating the dummy variables’
-inclusion proportions.}
 
 \item{out}{Choose to either output just the variable importance ('vimp'),
 the variable interaction ('vint'), or both ('vivi') (default).}

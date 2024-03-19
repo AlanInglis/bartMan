@@ -73,8 +73,8 @@ bivariate_range <- function() {
 ScaleBivariate <- ggproto("ScaleBivariate",
                           Scale,
                           range = bivariate_range(),
-                          rescaler = list(rescale, rescale),
-                          oob = censor,
+                          rescaler = list(scales::rescale, scales::rescale),
+                          oob = scales::censor,
                           #trans = list(identity_trans, dentity_trans),
 
                           is_discrete = function() FALSE,
@@ -214,7 +214,7 @@ ScaleBivariate <- ggproto("ScaleBivariate",
 #' @export
 bivariate_scale <- function(aesthetics, palette, name = waiver(),
                             breaks = waiver(), labels = waiver(), limits = NULL,
-                            rescaler = rescale, oob = censor, expand = waiver(), na.value = NA_real_,
+                            rescaler = scales::rescale, oob = scales::censor, expand = waiver(), na.value = NA_real_,
                             trans = "identity", guide = "none", super = ScaleBivariate,
                             scale_name = "bivariate_scale") {
 

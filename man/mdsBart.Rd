@@ -8,6 +8,7 @@ mdsBart(
   treeData,
   data,
   target,
+  response,
   plotType = "rows",
   showGroup = TRUE,
   level = 0.95
@@ -16,9 +17,11 @@ mdsBart(
 \arguments{
 \item{treeData}{A data frame created by treeData function.}
 
-\item{data}{a dataframe}
+\item{data}{a dataframe used in building the model.}
 
 \item{target}{A target proximity matrix to}
+
+\item{response}{The name of the response for the fit.}
 
 \item{plotType}{Type of plot to show. Either 'interactive' - showing interactive confidence ellipses.
 'point' - a point plot showing the average position of a observation.

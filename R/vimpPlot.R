@@ -108,13 +108,13 @@ vimpPlot <- function(treeData,
       ggplot(aes(x = Variable, y = imp)) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = upperQ,
-        colour = "gray50", alpha = rev(stat(index))
+        colour = "gray50", alpha = rev(after_stat(index))
       ),
       size = 5, n = 1000
       ) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = lowerQ,
-        colour = 'gray50', alpha = rev(stat(index))
+        colour = 'gray50', alpha = rev(after_stat(index))
       ),
       size = 5, n = 1000
       ) +
@@ -141,7 +141,8 @@ vimpPlot <- function(treeData,
 
      p <- ggplot(dfvimp, aes(stats::reorder(variable, value), value)) +
                # aes(x = variable, y = value)) +
-      lvplot::geom_lv(aes(fill = ..LV..),
+    #  lvplot::geom_lv(aes(fill = ..LV..),
+       lvplot::geom_lv(aes(fill = after_stat(LV)),
         conf = 0.5,
         outlier.colour = "blue",
         outlier.shape = 5,

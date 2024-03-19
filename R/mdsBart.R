@@ -3,8 +3,9 @@
 #' @description Multi-dimensional Scaling Plot of proximity matrix from a BART model.
 #'
 #' @param treeData A data frame created by treeData function.
-#' @param plotType xxx
-#' @param data  a dataframe
+#' @param plotType Type of plot. One of "interactive", "point", "rows", or "all".
+#' @param data  a dataframe used in building the model.
+#' @param response The name of the response for the fit.
 #' @param target A target proximity matrix to
 #' @param plotType Type of plot to show. Either 'interactive' - showing interactive confidence ellipses.
 #' 'point' - a point plot showing the average position of a observation.
@@ -39,6 +40,7 @@ mdsBart <- function(
     treeData,
     data,
     target,
+    response,
     plotType = "rows",
     showGroup = TRUE,
     level = 0.95){
@@ -48,7 +50,7 @@ mdsBart <- function(
   }
 
   # remove stumps
-  whichStumps <- which(treeData$structure$isLeaf == TRUE & treeData$structure$node == 1)
+  whichStumps <- which(treeData$structure$terminal == TRUE & treeData$structure$node == 1)
   df <- NULL
   if(length(whichStumps > 0)){
     df$structure <- treeData$structure[-whichStumps,]
@@ -98,8 +100,10 @@ mdsBart <- function(
   }
 
   # add in response & make a group variable for each df and combine
-  responseNum <- which(!(names(data) %in% treeData$varName))
-  response <- names(data[responseNum])
+  # responseNum <- which(!(names(data) %in% treeData$varName))
+  # response <- names(data[responseNum])
+  # responseNum <- which(names(data) == response)
+  # response <- names(data[responseNum])
 
   addResponse <- function(x){
     d <- x %>%

@@ -83,7 +83,8 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
     x <- data[, -responseIdx]
 
 
-
+    # capture.output is used to suppress output of building model
+    capture.output(
     bmodelPerm <- BART:: wbart(
       x.train = x,
       y.train = yPerm,
@@ -91,6 +92,8 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
       ndpost = nMCMC,
       nkeeptreedraws = nMCMC,
       ntree = numTreesPerm
+    ),
+    file = nullfile()
     )
 
 
@@ -138,6 +141,7 @@ perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
+
     bmodelPerm <- dbarts::bart(x.train = x,
                        y.train = yPerm,
                        ntree = numTreesPerm,
@@ -145,7 +149,8 @@ perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
                        nskip = burnIn,
                        ndpost = nMCMC,
                        combinechains = F,
-                       nchain = 1
+                       nchain = 1,
+                       verbose = FALSE
     )
 
 
@@ -201,7 +206,8 @@ perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
                               num_trees = numTreesPerm,
                               flush_indices_to_save_RAM = FALSE,
                               num_burn_in = burnIn,
-                              num_iterations_after_burn_in = nMCMC)
+                              num_iterations_after_burn_in = nMCMC,
+                              verbose = FALSE)
 
 
     varPropPerm <- bartMachine::get_var_counts_over_chain(bmodelPerm)

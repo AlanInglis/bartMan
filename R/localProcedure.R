@@ -4,6 +4,7 @@
 #'
 #' @param model Model created from either the BART, dbarts or bartMachine packages.
 #' @param data A data frame containing variables in the model.
+#' @param response The name of the response for the fit.
 #' @param numRep The number of replicates to perform for the BART null model's variable inclusion proportions.
 #' @param numTreesRep The number of trees to be used in the replicates.
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
@@ -20,9 +21,10 @@
 #'
 #' @export
 
-localProcedure <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
+localProcedure <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
   vimp <- lProd(model= model,
                 data = data,
+                response = response,
                 numRep = numRep,
                 numTreesRep = numTreesRep,
                 alpha = alpha,
@@ -34,14 +36,14 @@ localProcedure <- function(model, data, numRep = 10, numTreesRep = NULL, alpha =
 # -------------------------------------------------------------------------
 
 # Main function:
-lProd <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE) {
+lProd <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE) {
   UseMethod("lProd")
 }
 
 
 # BART --------------------------------------------------------------------
 
-lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
+lProd.wbart <- function(model, data, response,  numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
   if (!requireNamespace("BART", quietly = TRUE)) {
     stop("Package \"BART\" needed for this function to work. Please install it.",
@@ -66,7 +68,9 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
   varPropAvg <- sort(varPropAvg, decreasing = TRUE)
 
 
-  responseIdx <- which(!(names(data) %in% colnames(model$varprob)))
+  #responseIdx <- which(!(names(data) %in% colnames(model$varprob)))
+  responseIdx <- which(names(data) == response)
+
 
   if(is.null(numTreesRep)){
     numTreesRep <- nTree
@@ -78,12 +82,16 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
+    # capture.output is used to suppress output of building model
+    capture.output(
     bmodelPerm <-  BART::wbart(x.train = x,
                          y.train = yPerm,
                          nskip = burnIn,
                          ndpost = nMCMC, # MCMC iters
                          nkeeptreedraws = nMCMC,
                          ntree = numTreesRep
+    ),
+    file = nullfile()
     )
 
     varPropsPerm <- bmodelPerm$varcount
@@ -91,9 +99,11 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
     return(varPropsPermAvg)
   }
 
+
   for (i in 1:numRep) {
     permuteMat[i, ] = permuteBART(data)
   }
+
 
 
   permuteMat <- permuteMat[, names(varPropAvg)]
@@ -161,7 +171,7 @@ lProd.wbart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.
 
 # dbarts ------------------------------------------------------------------
 
-lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
+lProd.bart <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
   if (!requireNamespace("dbarts", quietly = TRUE)) {
     stop("Package \"dbarts\" needed for this function to work. Please install it.",
@@ -201,7 +211,8 @@ lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5
                        nskip = burnIn,
                        ndpost = nMCMC,
                        combinechains = F,
-                       nchain = 1
+                       nchain = 1,
+                       verbose = FALSE
     )
 
 
@@ -273,7 +284,7 @@ lProd.bart <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5
 # bartMachine -------------------------------------------------------------
 
 
-lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
+lProd.bartMachine <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
   if (!requireNamespace("bartMachine", quietly = TRUE)) {
     stop("Package \"bartMachine\" needed for this function to work. Please install it.",
@@ -310,7 +321,7 @@ lProd.bartMachine <- function(model, data, numRep = 10, numTreesRep = NULL, alph
                               num_trees = numTreesRep,
                               flush_indices_to_save_RAM = FALSE,
                               num_burn_in = burnIn,
-                              num_iterations_after_burn_in = nMCMC)
+                              num_iterations_after_burn_in = nMCMC, verbose = FALSE)
 
 
 

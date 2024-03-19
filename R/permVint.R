@@ -35,7 +35,7 @@ permVint <- function(model,
                      top = NULL) {
 
   # get og model vints
-  actualVint <- viviBart(treeData = treeData, combineFact = F, out = 'vint')
+  actualVint <- viviBart(treeData = treeData, out = 'vint')
 
   # get null permutation vints
   permVint <- permBartVint(
@@ -136,11 +136,12 @@ permBartVint.bart <- function(model, data,  response, numTreesPerm = NULL){
                                nskip = 100,
                                ndpost = 1000,
                                combinechains = F,
-                               nchain = 1
+                               nchain = 1,
+                               verbose = FALSE
     )
 
     permDF <- extractTreeData(bmodelPerm, data)
-    permVints <- viviBart(treeData = permDF, combineFact = F, out = 'vint')
+    permVints <- viviBart(treeData = permDF, out = 'vint')
     return(permVints)
   }
 
@@ -181,13 +182,14 @@ permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL
                               num_trees = numTreesPerm,
                               flush_indices_to_save_RAM = FALSE,
                               num_burn_in = burnIn,
-                              num_iterations_after_burn_in = nMCMC)
+                              num_iterations_after_burn_in = nMCMC,
+                              verbose = FALSE)
 
 
 
 
     permDF <- extractTreeData(bmodelPerm, data)
-    permVints <- viviBart(treeData = permDF, combineFact = F, out = 'vint')
+    permVints <- viviBart(treeData = permDF,out = 'vint')
     return(permVints)
   }
 
@@ -226,6 +228,8 @@ permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
     yPerm <- sample(data[, responseIdx], replace = FALSE)
     x <- data[, -responseIdx]
 
+    # capture.output is used to suppress output of building model
+    capture.output(
     bmodelPerm <- BART::wbart(
       x.train = x,
       y.train = yPerm,
@@ -233,10 +237,12 @@ permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
       ndpost = nMCMC,
       nkeeptreedraws = nMCMC,
       ntree = numTreesPerm
+    ),
+    file = nullfile()
     )
 
     permDF <- extractTreeData(bmodelPerm, data)
-    permVints <- viviBart(treeData = permDF, combineFact = F, out = 'vint')
+    permVints <- viviBart(treeData = permDF,  out = 'vint')
     return(permVints)
   }
 

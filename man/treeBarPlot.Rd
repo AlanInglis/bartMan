@@ -2,36 +2,34 @@
 % Please edit documentation in R/treeBarPlot.R
 \name{treeBarPlot}
 \alias{treeBarPlot}
-\title{treeBarPlot}
+\title{Plot Frequency of Tree Structures}
 \usage{
-treeBarPlot(
-  treeData,
-  iter = NULL,
-  treeNo = NULL,
-  topTrees = NULL,
-  removeStump = FALSE,
-  combineFact = FALSE
-)
+treeBarPlot(trees, iter = NULL, topTrees = NULL, removeStump = FALSE)
 }
 \arguments{
-\item{treeData}{A list of tree attributes created using the extractTreeData function.}
+\item{trees}{A list of tree graphs to display}
 
-\item{iter}{The selected iteration}
+\item{iter}{Optional; specifies the iteration to display.}
 
-\item{treeNo}{The selected tree number.}
+\item{topTrees}{Optional; the number of top tree structures to display. If NULL, displays all.}
 
-\item{topTrees}{integer value to show the top x variables.}
-
-\item{removeStump}{LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
-remain in plot and are coloured grey.}
-
-\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-If combineFact = TRUE, then the dummy factors are combined into their original factor.}
+\item{removeStump}{Logical; if TRUE, trees with no edges (stumps) are excluded from the display}
 }
 \value{
-A barplot plot.
+A `ggplot` object representing the bar plot of tree frequencies.
 }
 \description{
-Creates a barplot displaying the frequency of different tree structures.
+Generates a bar plot showing the frequency of different tree structures
+represented in a list of tree graphs. Optionally, it can filter to show only the top N trees
+and handle stump trees specially.
+}
+\details{
+This function processes a list of tree structures to compute the frequency of each unique structure,
+represented by a bar plot. It has options to exclude stump trees (trees with no edges) and to limit
+the plot to the top N most frequent structures.
+}
+\examples{
+plot <- treeBarPlot(trees = treeList, topTrees = 10, removeStump = TRUE)
+print(plot)
+
 }

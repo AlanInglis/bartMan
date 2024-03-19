@@ -9,8 +9,7 @@ viviBartMatrix(
   type = "standard",
   metric = "propMean",
   metricError = "CV",
-  reorder = FALSE,
-  combineFact = FALSE
+  reorder = FALSE
 )
 }
 \arguments{
@@ -23,11 +22,6 @@ viviBartMatrix(
 \item{metricError}{Which metric to use to fill the uncertainty matrix. Either 'SD', 'CV' or 'SE'.}
 
 \item{reorder}{LOGICAL. If TRUE then the matrix is reordered so high values are pushed to the top left.}
-
-\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-If combineFact = TRUE, then both the importance and interactions are calculated for the entire factor by aggregating the dummy variables’
-inclusion proportions.}
 }
 \value{
 A heatmap plot showing variable importance on the diagonal

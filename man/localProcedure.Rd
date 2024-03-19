@@ -7,6 +7,7 @@
 localProcedure(
   model,
   data,
+  response,
   numRep = 10,
   numTreesRep = NULL,
   alpha = 0.5,
@@ -17,6 +18,8 @@ localProcedure(
 \item{model}{Model created from either the BART, dbarts or bartMachine packages.}
 
 \item{data}{A data frame containing variables in the model.}
+
+\item{response}{The name of the response for the fit.}
 
 \item{numRep}{The number of replicates to perform for the BART null model's variable inclusion proportions.}
 

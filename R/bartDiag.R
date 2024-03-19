@@ -5,16 +5,12 @@
 #' @param model a model created from either the BART, modelarts, or bartMachine package.
 #' @param response The name of the response for the fit.
 #' @param burnIn Trace plot will only show iterations above selected burn in value.
-#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-#' inclusion proportions.
 #' @param data A dataframe used to build the model.
 #' @param threshold A dashed line on some plots to indicate a chosen threshold value (classification only).
 #' by default the Youden index is shown.
 #' @param pNorm apply pnorm to the y-hat data (classification only).
 #' @param showInterval LOGICAL if TRUE then show 5\% and 95\% quantile intervals on ROC an PC curves (classification only).
-#'
+#' @param combineFactors Whether or not to combine dummy variables (if present) in display.
 #'
 #'
 #' @return A selection of diagnostic plots
@@ -34,24 +30,24 @@
 #' @export
 
 bartDiag <- function(model,
-                     data,
-                     response,
-                     burnIn = 0,
-                     threshold = 'Youden',
-                     pNorm = FALSE,
-                     showInterval = TRUE,
-                     combineFact = FALSE){
+                      data,
+                      response,
+                      burnIn = 0,
+                      threshold = 'Youden',
+                      pNorm = FALSE,
+                      showInterval = TRUE,
+                      combineFactors = FALSE){
 
   if(any(class(model) == 'pbart')){
 
     output <- bartClassifDiag(model = model, data = data, response = response,
-                    threshold = threshold, pNorm = pNorm, showInterval = showInterval,
-                    combineFact = combineFact)
+                              threshold = threshold, pNorm = pNorm, showInterval = showInterval,
+                              combineFactors = combineFactors)
 
   }else if(any(class(model) == 'wbart')){
 
     output <- bartRegrDiag(model = model, data = data, response = response,
-                           burnIn = burnIn, combineFact = combineFact)
+                           burnIn = burnIn, combineFactors = combineFactors)
 
   }else if(any(class(model) == 'bart')){
 
@@ -59,11 +55,11 @@ bartDiag <- function(model,
 
       output <- bartClassifDiag(model = model, data = data, response = response,
                                 threshold = threshold, pNorm = pNorm, showInterval = showInterval,
-                                combineFact = combineFact)
+                                combineFactors = combineFactors)
 
     }else{
       output <- bartRegrDiag(model = model, data = data, response = response,
-                             burnIn = burnIn, combineFact = combineFact)
+                             burnIn = burnIn, combineFactors = combineFactors)
     }
 
   }else if(any(class(model) == 'bartMachine')){
@@ -72,10 +68,10 @@ bartDiag <- function(model,
 
       output <- bartClassifDiag(model = model, data = data, response = response,
                                 threshold = threshold, pNorm = pNorm, showInterval = showInterval,
-                                combineFact = combineFact)
+                                combineFactors = combineFactors)
     }else{
       output <- bartRegrDiag(model = model, data = data, response = response,
-                             burnIn = burnIn, combineFact = combineFact)
+                             burnIn = burnIn, combineFactors = combineFactors)
     }
   }
   return(output)
@@ -93,11 +89,8 @@ bartDiag <- function(model,
 #' @param model a model created from either the BART, modelarts, or bartMachine package.
 #' @param response The name of the response for the fit.
 #' @param burnIn Trace plot will only show iterations above selected burn in value.
-#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-#' inclusion proportions.
 #' @param data A dataframe used to build the model.
+#' @param combineFactors Whether or not to combine dummy variables (if present) in display.
 #'
 #'
 #' @return A selection of diagnostic plots
@@ -121,15 +114,15 @@ bartDiag <- function(model,
 bartRegrDiag <- function(model,
                          response,
                          burnIn = 0,
-                         combineFact = FALSE,
-                         data) {
+                         data,
+                         combineFactors = FALSE) {
 
   qq <- bartQQ(model, response)
   trace <- bartTrace(model, burnIn = burnIn)
   residual <- bartResiduals(model, response = response)
   histogram <- bartHist(model, response)
   fitVSact <- bartFitted(model, response)
-  vImp <- bartVimp(model, combineFact = combineFact, data = data)
+  vImp <- bartVimp(model, data = data, combineFactors = combineFactors)
 
   design <- c(
     area(1, 1, 3, 3),
@@ -170,6 +163,9 @@ bartQQ <- function(model, response) {
 }
 
 
+
+
+
 # Trace plot --------------------------------------------------------------
 
 
@@ -187,18 +183,32 @@ bartTrace <- function(model, burnIn = 0) {
 
 
   maxIter <- max(varDraws$.draw)
-
-  p <- ggplot(varDraws[1:burnIn, ], aes(x = .draw, y = sigma)) +
-    geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
-    geom_line(alpha = 0.5) +
-    geom_line(data = varDraws[burnIn:maxIter, ], colour = "blue", alpha = 0.5) +
-    theme_bw() +
-    xlab("Iteration") +
-    ylab("Sigma") +
-    ggtitle("Trace plot")
+  if (burnIn > 0 && burnIn < maxIter) {
+    # Plot includes all parts because there's data after burnIn
+    p <- ggplot(varDraws[1:burnIn, ], aes(x = .draw, y = sigma)) +
+      geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
+      geom_line(alpha = 0.5) +
+      geom_line(data = varDraws[burnIn:maxIter, ], aes(x = .draw, y = sigma), colour = "blue", alpha = 0.5) +
+      theme_bw() +
+      xlab("Iteration") +
+      ylab("Sigma") +
+      ggtitle("Trace plot")
+  } else {
+    # Plot only the initial segment because burnIn is 0 or equals maxIter
+    p <- ggplot(varDraws, aes(x = .draw, y = sigma)) +
+      geom_line(alpha = 0.5) +
+      theme_bw() +
+      xlab("Iteration") +
+      ylab("Sigma") +
+      ggtitle("Trace plot")
+  }
 
   return(p)
 }
+
+
+
+
 
 # Residuals vs Fitted --------------------------------------------------------------
 
@@ -241,6 +251,8 @@ bartResiduals <- function(model,
 }
 
 
+
+
 # Histogram Residuals -----------------------------------------------------
 
 bartHist <- function(model, response) {
@@ -260,6 +272,7 @@ bartHist <- function(model, response) {
 
   return(p)
 }
+
 
 
 # Fitted Vs Actual --------------------------------------------------------
@@ -319,9 +332,10 @@ bartFitted <- function(model, response) {
 }
 
 
+
 # Variable Importance -----------------------------------------------------
 
-bartVimp <- function(model, combineFact = FALSE, data) {
+bartVimp <- function(model,  data, combineFactors = FALSE) {
 
 
   if(class(model) == "bartMachine"){
@@ -331,10 +345,11 @@ bartVimp <- function(model, combineFact = FALSE, data) {
     vImp <- model$varcount
   }
 
-  vImpProps <- proportions(vImp, 1)
-  if(combineFact){
-    vImpProps <- combineFactorsDiag(data = data, dataCombine = vImpProps, model = model)
+  if(combineFactors){
+    vImp <-  combineDummyDiag(data = data, vimp = vImp)
   }
+
+  vImpProps <- proportions(vImp, 1)
   vImp <- colMeans(vImpProps)
 
 
@@ -355,15 +370,15 @@ bartVimp <- function(model, combineFact = FALSE, data) {
     ggplot(aes(x = Variable, y = imp)) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = upperQ,
-      colour = "gray50", alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(after_stat(index))
     ),
-    size = 2, n = 1000
+    linewidth = 2, n = 1000
     ) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = lowerQ,
-      colour = "gray50", alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(after_stat(index))
     ),
-    size = 2, n = 1000
+    linewidth = 2, n = 1000
     ) +
     geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
     scale_colour_identity() +
@@ -392,10 +407,8 @@ bartVimp <- function(model, combineFact = FALSE, data) {
 #' by default the Youden index is shown.
 #' @param pNorm apply pnorm to the y-hat data
 #' @param showInterval LOGICAL if TRUE then show 5\% and 95\% quantile intervals.
-#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-#' inclusion proportions.
+#' @param combineFactors Whether or not to combine dummy variables (if present) in display.
+#'
 #' @return A selection of diagnostic plots
 #'
 #' @import ggplot2
@@ -411,7 +424,7 @@ bartClassifDiag <- function(model,
                             threshold = 'Youden',
                             pNorm = FALSE,
                             showInterval = TRUE,
-                            combineFact = FALSE){
+                            combineFactors = FALSE){
 
 
   if (!requireNamespace("ROCR", quietly = TRUE)) {
@@ -505,7 +518,7 @@ bartClassifDiag <- function(model,
   }
   classF <- classFit(dfFitClassBart, threshold = threshold)
   histogram <- classHist(dfHist, threshold = threshold)
-  vimp <- bartVimpClass(model, combineFact = combineFact, data = data)
+  vimp <- bartVimpClass(model, data = data)
   cM <- confMat(model, data, response)
 
   design <- c(
@@ -618,7 +631,7 @@ classHist <- function(data, threshold){
 
 # VIMP --------------------------------------------------------------------
 
-bartVimpClass <- function(model, combineFact = FALSE, data){
+bartVimpClass <- function(model, data, combineFactors = FALSE){
 
 
 
@@ -629,10 +642,11 @@ bartVimpClass <- function(model, combineFact = FALSE, data){
     vImp <- model$varcount
   }
 
-  vImpProps <- proportions(vImp, 1)
-  if(combineFact){
-    vImpProps <- combineFactorsDiag(data = data, dataCombine = vImpProps, model = model)
+  if(combineFactors){
+    vImp <-  combineDummyDiag(data = data, vimp = vImp)
   }
+
+  vImpProps <- proportions(vImp, 1)
   vImp <- colMeans(vImpProps)
 
 
@@ -653,13 +667,13 @@ bartVimpClass <- function(model, combineFact = FALSE, data){
     ggplot(aes(x = Variable, y = imp)) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = upperQ,
-      colour = "gray50", alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(after_stat(index))
     ),
     size = 2, n = 1000
     ) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = lowerQ,
-      colour = "gray50", alpha = rev(stat(index))
+      colour = "gray50", alpha = rev(after_stat(index))
     ),
     size = 2, n = 1000
     ) +
@@ -958,5 +972,46 @@ prCI <- function(model, response, data){
   return(p)
 
 }
+
+
+# -------------------------------------------------------------------------
+
+
+# combine factors ---------------------------------------------------------
+
+combineDummyDiag <- function(data, vimp) {
+  # Identify factor columns in trees$data
+  dfOG <- data
+  factorColNam <- names(which(!(sapply(dfOG[colnames(dfOG)], is.numeric))))
+  factorCols <- which((colnames(dfOG) %in% factorColNam))
+
+  # Create a list of the variables split into their factors
+  facLevelsList <- list()
+  for (i in 1:length(factorCols)) {
+    facLevels <- unique(dfOG[, factorCols[i]])
+    facLevelsList[[names(dfOG)[factorCols[i]]]] <- as.character(facLevels)
+  }
+
+  # Function to find original factor name for dummy variables
+  find_original_factor_name <- function(varName, factorList) {
+    for (factorName in names(factorList)) {
+      if (grepl(factorName, varName)) {
+        return(factorName)
+      }
+    }
+    return(varName) # Return original if no match found
+  }
+
+  # Update entries in trees$structure$var
+  colnames(vimp) <- sapply(colnames(vimp), find_original_factor_name, factorList = facLevelsList)
+  names(colnames(vimp)) <- NULL
+
+  vimp <- as.data.frame(vimp)
+  vimp <- sapply(split.default(vimp, colnames(vimp)), rowSums, na.rm = TRUE)
+
+  return(vimp)
+}
+
+
 
 

@@ -4,7 +4,7 @@
 \alias{bartRegrDiag}
 \title{bartRegrDiag}
 \usage{
-bartRegrDiag(model, response, burnIn = 0, combineFact = FALSE, data)
+bartRegrDiag(model, response, burnIn = 0, data, combineFactors = FALSE)
 }
 \arguments{
 \item{model}{a model created from either the BART, modelarts, or bartMachine package.}
@@ -13,12 +13,9 @@ bartRegrDiag(model, response, burnIn = 0, combineFact = FALSE, data)
 
 \item{burnIn}{Trace plot will only show iterations above selected burn in value.}
 
-\item{combineFact}{If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-inclusion proportions.}
-
 \item{data}{A dataframe used to build the model.}
+
+\item{combineFactors}{Whether or not to combine dummy variables (if present) in display.}
 }
 \value{
 A selection of diagnostic plots
