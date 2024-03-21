@@ -3,7 +3,8 @@
 
 
 .DS_Store
-
+.RDataTmp
+*.RDataTmp*
 # History files
 .Rhistory
 .Rapp.history
