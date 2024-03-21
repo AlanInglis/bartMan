@@ -77,10 +77,6 @@ extractTrees.wbart <- function(model, data){
                                        skip = 1,
                                        fill = NA,
                                        col.names = c("node", "var", "splitValue", "leafValue"))
-
-
-
-
   # Adding in columns
   trees$structure$var <- varNames[trees$structure$var + 1] # as vars are indexed at 0
   trees$structure$splitID <- trees$structure$splitValue + 1
