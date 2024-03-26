@@ -4,7 +4,7 @@
 #' customizations such as fill color based on node response or value, node size adjustments,
 #' and color palettes.
 #'
-#' @param trees A list of tidygraph objects, each representing a tree to be plotted.
+#' @param trees A data frame of trees.
 #' @param iter An integer specifying the iteration number of trees to be included in the output.
 #'             If NULL, trees from all iterations are included.
 #' @param treeNo An integer specifying the number of the tree to include in the output.
@@ -18,7 +18,7 @@
 #' @param removeStump A logical value. If TRUE, then stumps are removed from plot.
 #' @param selectedVars A vector of selected variables to display. Either a character vector of names
 #'                  or the variables column number.
-#' @param pal A colour palette for node colouring. Palette is used when 'fillBy' is specified for gradient coloring.
+#' @param pal A colour palette for node colouring. Palette is used when 'fillBy' is specified for gradient colouring.
 #' @param center_Mu A logical value indicating whether to center the color scale for the 'mu'
 #'                  attribute around zero. Applicable only when 'fillBy' is set to "mu".
 #' @param cluster A character string that specifies the criterion for reordering trees in the output.
@@ -152,6 +152,7 @@ plotTrees <- function(trees,
   if(is.null(fillBy)) {
     fill_value <- NULL
     lims <- NULL
+    legend_name <- 'Variable'
   } else if(fillBy == 'response') {
     lims <- range(leaf_stumps$respNode, na.rm = TRUE)
     lims <- pretty(c(lims[1], lims[2]))
@@ -178,8 +179,6 @@ plotTrees <- function(trees,
   nodeNames <-  unique(all_nodes$var) #sort(all_vars)
   nodecolors <- setNames(scales::hue_pal(c(0, 360) + 15, 100, 64, 0, 1)(length(nodeNames)), nodeNames)
 
-  # set default legend name
-  legend_name <- 'Variable'
 
 
   # set stump colour

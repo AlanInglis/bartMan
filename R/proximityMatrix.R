@@ -3,7 +3,7 @@
 #' @description Creates a matrix of proximity values.
 #'
 #' @param treeData A list of tree attributes created by treeData function.
-#' @param data Data frame of data excluding the response.
+
 #' @param nRows Number of rows to consider.
 #' @param normalize Default is TRUE. Divide the total number of pairs of observations by
 #' the number of trees.
@@ -19,7 +19,7 @@
 #' @importFrom DendSer dser
 #' @export
 
-proximityMatrix <- function(treeData, data, nRows, normalize = TRUE, reorder = TRUE, iter = NULL) {
+proximityMatrix <- function(treeData, nRows, normalize = TRUE, reorder = TRUE, iter = NULL) {
 
 
   if (!is.null(iter)) {

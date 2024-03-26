@@ -10,7 +10,7 @@
 #' @param numTreesPerm The number of trees to be used in the null model.
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 #' variables to used in the model. If NULL, then the number of trees from the true model is used.
-#' @param plotType Either a bar plot ('barplot') or a point plot ('pointGrad')
+#' @param plotType Either a bar plot ('barplot') or a point plot ('point')
 #' @return A variable selection plot.
 #'
 #'
@@ -253,7 +253,7 @@ permPlotFn <- function(dat, plotType = 'barplot'){
         axis.title.y = element_text(angle = 90, vjust = 0.5),
         legend.key.size = unit(0.5, "cm")
       )
-  } else if (plotType == "pointGrad") {
+  } else if (plotType == "point") {
 
     if (!requireNamespace("ggforce", quietly = TRUE)) {
       stop("Package \"ggforce\" needed for this function to work. Please install it.",
@@ -266,13 +266,13 @@ permPlotFn <- function(dat, plotType = 'barplot'){
       ggplot(aes(x = Variable, y = mean)) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = low,
-        col = Variable, alpha = rev(stat(index))
+        col = Variable, alpha = rev(after_stat(index))
       ),
       size = 5, n = 1000
       ) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = high,
-        col = Variable, alpha = rev(stat(index))
+        col = Variable, alpha = rev(after_stat(index))
       ),
       size = 5, n = 1000
       ) +

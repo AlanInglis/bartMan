@@ -10,7 +10,7 @@
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 #' variables to used in the model. If NULL, then the number of trees from the true model is used.
 #' @param alpha The cut-off level for the thresholds.
-#' @param shift Whether to shift the incusion proportion points by the difference
+#' @param shift Whether to shift the inclusion proportion points by the difference
 #' in distance between the quantile and the value of the inclusion proportion point.
 #'
 #' @return A variable selection plot using the local procedure method.
@@ -269,7 +269,7 @@ lProd.bart <- function(model, data, response, numRep = 10, numTreesRep = NULL, a
   if(shift){
     p <- ggplot(incProp, aes(x = Variable, y = difference)) +
       geom_point(size = 3) +
-      theme_bw() + ylab('proportion included')
+      theme_bw() + ylab('proportion included') + coord_flip()
   }else{
     p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
       geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
@@ -378,7 +378,7 @@ lProd.bartMachine <- function(model, data, response, numRep = 10, numTreesRep = 
   if(shift){
     p <- ggplot(incProp, aes(x = Variable, y = difference)) +
       geom_point(size = 3) +
-      theme_bw() + ylab('proportion included')
+      theme_bw() + ylab('proportion included') + coord_flip()
   }else{
     p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
       geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +

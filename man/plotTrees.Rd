@@ -18,7 +18,7 @@ plotTrees(
 )
 }
 \arguments{
-\item{trees}{A list of tidygraph objects, each representing a tree to be plotted.}
+\item{trees}{A data frame of trees.}
 
 \item{iter}{An integer specifying the iteration number of trees to be included in the output.
 If NULL, trees from all iterations are included.}
@@ -39,7 +39,7 @@ If TRUE, node sizes are adjusted; if FALSE, all nodes are given the same size.}
 \item{selectedVars}{A vector of selected variables to display. Either a character vector of names
 or the variables column number.}
 
-\item{pal}{A colour palette for node colouring. Palette is used when 'fillBy' is specified for gradient coloring.}
+\item{pal}{A colour palette for node colouring. Palette is used when 'fillBy' is specified for gradient colouring.}
 
 \item{center_Mu}{A logical value indicating whether to center the color scale for the 'mu'
 attribute around zero. Applicable only when 'fillBy' is set to "mu".}

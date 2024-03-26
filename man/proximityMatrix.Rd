@@ -4,19 +4,10 @@
 \alias{proximityMatrix}
 \title{proximityMatrix}
 \usage{
-proximityMatrix(
-  treeData,
-  data,
-  nRows,
-  normalize = TRUE,
-  reorder = TRUE,
-  iter = NULL
-)
+proximityMatrix(treeData, nRows, normalize = TRUE, reorder = TRUE, iter = NULL)
 }
 \arguments{
 \item{treeData}{A list of tree attributes created by treeData function.}
-
-\item{data}{Data frame of data excluding the response.}
 
 \item{nRows}{Number of rows to consider.}
 
