@@ -29,7 +29,7 @@ variables to used in the model. If NULL, then the number of trees from the true 
 
 \item{alpha}{The cut-off level for the thresholds.}
 
-\item{shift}{Whether to shift the incusion proportion points by the difference
+\item{shift}{Whether to shift the inclusion proportion points by the difference
 in distance between the quantile and the value of the inclusion proportion point.}
 }
 \value{

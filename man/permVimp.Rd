@@ -17,7 +17,7 @@ permVimp(model, data, response, numTreesPerm = NULL, plotType = "barplot")
 As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
 variables to used in the model. If NULL, then the number of trees from the true model is used.}
 
-\item{plotType}{Either a bar plot ('barplot') or a point plot ('pointGrad')}
+\item{plotType}{Either a bar plot ('barplot') or a point plot ('point')}
 }
 \value{
 A variable selection plot.
