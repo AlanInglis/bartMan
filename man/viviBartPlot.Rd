@@ -54,9 +54,18 @@ viviBartPlot(
 \item{label}{legend label for the uncertainty measure.}
 }
 \value{
-Either a heatmap, VSUp, or quantile heatmap plot.
+Either a heatmap, VSUP, or quantile heatmap plot.
 }
 \description{
 Plots a Heatmap showing variable importance on the diagonal
 and variable interaction on the off-diagonal with uncertainty included.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+vsupMat <- viviBartMatrix(df_trees, type = 'vsup', metric = 'propMean', metricError = "CV")
+viviBartPlot(vsupMat, label = 'CV')
+}
+
+
 }

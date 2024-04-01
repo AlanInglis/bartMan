@@ -23,3 +23,13 @@ A plot of proximity values.
 \description{
 Plot a proximity matrix
 }
+\examples{
+\dontrun{
+library(ggplot2)
+df_trees <- extractTreeData(model = my_model, data = my_data)
+mProx <- proximityMatrix(trees = trees_data, reorder = TRUE, normalize = TRUE, iter = 1)
+plotProximity(matrix = mProx) +
+ ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 5),
+ axis.text.y = ggplot2::element_text(size = 5))
+}
+}

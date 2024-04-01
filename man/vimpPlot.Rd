@@ -5,7 +5,7 @@
 \title{vimpPlot}
 \usage{
 vimpPlot(
-  treeData,
+  trees,
   type = "prop",
   plotType = "barplot",
   metric = "median",
@@ -13,7 +13,7 @@ vimpPlot(
 )
 }
 \arguments{
-\item{treeData}{A data frame created by treeData function.}
+\item{trees}{A data frame created by `extractTreeData` function.}
 
 \item{type}{What value to return. Either the raw count 'count'
 or the proportions 'prop' averaged over iterations.}
@@ -36,4 +36,11 @@ A plot of variable importance.
 \description{
 Plot the variable importance for a BART model with the 25% and 75%
 quantile.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+vimpPlot(trees = df_trees, plotType = 'point')
+}
+
 }

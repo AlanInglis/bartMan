@@ -4,10 +4,10 @@
 \alias{plotSingleTree}
 \title{plotSingleTree}
 \usage{
-plotSingleTree(treeData, iter = 1, treeNo = 1, plotType = "icicle")
+plotSingleTree(trees, iter = 1, treeNo = 1, plotType = "icicle")
 }
 \arguments{
-\item{treeData}{A data frame created by \code{extractTreeData} function}
+\item{trees}{A data frame created by \code{extractTreeData} function}
 
 \item{iter}{The MCMC iteration or chain to plot.}
 
@@ -20,4 +20,10 @@ A plot of an individual tree
 }
 \description{
 Plots individual trees.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+plotSingleTree(trees = df_trees, treeNo = 1, iter = 1, plotType = "icicle")
+}
 }

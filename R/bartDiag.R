@@ -27,6 +27,11 @@
 #' @importFrom dplyr summarise
 #' @importFrom dplyr tibble
 #' @import ggplot2
+#'
+#' @examples
+#' \dontrun{
+#' bartDiag(model = my_model, response = data$response, burnIn = 100, data = my_data)
+#' }
 #' @export
 
 bartDiag <- function(model,

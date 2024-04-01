@@ -4,14 +4,14 @@
 \alias{permVint}
 \title{permVint}
 \usage{
-permVint(model, data, treeData, response, numTreesPerm = NULL, top = NULL)
+permVint(model, data, trees, response, numTreesPerm = NULL, top = NULL)
 }
 \arguments{
 \item{model}{Model created from either the BART, dbarts or bartMachine packages.}
 
 \item{data}{A data frame containing variables in the model.}
 
-\item{treeData}{A data frame created by extractTreeData function.}
+\item{trees}{A data frame created by extractTreeData function.}
 
 \item{response}{The name of the response for the fit.}
 
@@ -31,4 +31,10 @@ A variable interaction evaluation which creates a null model by
 permuting the response, rebuilding the model, and calculating the inclusion proportion (IP)
 of adjacent splits on the null model.
 The final result displayed is the original model's IP minus the null IP.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+permVint(trees = df_trees, model = my_model, data = my_data, response = my_response, top = 5)
+}
 }

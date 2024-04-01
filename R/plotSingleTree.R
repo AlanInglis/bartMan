@@ -2,7 +2,7 @@
 #'
 #' @description Plots individual trees.
 #'
-#' @param treeData A data frame created by \code{extractTreeData} function
+#' @param trees A data frame created by \code{extractTreeData} function
 #' @param iter The MCMC iteration or chain to plot.
 #' @param treeNo The tree number to plot.
 #' @param plotType What type of plot to display. either dendrogram or icicle.
@@ -10,10 +10,14 @@
 #'
 #' @import ggraph
 #' @import ggplot2
-#'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' plotSingleTree(trees = df_trees, treeNo = 1, iter = 1, plotType = "icicle")
+#' }
 #' @export
 
-plotSingleTree <- function(treeData,
+plotSingleTree <- function(trees,
                            iter = 1,
                            treeNo = 1,
                            plotType =  "icicle") {
@@ -26,7 +30,7 @@ plotSingleTree <- function(treeData,
     stop("Error: 'treeNo' cannot be NULL")
   }
 
-  p <- treeList(treeData, iter = iter, treeNo = treeNo)
+  p <- treeList(trees, iter = iter, treeNo = treeNo)
 
   if (plotType == "dendrogram") {
     gp <- ggraph(p[[1]], "dendrogram") +

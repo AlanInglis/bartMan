@@ -2,7 +2,7 @@
 #'
 #' @description Creates a matrix of proximity values.
 #'
-#' @param treeData A list of tree attributes created by treeData function.
+#' @param trees A list of tree attributes created by `extractTreeData` function.
 
 #' @param nRows Number of rows to consider.
 #' @param normalize Default is TRUE. Divide the total number of pairs of observations by
@@ -17,25 +17,31 @@
 #' @importFrom dplyr group_by
 #' @importFrom dplyr mutate
 #' @importFrom DendSer dser
+#'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' bmProx <- proximityMatrix(trees = df_trees, reorder = TRUE, normalize = TRUE, iter = 1)
+#' }
 #' @export
 
-proximityMatrix <- function(treeData, nRows, normalize = TRUE, reorder = TRUE, iter = NULL) {
+proximityMatrix <- function(trees, nRows, normalize = TRUE, reorder = TRUE, iter = NULL) {
 
 
   if (!is.null(iter)) {
-    treeData$structure <- treeData$structure %>%
+    trees$structure <- trees$structure %>%
       filter(iteration == iter)
-    treeTotal <- max(treeData$structure$treeNum)
+    treeTotal <- max(trees$structure$treeNum)
   } else {
-    treeNumber <- treeData$nTree
-    iterNumber <- treeData$nMCMC
+    treeNumber <- trees$nTree
+    iterNumber <- trees$nMCMC
     treeTotal <- treeNumber*iterNumber
   }
 
   #data <- data[nRows, ]
   # get observations in each node
 
-  # dfObs <- treeData$structure %>%
+  # dfObs <- trees$structure %>%
   #   select(var, splitValue, iteration, treeNum, value, noObs) %>%
   #   group_by(iteration, treeNum) %>%
   #   mutate(obsList = evalNode(dat, var, splitValue))
@@ -48,9 +54,9 @@ proximityMatrix <- function(treeData, nRows, normalize = TRUE, reorder = TRUE, i
   # whichObs <- lapply(whichObs, as.numeric)
 
 
-  dfObs <- treeData$structure %>%
+  dfObs <- trees$structure %>%
        select(var, splitValue, iteration, treeNum, value, noObs)
-  whichObs <- treeData$structure$obsNode
+  whichObs <- trees$structure$obsNode
 
   # get all indicies
   idxLength <- length(whichObs)

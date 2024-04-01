@@ -22,10 +22,18 @@
 #' @importFrom ggnewscale new_scale_fill
 #' @importFrom stats as.dist
 #'
-#' @return Either a heatmap, VSUp, or quantile heatmap plot.
+#' @return Either a heatmap, VSUP, or quantile heatmap plot.
+#'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' vsupMat <- viviBartMatrix(df_trees, type = 'vsup', metric = 'propMean', metricError = "CV")
+#' viviBartPlot(vsupMat, label = 'CV')
+#' }
+#'
+#'
 #' @export
-#'
-#'
+
 
 viviBartPlot <- function(matrix,
                          intPal = NULL,

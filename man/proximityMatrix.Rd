@@ -4,10 +4,10 @@
 \alias{proximityMatrix}
 \title{proximityMatrix}
 \usage{
-proximityMatrix(treeData, nRows, normalize = TRUE, reorder = TRUE, iter = NULL)
+proximityMatrix(trees, nRows, normalize = TRUE, reorder = TRUE, iter = NULL)
 }
 \arguments{
-\item{treeData}{A list of tree attributes created by treeData function.}
+\item{trees}{A list of tree attributes created by `extractTreeData` function.}
 
 \item{nRows}{Number of rows to consider.}
 
@@ -24,4 +24,10 @@ A matrix containing proximity values.
 }
 \description{
 Creates a matrix of proximity values.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+bmProx <- proximityMatrix(trees = df_trees, reorder = TRUE, normalize = TRUE, iter = 1)
+}
 }

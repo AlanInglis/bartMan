@@ -1,4 +1,5 @@
-
+# Original VSUP code used with kind permission of Claus Wilke.
+# See https://github.com/clauswilke/multiscales for more details
 
 # -------------------------------------------------------------------------
 

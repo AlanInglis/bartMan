@@ -3,7 +3,7 @@
 #' @description Plot the pair-wise variable interactions inclusion porportions
 #' for a BART model with the 25% and 75% quantile.
 #'
-#' @param treeData A data frame created by treeData function.
+#' @param trees A data frame created by `extractTreeData` function.
 #' @param plotType Which type of plot to return. Either a barplot 'barplot' with the
 #' quantiles shown as a line, a point plot with the quantiles shown as a gradient 'point', or a
 #' letter-value plot 'lvp'.
@@ -18,12 +18,16 @@
 #' @importFrom dplyr mutate
 #' @importFrom purrr map
 #'
-#'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' vintPlot(trees = df_trees, top = 5)
+#' }
 #' @export
 #'
 
 
-vintPlot <- function(treeData,
+vintPlot <- function(trees,
                       plotType = 'barplot',
                       top = NULL){
 
@@ -31,8 +35,8 @@ vintPlot <- function(treeData,
     stop("type must be \"barplot\" or \"point\"")
   }
 
-  df <- treeData$structure
-  nam <- treeData$varName
+  df <- trees$structure
+  nam <- trees$varName
 
   # cycle through trees and create list of Vints
   mkTree <- function(x, pos = 1L) {
@@ -94,7 +98,7 @@ vintPlot <- function(treeData,
 
 
   # create a matrix of all possible combinations
-  nam <- treeData$varName
+  nam <- trees$varName
   namDF <- expand.grid(nam, nam)
 
   newName <- NULL
@@ -102,7 +106,7 @@ vintPlot <- function(treeData,
     newName[i] <- paste0(namDF$Var2[i], ":", namDF$Var1[i])
   }
 
-  allCombMat <- matrix(NA, nrow = treeData$nMCMC, ncol = length(newName))
+  allCombMat <- matrix(NA, nrow = trees$nMCMC, ncol = length(newName))
   colnames(allCombMat) <- newName
 
   # join actual values into matirx of all combinations
@@ -174,7 +178,7 @@ vintPlot <- function(treeData,
   colnames(vintSD) = c('SD', 'var')
   vintSD$var <- as.character(vintSD$var)
 
-  vintSE <- vintSD$SD/sqrt(treeData$nMCMC)
+  vintSE <- vintSD$SD/sqrt(trees$nMCMC)
   names(vintSE) <- vintSD$var
 
   vintSE <- utils::stack(vintSE)

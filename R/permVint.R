@@ -7,7 +7,7 @@
 #'
 #' @param model Model created from either the BART, dbarts or bartMachine packages.
 #' @param data A data frame containing variables in the model.
-#' @param treeData A data frame created by extractTreeData function.
+#' @param trees A data frame created by extractTreeData function.
 #' @param response The name of the response for the fit.
 #' @param numTreesPerm The number of trees to be used in the null model.
 #' As suggested by Chipman (2009), a small number of trees is recommended (~20) to force important
@@ -22,20 +22,24 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr arrange
 #' @import ggplot2
-#'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' permVint(trees = df_trees, model = my_model, data = my_data, response = my_response, top = 5)
+#' }
 #' @export
 #'
 
 
 permVint <- function(model,
                      data,
-                     treeData,
+                     trees,
                      response,
                      numTreesPerm = NULL,
                      top = NULL) {
 
   # get og model vints
-  actualVint <- viviBart(treeData = treeData, out = 'vint')
+  actualVint <- viviBart(trees = trees, out = 'vint')
 
   # get null permutation vints
   permVint <- permBartVint(
@@ -141,7 +145,7 @@ permBartVint.bart <- function(model, data,  response, numTreesPerm = NULL){
     )
 
     permDF <- extractTreeData(bmodelPerm, data)
-    permVints <- viviBart(treeData = permDF, out = 'vint')
+    permVints <- viviBart(trees = permDF, out = 'vint')
     return(permVints)
   }
 
@@ -189,7 +193,7 @@ permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL
 
 
     permDF <- extractTreeData(bmodelPerm, data)
-    permVints <- viviBart(treeData = permDF,out = 'vint')
+    permVints <- viviBart(trees = permDF,out = 'vint')
     return(permVints)
   }
 
@@ -242,7 +246,7 @@ permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
     )
 
     permDF <- extractTreeData(bmodelPerm, data)
-    permVints <- viviBart(treeData = permDF,  out = 'vint')
+    permVints <- viviBart(trees = permDF,  out = 'vint')
     return(permVints)
   }
 

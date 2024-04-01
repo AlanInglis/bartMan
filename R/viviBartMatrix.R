@@ -5,7 +5,7 @@
 #' One with the actual values and another matrix of uncertainty values.
 #' If type = 'quantiles', three matrices are returned. One for the 25%, 50%, and 75% quantiles.
 #'
-#'@param treeData A data frame created by extractTreeData function.
+#'@param trees A data frame created by `extractTreeData` function.
 #'@param type Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'
 #'@param metric Which metric to use to fill the actual values matrix. Either 'propMean' or 'count'.
 #'@param metricError Which metric to use to fill the uncertainty matrix. Either 'SD', 'CV' or 'SE'.
@@ -26,7 +26,7 @@
 #'@export
 
 
-viviBartMatrix <- function(treeData,
+viviBartMatrix <- function(trees,
                            type = "standard",
                            metric = "propMean",
                            metricError = "CV",
@@ -45,22 +45,22 @@ viviBartMatrix <- function(treeData,
     stop("type must be \"standard\", \"vsup\", or \"quantiles\"")
   }
 
-  viviDf <- viviBartInternal(treeData)
+  viviDf <- viviBartInternal(trees)
 
   if(type == 'standard'){
-   viviMat <-  viviBartStd(treeData = treeData,
+   viviMat <-  viviBartStd(trees = trees,
                                  data = viviDf,
                                  metric = metric,
                                  reorder = reorder
                                  )
   }else if(type == 'vsup'){
-    viviMat <- viviBartVSUP(treeData = treeData,
+    viviMat <- viviBartVSUP(trees = trees,
                                  data = viviDf,
                                  metricError = metricError,
                                  metric = metric,
                                  reorder = reorder)
   }else if(type == 'quantiles'){
-    viviMat <- viviBartQuantile(treeData = treeData,
+    viviMat <- viviBartQuantile(trees = trees,
                                    data = viviDf,
                                    reorder = reorder)
   }
@@ -76,13 +76,13 @@ viviBartMatrix <- function(treeData,
 # VIVI dataframe ----------------------------------------------------------
 # -------------------------------------------------------------------------
 
-viviBartInternal <- function(treeData){
+viviBartInternal <- function(trees){
 
   # Vimps -------------------------------------------------------------------
 
   # get vimps
-  vimps <- bartMan::vimpBart(treeData, type = 'prop')
-  vimpsVal <- bartMan::vimpBart(treeData, type = 'val')
+  vimps <- bartMan::vimpBart(trees, type = 'prop')
+  vimpsVal <- bartMan::vimpBart(trees, type = 'val')
 
 
   vImp <- colMeans(vimps)
@@ -90,8 +90,8 @@ viviBartInternal <- function(treeData){
 
   # get uncertainty measures
   vimpSD <- apply(vimps, 2, sd)
-  upperVimp  <- vImp + 1.96 * vimpSD/sqrt(treeData$nMCMC)
-  lowerVimp  <- vImp - 1.96 * vimpSD/sqrt(treeData$nMCMC)
+  upperVimp  <- vImp + 1.96 * vimpSD/sqrt(trees$nMCMC)
+  lowerVimp  <- vImp - 1.96 * vimpSD/sqrt(trees$nMCMC)
   SEvimp <- sapply(as.data.frame(vimps), function(x) sd(x)/sqrt(length(x)))
   CVvimp <- vimpSD / vImp
   CVvimp[is.nan(CVvimp)] <- 0
@@ -130,8 +130,8 @@ viviBartInternal <- function(treeData){
 # VInts -------------------------------------------------------------------
 
 
-  df <- treeData$structure
-  nam <- treeData$varName
+  df <- trees$structure
+  nam <- trees$varName
 
   # cycle through trees and create list of Vints
   mkTree <- function(x, pos = 1L) {
@@ -193,7 +193,7 @@ viviBartInternal <- function(treeData){
 
 
   # create a matrix of all possible combinations
-  nam <- treeData$varName
+  nam <- trees$varName
   namDF <- expand.grid(nam, nam)
 
   newName <- NULL
@@ -201,7 +201,7 @@ viviBartInternal <- function(treeData){
     newName[i] <- paste0(namDF$Var2[i], ":", namDF$Var1[i])
   }
 
-  allCombMat <- matrix(NA, nrow = treeData$nMCMC, ncol = length(newName))
+  allCombMat <- matrix(NA, nrow = trees$nMCMC, ncol = length(newName))
   colnames(allCombMat) <- newName
 
   # join actual values into matirx of all combinations
@@ -282,7 +282,7 @@ viviBartInternal <- function(treeData){
   colnames(vintSD) = c('SD', 'var')
   vintSD$var <- as.character(vintSD$var)
 
-  vintSE <- vintSD$SD/sqrt(treeData$nMCMC)
+  vintSE <- vintSD$SD/sqrt(trees$nMCMC)
   names(vintSE) <- vintSD$var
   # vintSE <- vintSE  |>
   #   reshape2::melt()  |>
@@ -354,7 +354,7 @@ viviBartInternal <- function(treeData){
   dfFinal <-  dfFinal |> select(var, count, propMean, SD, CV, SE, Q25, Q50, Q75)
 
   # add adjustment
-  vimpsAdj <- bartMan::vimpBart(treeData, type = 'propMean')
+  vimpsAdj <- bartMan::vimpBart(trees, type = 'propMean')
 
   splitN <- t(simplify2array(strsplit(as.character(dfFinal[["var"]]), ":")))
   values <- t(apply(splitN, 1, function(x){c(vimpsAdj[x[1]], vimpsAdj[x[2]])}))
@@ -391,7 +391,7 @@ viviBartInternal <- function(treeData){
 # Standard Matrix ---------------------------------------------------------
 # -------------------------------------------------------------------------
 
-viviBartStd <- function(treeData,
+viviBartStd <- function(trees,
                         data,
                         reorder = FALSE,
                         metric = "propMean"
@@ -399,7 +399,7 @@ viviBartStd <- function(treeData,
 
   propFinal <- data$Vint
   vars2  <- t(simplify2array(strsplit(as.character(propFinal[["var"]]), ":")))
-  ovars <- treeData$varName
+  ovars <- trees$varName
 
   mat <- matrix(0, length(ovars), length(ovars)) # create matrix
   rownames(mat) <- colnames(mat) <- ovars # set names
@@ -434,7 +434,7 @@ viviBartStd <- function(treeData,
 
 
 
-viviBartVSUP <- function(treeData,
+viviBartVSUP <- function(trees,
                          data,
                          reorder = FALSE,
                          metricError = 'CV',
@@ -444,7 +444,7 @@ viviBartVSUP <- function(treeData,
   propFinal <- data$Vint
   vars2  <- t(simplify2array(strsplit(as.character(propFinal[["var"]]), ":")))
 
-  ovars <- treeData$varName
+  ovars <- trees$varName
 
 
   mat <- matrix(0, length(ovars), length(ovars)) # create matrix
@@ -460,7 +460,7 @@ viviBartVSUP <- function(treeData,
   uncertaintyMatrix <- mat
 
   # get actual values matrix
-  actualMatrix <- viviBartStd(treeData = treeData, data = data,
+  actualMatrix <- viviBartStd(trees = trees, data = data,
                               reorder = reorder, metric = metric)
 
   # reorder actual values matrix
@@ -490,13 +490,13 @@ viviBartVSUP <- function(treeData,
 # -------------------------------------------------------------------------
 
 
-viviBartQuantile <-  function(treeData, data, reorder = FALSE){
+viviBartQuantile <-  function(trees, data, reorder = FALSE){
 
   propFinal <- data$Vint
 
-  matFun <- function(treeData, dataVint, data, metric){
+  matFun <- function(trees, dataVint, data, metric){
     vars2  <- t(simplify2array(strsplit(as.character(dataVint[["var"]]), ":")))
-    ovars <- treeData$varName
+    ovars <- trees$varName
     mat <- matrix(0, length(ovars), length(ovars)) # create matrix
     rownames(mat) <- colnames(mat) <- ovars # set names
     mat[vars2] <- dataVint[[metric]] # set values
@@ -513,9 +513,9 @@ viviBartQuantile <-  function(treeData, data, reorder = FALSE){
     return(mat)
   }
 
-  lowerQuantile  <- matFun(treeData, propFinal, data,  metric = 'lowerQ')
-  median <- matFun(treeData, propFinal, data, metric = 'median')
-  upperQuantile  <- matFun(treeData, propFinal, data, metric = 'upperQ')
+  lowerQuantile  <- matFun(trees, propFinal, data,  metric = 'lowerQ')
+  median <- matFun(trees, propFinal, data, metric = 'median')
+  upperQuantile  <- matFun(trees, propFinal, data, metric = 'upperQ')
 
   # reorder median matrix
   if(reorder){

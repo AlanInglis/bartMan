@@ -53,7 +53,7 @@ A ggplot object representing the plotted trees with the specified customizations
 }
 \description{
 This function plots trees from a list of tidygraph objects. It allows for various
-customizations such as fill color based on node response or value, node size adjustments,
+customisations such as fill colour based on node response or value, node size adjustments,
 and color palettes.
 }
 \examples{

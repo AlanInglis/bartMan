@@ -27,3 +27,10 @@ A variable selection approach which creates a null model by
 permuting the response, rebuilding the model, and calculating the inclusion proportion (IP) on the null model.
 The final result displayed is the original model's IP minus the null IP.
 }
+\examples{
+\dontrun{
+permVimp(model = my_model, data = my_data, response = my_response,
+        numTreesPerm = 20, plotType = 'barplot')
+}
+
+}

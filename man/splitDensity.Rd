@@ -5,7 +5,7 @@
 \title{splitDensity}
 \usage{
 splitDensity(
-  treeData,
+  trees,
   data,
   bandWidth = NULL,
   panelScale = NULL,
@@ -14,7 +14,7 @@ splitDensity(
 )
 }
 \arguments{
-\item{treeData}{A list of trees created using the treeData function.}
+\item{trees}{A list of trees created using the trees function.}
 
 \item{data}{Data frame containing variables from the model.}
 
@@ -34,4 +34,11 @@ A faceted group of density plots
 }
 \description{
 Density plots of the split value for each variable.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+splitDensity(trees = df_trees, data = my_data, display = 'dataSplit')
+}
+
 }

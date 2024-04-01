@@ -3,7 +3,7 @@
 #' @description Plot the variable importance for a BART model with the 25% and 75%
 #' quantile.
 #'
-#' @param treeData A data frame created by treeData function.
+#' @param trees A data frame created by `extractTreeData` function.
 #' @param type What value to return. Either the raw count 'count'
 #' or the proportions 'prop' averaged over iterations.
 #' @param plotType Which type of plot to return. Either a barplot 'barplot' with the
@@ -24,11 +24,16 @@
 #' @importFrom dplyr arrange
 #' @importFrom dplyr mutate
 #'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' vimpPlot(trees = df_trees, plotType = 'point')
+#' }
 #'
 #' @export
 #'
 
-vimpPlot <- function(treeData,
+vimpPlot <- function(trees,
                      type = "prop",
                      plotType = "barplot",
                      metric = "median",
@@ -48,12 +53,12 @@ vimpPlot <- function(treeData,
     stop("metric must be \"mean\"  or \"median\"")
   }
 
-  vimp <- vimpBart(treeData, type = type)
+  vimp <- vimpBart(trees, type = type)
   vimp <- as.data.frame(vimp)
 
   # combine factor variables
   if(combineFact){
-    vimp <- combineFactors(treeData = treeData, dataCombine = vimp)
+    vimp <- combineFactors(trees = trees, dataCombine = vimp)
   }
 
   # get quantiles of proportions

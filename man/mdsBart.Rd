@@ -5,7 +5,7 @@
 \title{mdsBart}
 \usage{
 mdsBart(
-  treeData,
+  trees,
   data,
   target,
   response,
@@ -15,7 +15,7 @@ mdsBart(
 )
 }
 \arguments{
-\item{treeData}{A data frame created by treeData function.}
+\item{trees}{A data frame created by `extractTreeData` function.}
 
 \item{data}{a dataframe used in building the model.}
 

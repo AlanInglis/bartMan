@@ -4,7 +4,7 @@
 #' Each row represents an MCMC iteration. For each variable, the total count
 #' of the number of times that variable is used in a tree is given.
 #'
-#' @param treeData A data frame created by treeData function.
+#' @param trees A data frame created by `extractTreeData` function.
 #' @param type What value to return. Either the raw count 'val', the proportion 'prop',
 #' the column means of the proportions 'propMean', or the median of the proportions 'propMedian'.
 #'
@@ -19,13 +19,13 @@
 #'
 
 
-vimpBart <- function(treeData, type = 'prop'){
+vimpBart <- function(trees, type = 'prop'){
 
   if (!(type %in% c("val", "prop", "propMean", "propMedian"))) {
     stop("type must be \"val\", \"prop\", \"propMedian\", or \"propMean\"")
   }
 
-  df <- treeData$structure
+  df <- trees$structure
 
   # get count of vars
   vCount <- df %>%
@@ -36,8 +36,8 @@ vimpBart <- function(treeData, type = 'prop'){
     as.data.frame.matrix()
 
   # turn into matrix (with all values)
-  nam <- treeData$varName
-  mat <- matrix(0, nrow = treeData$nMCMC, ncol = length(nam))
+  nam <- trees$varName
+  mat <- matrix(0, nrow = trees$nMCMC, ncol = length(nam))
   colnames(mat) <- nam
 
   namesDat <- colnames(vCount)

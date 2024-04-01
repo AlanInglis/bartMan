@@ -4,10 +4,10 @@
 \alias{viviBart}
 \title{viviBart}
 \usage{
-viviBart(treeData, out = "vivi")
+viviBart(trees, out = "vivi")
 }
 \arguments{
-\item{treeData}{A data frame created by extractTreeData function.}
+\item{trees}{A data frame created by `extractTreeData` function.}
 
 \item{out}{Choose to either output just the variable importance ('vimp'),
 the variable interaction ('vint'), or both ('vivi') (default).}
@@ -18,4 +18,12 @@ A list of dataframes of VIVI summaries.
 \description{
 Returns a list containing a dataframe of variable importance summaries
 and a dataframe of variable interaction summaries.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+viviBart(trees = df_trees, out = 'vivi')
+}
+
+
 }

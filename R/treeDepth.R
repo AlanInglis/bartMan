@@ -2,7 +2,7 @@
 #'
 #' @description A plot of tree depth over iterations.
 #'
-#' @param treeData A list of tree attributes created using the extractTreeData function.
+#' @param trees A list of tree attributes created using the extractTreeData function.
 #'
 #' @return A plot of average tree depths over iteration
 #'
@@ -13,12 +13,19 @@
 #' @importFrom dplyr group_by
 #' @importFrom dplyr ungroup
 #' @importFrom dplyr as_tibble
+#'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' treeDepth(trees = df_trees)
+#' }
+#'
 #' @export
 
-treeDepth <- function(treeData) {
-  maxIter <- max(treeData$structure$iteration)
+treeDepth <- function(trees) {
+  maxIter <- max(trees$structure$iteration)
 
-  newTrees <- treeData$structure %>%
+  newTrees <- trees$structure %>%
     select(iteration, treeNum, depthMax) %>%
     as_tibble() %>%
     group_by(iteration, treeNum) %>%

@@ -2,7 +2,7 @@
 #'
 #' @description Multi-dimensional Scaling Plot of proximity matrix from a BART model.
 #'
-#' @param treeData A data frame created by treeData function.
+#' @param trees A data frame created by `extractTreeData` function.
 #' @param plotType Type of plot. One of "interactive", "point", "rows", or "all".
 #' @param data  a dataframe used in building the model.
 #' @param response The name of the response for the fit.
@@ -37,7 +37,7 @@
 #'
 
 mdsBart <- function(
-    treeData,
+    trees,
     data,
     target,
     response,
@@ -50,18 +50,18 @@ mdsBart <- function(
   }
 
   # remove stumps
-  whichStumps <- which(treeData$structure$terminal == TRUE & treeData$structure$node == 1)
+  whichStumps <- which(trees$structure$terminal == TRUE & trees$structure$node == 1)
   df <- NULL
   if(length(whichStumps > 0)){
-    df$structure <- treeData$structure[-whichStumps,]
+    df$structure <- trees$structure[-whichStumps,]
   }else{
-    df$structure <- treeData$structure
+    df$structure <- trees$structure
   }
 
 
   # set target matrix
   targetFit <- stats::cmdscale(1 - target, eig = TRUE, k = 2)
-  iter <- treeData$nMCMC
+  iter <- trees$nMCMC
 
   # get all rotation matrices
   message('Getting proximites...')
@@ -100,7 +100,7 @@ mdsBart <- function(
   }
 
   # add in response & make a group variable for each df and combine
-  # responseNum <- which(!(names(data) %in% treeData$varName))
+  # responseNum <- which(!(names(data) %in% trees$varName))
   # response <- names(data[responseNum])
   # responseNum <- which(names(data) == response)
   # response <- names(data[responseNum])

@@ -4,14 +4,21 @@
 \alias{treeNodes}
 \title{treeNodes}
 \usage{
-treeNodes(treeData)
+treeNodes(trees)
 }
 \arguments{
-\item{treeData}{A list of tree attributes created using the extractTreeData function.}
+\item{trees}{A list of tree attributes created using the extractTreeData function.}
 }
 \value{
 A plot of tree number of nodes over iterations.
 }
 \description{
 A plot of number of nodes over iterations.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+treeNodes(trees = df_trees)
+}
+
 }

@@ -4,10 +4,10 @@
 \alias{acceptRate}
 \title{acceptRate}
 \usage{
-acceptRate(treeData)
+acceptRate(trees)
 }
 \arguments{
-\item{treeData}{A data frame created by extractTreeData function.
+\item{trees}{A data frame created by extractTreeData function.
 Displays a division on the plot to separate prior and post burn-in iterations.}
 }
 \value{
@@ -15,4 +15,12 @@ A plot of acceptance rate.
 }
 \description{
 Plots the acceptance rate of trees from a BART model.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+acceptRate(trees = df_trees)
+}
+
+
 }

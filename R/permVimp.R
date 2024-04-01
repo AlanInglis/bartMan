@@ -19,6 +19,12 @@
 #' @importFrom dplyr arrange
 #' @import ggplot2
 #'
+#' @examples
+#' \dontrun{
+#' permVimp(model = my_model, data = my_data, response = my_response,
+#'         numTreesPerm = 20, plotType = 'barplot')
+#' }
+#'
 #' @export
 
 permVimp <- function(model, data, response, numTreesPerm = NULL, plotType = 'barplot') {

@@ -6,7 +6,16 @@
 #'
 #' @param model Model created from either the BART, dbarts or bartMachine packages.
 #' @param data a data frame used to build the BART model.
-#' @return A list containing the extracted and processed tree data, including dataframe of trees and attributes.
+#' @return A list containing the extracted and processed tree data. This list includes:
+#' \enumerate{
+#'   \item \strong{Tree Data Frame}: A data frame containing tree attributes.
+#'   \item \strong{Variable Name}: The names of the variables used in building the model.
+#'   \item \strong{nMCMC}: The total number of iterations (posterior draws) after burn-in.
+#'   \item \strong{nTree}: The total number of trees grown in the sum-of-trees model.
+#'   \item \strong{nVar}: The total number of covariates used in the model.
+#' }
+#' The object created by the `extractTreeData` function encompasses these elements,
+#' facilitating detailed analysis and visualisation of BART model components.
 #'
 #'
 #' @importFrom purrr map_df
@@ -30,6 +39,10 @@
 #' @importFrom dbarts extract
 #' @importFrom rJava .jcall is.jnull
 #'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' }
 #' @export
 # Extract Tree Data Method ------------------------------------------------
 

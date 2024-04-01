@@ -2,7 +2,7 @@
 #'
 #' @description Density plots of the split value for each variable.
 #'
-#' @param treeData A list of trees created using the treeData function.
+#' @param trees A list of trees created using the trees function.
 #' @param data Data frame containing variables from the model.
 #' @param bandWidth Bandwidth used for density calculation. If not provided, is estimated from the data.
 #' @param panelScale If TRUE, the default, relative scaling is calculated separately for each panel.
@@ -18,11 +18,16 @@
 #' @importFrom dplyr %>%
 #' @importFrom dplyr select
 #' @import ggplot2
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' splitDensity(trees = df_trees, data = my_data, display = 'dataSplit')
+#' }
 #'
 #' @export
 
 
-splitDensity <- function(treeData,
+splitDensity <- function(trees,
                          data,
                          bandWidth = NULL,
                          panelScale = NULL,
@@ -34,13 +39,13 @@ splitDensity <- function(treeData,
   }
 
   # get just the variable and split value
-  tt <- treeData$structure %>%
+  tt <- trees$structure %>%
     ungroup() %>%
     select(var, splitValue) %>%
     stats::na.omit()
 
   # create plotting order to match order of data
-  nam <- treeData$varName
+  nam <- trees$varName
   tt$var <- factor(tt$var, levels = nam)
 
   varNames <- unique(tt$var)

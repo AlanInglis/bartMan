@@ -17,8 +17,10 @@
 #' @return A `ggplot` object representing the bar plot of tree frequencies.
 #'
 #' @examples
-#' plot <- treeBarPlot(trees = treeList, topTrees = 10, removeStump = TRUE)
-#' print(plot)
+#' #' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' plot <- treeBarPlot(trees = df_trees, topTrees = 10, removeStump = TRUE)
+#' }
 #'
 #' @importFrom dplyr mutate pull group_by arrange filter slice n
 #' @importFrom purrr map imap
@@ -35,7 +37,7 @@
 
 treeBarPlot <- function(trees, iter = NULL, topTrees = NULL, removeStump = FALSE) {
   # Create list of trees
-  treeList <- treeList(treeData = trees, iter = iter, treeNo = NULL)
+  treeList <- treeList(trees = trees, iter = iter, treeNo = NULL)
 
   # Optionally remove stumps
   if (removeStump) {

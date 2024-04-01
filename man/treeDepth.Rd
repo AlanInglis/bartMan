@@ -4,14 +4,21 @@
 \alias{treeDepth}
 \title{treeDepth}
 \usage{
-treeDepth(treeData)
+treeDepth(trees)
 }
 \arguments{
-\item{treeData}{A list of tree attributes created using the extractTreeData function.}
+\item{trees}{A list of tree attributes created using the extractTreeData function.}
 }
 \value{
 A plot of average tree depths over iteration
 }
 \description{
 A plot of tree depth over iterations.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+treeDepth(trees = df_trees)
+}
+
 }

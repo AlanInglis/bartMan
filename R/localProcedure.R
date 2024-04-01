@@ -21,7 +21,14 @@
 #'
 #' @export
 
-localProcedure <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
+localProcedure <- function(model,
+                           data,
+                           response,
+                           numRep = 10,
+                           numTreesRep = NULL,
+                           alpha = 0.5,
+                           shift = FALSE){
+
   vimp <- lProd(model= model,
                 data = data,
                 response = response,

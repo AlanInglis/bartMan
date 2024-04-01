@@ -1,7 +1,7 @@
 #' Plot Trees with Customizations
 #'
 #' This function plots trees from a list of tidygraph objects. It allows for various
-#' customizations such as fill color based on node response or value, node size adjustments,
+#' customisations such as fill colour based on node response or value, node size adjustments,
 #' and color palettes.
 #'
 #' @param trees A data frame of trees.
@@ -58,7 +58,7 @@ plotTrees <- function(trees,
   variable_names <- trees$varName
 
   # make list of trees
-  trees <- treeList(treeData = trees,
+  trees <- treeList(trees = trees,
                     iter = iter,
                     treeNo = treeNo)
 
@@ -254,7 +254,7 @@ plotTrees <- function(trees,
     facet_formula <- as.formula(paste0("~ iteration + treeNum"))
   }
 
-
+  suppressMessages(
   p <- ggraph(combined_graph, layout = "partition", weight = dynamic_weight) +
     geom_node_tile(aes(fill = var), linewidth = 0.25) +
     scale_y_reverse() +
@@ -282,8 +282,7 @@ plotTrees <- function(trees,
         order = 2
       ),
     )
-
-  p
+  )
 
   return(p)
 }

@@ -20,6 +20,6 @@ parent-child relationships between nodes based on tree structure.
 }
 \examples{
 # Assuming `treeData` has been prepared with terminal node indicators
-treeData <- getChildren(treeData)
+treeData <- getChildren(data = treeData)
 
 }

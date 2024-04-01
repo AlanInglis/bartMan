@@ -39,3 +39,8 @@ A selection of diagnostic plots
 \description{
 Displays a selection of diagnostic plots for a BART model.
 }
+\examples{
+\dontrun{
+bartDiag(model = my_model, response = data$response, burnIn = 100, data = my_data)
+}
+}

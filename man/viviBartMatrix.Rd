@@ -5,7 +5,7 @@
 \title{viviBartMatrix}
 \usage{
 viviBartMatrix(
-  treeData,
+  trees,
   type = "standard",
   metric = "propMean",
   metricError = "CV",
@@ -13,7 +13,7 @@ viviBartMatrix(
 )
 }
 \arguments{
-\item{treeData}{A data frame created by extractTreeData function.}
+\item{trees}{A data frame created by `extractTreeData` function.}
 
 \item{type}{Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'}
 

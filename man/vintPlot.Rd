@@ -4,10 +4,10 @@
 \alias{vintPlot}
 \title{vintPlot}
 \usage{
-vintPlot(treeData, plotType = "barplot", top = NULL)
+vintPlot(trees, plotType = "barplot", top = NULL)
 }
 \arguments{
-\item{treeData}{A data frame created by treeData function.}
+\item{trees}{A data frame created by `extractTreeData` function.}
 
 \item{plotType}{Which type of plot to return. Either a barplot 'barplot' with the
 quantiles shown as a line, a point plot with the quantiles shown as a gradient 'point', or a
@@ -21,4 +21,10 @@ A plot of variable importance.
 \description{
 Plot the pair-wise variable interactions inclusion porportions
 for a BART model with the 25% and 75% quantile.
+}
+\examples{
+\dontrun{
+df_trees <- extractTreeData(model = my_model, data = my_data)
+vintPlot(trees = df_trees, top = 5)
+}
 }

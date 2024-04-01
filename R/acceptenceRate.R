@@ -2,7 +2,7 @@
 #'
 #' @description Plots the acceptance rate of trees from a BART model.
 #'
-#' @param treeData A data frame created by extractTreeData function.
+#' @param trees A data frame created by extractTreeData function.
 #'  Displays a division on the plot to separate prior and post burn-in iterations.
 #'
 #' @return A plot of acceptance rate.
@@ -15,10 +15,17 @@
 #' @importFrom tidyr replace_na
 #' @import ggplot2
 #'
+#' @examples
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' acceptRate(trees = df_trees)
+#' }
+#'
+#'
 #' @export
 
-acceptRate <- function(treeData) {
-  df <- treeData$structure
+acceptRate <- function(trees) {
+  df <- trees$structure
 
   maxIter <- max(df$iteration)
 

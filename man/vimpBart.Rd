@@ -4,10 +4,10 @@
 \alias{vimpBart}
 \title{vimpBart}
 \usage{
-vimpBart(treeData, type = "prop")
+vimpBart(trees, type = "prop")
 }
 \arguments{
-\item{treeData}{A data frame created by treeData function.}
+\item{trees}{A data frame created by `extractTreeData` function.}
 
 \item{type}{What value to return. Either the raw count 'val', the proportion 'prop',
 the column means of the proportions 'propMean', or the median of the proportions 'propMedian'.}
