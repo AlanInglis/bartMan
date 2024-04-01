@@ -17,7 +17,7 @@ Authors@R:
              email = "catherine.hurley@mu.ie"),
       person(given = "Claus",
              family = "Wilke",
-             role = "aut",
+             role = "ctb",
              comment = "Developer of VSUP script"))
 Maintainer: <alan.inglis@mu.ie>
 Description: Visualisations for examining trees, variable importance, and
