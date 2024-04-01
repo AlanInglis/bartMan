@@ -17,6 +17,9 @@
 #'
 #'
 #' @importFrom dplyr tibble
+#' @importFrom BART wbart
+#' @importFrom dbarts bart
+#' @importFrom bartMachine bartMachine
 #' @import ggplot2
 #'
 #' @export

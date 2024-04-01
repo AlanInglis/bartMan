@@ -47,10 +47,12 @@ Imports:
     tidyr,
     tidytreatment,
     utils,
-Suggests:
+    tibble,
     BART,
     bartMachine,
     dbarts,
+    rJava,
+Suggests:
     rJava,
     ROCR,
     ggridges,
