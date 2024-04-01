@@ -18,6 +18,7 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr arrange
 #' @import ggplot2
+#' @importFrom utils capture.output
 #'
 #' @examples
 #' \dontrun{

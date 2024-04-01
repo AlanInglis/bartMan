@@ -26,6 +26,8 @@ If FALSE, relative scaling is calculated globally.
  A value of 1 indicates that the maximum point of any ridgeline touches the baseline right above,
  assuming even spacing between baselines.}
 
+\item{scaleFactor}{A numerical value to scale the plot.}
+
 \item{display}{Choose how to display the plot. Either histogram, facet wrap, ridges
 or display both the split value and density of the predictor by using dataSplit.}
 }

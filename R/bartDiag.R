@@ -43,18 +43,19 @@ bartDiag <- function(model,
                       showInterval = TRUE,
                       combineFactors = FALSE){
 
-  if(any(class(model) == 'pbart')){
+  if(inherits(model, 'pbart')){
 
     output <- bartClassifDiag(model = model, data = data, response = response,
                               threshold = threshold, pNorm = pNorm, showInterval = showInterval,
                               combineFactors = combineFactors)
 
-  }else if(any(class(model) == 'wbart')){
+  }else if(inherits(model, 'wbart')){
+
 
     output <- bartRegrDiag(model = model, data = data, response = response,
                            burnIn = burnIn, combineFactors = combineFactors)
 
-  }else if(any(class(model) == 'bart')){
+  }else if(inherits(model, 'bart')){
 
     if(model$fit$control@binary == TRUE){
 
@@ -67,7 +68,7 @@ bartDiag <- function(model,
                              burnIn = burnIn, combineFactors = combineFactors)
     }
 
-  }else if(any(class(model) == 'bartMachine')){
+  }else if(inherits(model, 'bartMachine')){
 
     if(model$pred_type == 'classification'){
 
@@ -148,7 +149,7 @@ bartRegrDiag <- function(model,
 # QQ plot -----------------------------------------------------------------
 
 bartQQ <- function(model, response) {
-  if (any(class(model) == "wbart") || any(class(model) == "bartMachine")) {
+  if (inherits(model, "wbart") || inherits(model, "bartMachine")){
     res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
     res <- res %>% summarise(.residual = mean(.residual))
   } else {
@@ -175,7 +176,7 @@ bartQQ <- function(model, response) {
 
 
 bartTrace <- function(model, burnIn = 0) {
-  if (class(model) == "wbart" || class(model) == "bartMachine") {
+  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
     # get values
     varDraws <- tidytreatment::variance_draws(model, value = "siqsq")
     varDraws$sigma <- sqrt(varDraws$siqsq)
@@ -220,7 +221,7 @@ bartTrace <- function(model, burnIn = 0) {
 
 bartResiduals <- function(model,
                           response) {
-  if (class(model) == "wbart" || class(model) == "bartMachine") {
+  if (inherits(model, "wbart") || inherits(model, "bartMachine")){
     res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
   } else {
     res <- data.frame(
@@ -230,7 +231,7 @@ bartResiduals <- function(model,
   }
 
 
-  if (class(model) == "wbart" || class(model) == "bartMachine") {
+  if (inherits(model, "wbart") || inherits(model, "bartMachine")){
     p <- res %>%
       tidybayes::point_interval(.fitted, .residual, .width = c(0.95)) %>%
       select(-.fitted.lower, -.fitted.upper) %>%
@@ -261,8 +262,7 @@ bartResiduals <- function(model,
 # Histogram Residuals -----------------------------------------------------
 
 bartHist <- function(model, response) {
-
-  if (class(model) == "wbart" || class(model) == "bartMachine") {
+  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
     res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
   } else {
     res <- data.frame(.residual = residuals(model))
@@ -285,8 +285,7 @@ bartHist <- function(model, response) {
 
 bartFitted <- function(model, response) {
 
-
-  if (class(model) == "wbart" || class(model) == "bartMachine") {
+  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
     res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
   } else {
     plquants = c(.05,.95)
@@ -303,7 +302,7 @@ bartFitted <- function(model, response) {
   }
 
 
-  if (class(model) == "wbart" || class(model) == "bartMachine") {
+  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
     p <- res %>%
       tidybayes::point_interval(.fitted, y, .width = c(0.95)) %>%
       select(-y.lower, -y.upper) %>%
@@ -342,8 +341,7 @@ bartFitted <- function(model, response) {
 
 bartVimp <- function(model,  data, combineFactors = FALSE) {
 
-
-  if(class(model) == "bartMachine"){
+  if (inherits(model, "bartMachine")){
     vImp <- bartMachine::get_var_counts_over_chain(model)
   } else {
     # get variable importance
@@ -439,8 +437,7 @@ bartClassifDiag <- function(model,
 
   responseVals <- response
 
-
-  if(class(model) == "bartMachine"){
+  if (inherits(model, "bartMachine")){
     yhatTrain <- model$y_hat_train
     if(model$pred_type == 'classification'){
       yhatTrain <- as.integer(yhatTrain)-1
@@ -640,7 +637,7 @@ bartVimpClass <- function(model, data, combineFactors = FALSE){
 
 
 
-  if(class(model) == "bartMachine"){
+  if (inherits(model, "bartMachine")){
     vImp <- bartMachine::get_var_counts_over_chain(model)
   } else {
     # get variable importance
@@ -700,18 +697,19 @@ bartVimpClass <- function(model, data, combineFactors = FALSE){
 confMat <- function(model, data, response){
 
   respIdx <- which(sapply(data, identical, y = response))
-  if(class(model) == 'bart' || class(model) == 'pbart' || class(model) == 'wbart'){
+  if (inherits(model, 'bart') || inherits(model, 'pbart') || inherits(model, 'wbart')){
     pred <-  round(colMeans(stats::predict(model, data[, -respIdx])), 0)
   }else{
     pred <- round(stats::predict(model, data[, -respIdx]), 0)
   }
 
-  if(class(model) == 'pbart' || class(model) == 'bart'){
+
+  if (inherits(model, 'pbart') || inherits(model, 'bart')){
     pred <-  ifelse(pred == 2, 1, 0)
   }
 
   pred <- as.factor(pred)
-  if(class(model) == 'bartMachine'){
+  if (inherits(model, 'bartMachine')){
     response <- as.numeric(response)
     #response <-  ifelse(response == 2, 1, 0)
     #pred <-  ifelse(pred == 2, 1, 0)
@@ -749,7 +747,7 @@ confMat <- function(model, data, response){
 rocCI <- function(model, response, data){
 
   # get model info
-  if(class(model) == 'pbart' | class(model) == 'wbart'){
+  if (inherits(model, 'pbart') || inherits(model, 'wbart')){
 
     modelTrees <- model$treedraws$trees
     modelInfo <- unlist(strsplit(modelTrees, " "))[1:3]
@@ -760,7 +758,7 @@ rocCI <- function(model, response, data){
     burnIn <- length(model$sigma) - nMCMC
     varNames <- names(model$varcount.mean)
 
-  }else if(class(model) == 'bart'){
+  }else if (inherits(model, 'bart')){
 
     nTree <- model$call$ntree
     nMCMC  <- model$call$ndpost
@@ -768,7 +766,7 @@ rocCI <- function(model, response, data){
     varNames <- colnames(model$fit$data@x)
     burnIn <-  model$call$nskip
 
-  }else if(class(model) == 'bartMachine'){
+  }else if (inherits(model, 'bartMachine')){
     nTree <-  model$num_trees
     nMCMC <-  model$num_iterations_after_burn_in
     nVar  <- model$p
@@ -778,7 +776,7 @@ rocCI <- function(model, response, data){
 
   # get yhats
   responseIdx <- which(!(names(data) %in% varNames))
-  if(class(model) == 'bartMachine'){
+  if (inherits(model, 'bartMachine')){
     yhatTrain = bartMachine::bart_machine_get_posterior(model, data[, -responseIdx])$y_hat_posterior_samples
   }else{
     yhatTrain = model$yhat.train
@@ -793,7 +791,7 @@ rocCI <- function(model, response, data){
 
   # get roc predicitons
   for(i in 1:noIter){
-    if(class(model) == 'bartMachine'){
+    if (inherits(model, 'bartMachine')){
       pred[[i]] <- ROCR::prediction(yhatTrain[,i], response)
     }else{
       pred[[i]] <- ROCR::prediction(yhatTrain[i,], response)
@@ -859,7 +857,7 @@ rocCI <- function(model, response, data){
 prCI <- function(model, response, data){
 
   # get model info
-  if(class(model) == 'pbart' | class(model) == 'wbart'){
+  if (inherits(model, 'pbart') || inherits(model, 'wbart')){
 
     modelTrees <- model$treedraws$trees
     modelInfo <- unlist(strsplit(modelTrees, " "))[1:3]
@@ -870,7 +868,7 @@ prCI <- function(model, response, data){
     burnIn <- length(model$sigma) - nMCMC
     varNames <- names(model$varcount.mean)
 
-  }else if(class(model) == 'bart'){
+  }else if (inherits(model, 'bart')){
 
     nTree <- model$call$ntree
     nMCMC  <- model$call$ndpost
@@ -878,7 +876,7 @@ prCI <- function(model, response, data){
     varNames <- colnames(model$fit$data@x)
     burnIn <-  model$call$nskip
 
-  }else if(class(model) == 'bartMachine'){
+  }else if (inherits(model, 'bartMachine')){
     nTree <-  model$num_trees
     nMCMC <-  model$num_iterations_after_burn_in
     nVar  <- model$p
@@ -888,7 +886,7 @@ prCI <- function(model, response, data){
 
   # get yhats
   responseIdx <- which(!(names(data) %in% varNames))
-  if(class(model) == 'bartMachine'){
+  if (inherits(model, 'bartMachine')){
     yhatTrain = bartMachine::bart_machine_get_posterior(model, data[, -responseIdx])$y_hat_posterior_samples
   }else{
     yhatTrain = model$yhat.train
@@ -902,7 +900,7 @@ prCI <- function(model, response, data){
 
   # get roc predicitons
   for(i in 1:noIter){
-    if(class(model) == 'bartMachine'){
+    if (inherits(model, 'bartMachine')){
       pred[[i]] <- ROCR::prediction(yhatTrain[,i], response)
     }else{
       pred[[i]] <- ROCR::prediction(yhatTrain[i,], response)

@@ -17,4 +17,6 @@
 ^CRAN-SUBMISSION$
 ^vigplots$
 ^\.github$
-
+^bartman_vignette_new_plots_1
+^\.RData
+^bartman_vignettte_new_plots_1$

@@ -19,7 +19,8 @@ Populates `childLeft`, `childRight`, and `parent` columns in the dataset to esta
 parent-child relationships between nodes based on tree structure.
 }
 \examples{
+ \dontrun{
 # Assuming `treeData` has been prepared with terminal node indicators
 treeData <- getChildren(data = treeData)
-
+}
 }

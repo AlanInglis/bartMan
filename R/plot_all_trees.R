@@ -36,9 +36,14 @@
 #' @importFrom igraph gsize
 #' @import ggplot2
 #' @import ggraph
+#' @importFrom grDevices colorRampPalette
+#' @importFrom stats as.formula
 #'
 #' @examples
-#' plotFun(my_trees, fillBy = 'response', sizeNodes = TRUE)
+#' \dontrun{
+#' df_trees <- extractTreeData(model = my_model, data = my_data)
+#' plotFun(trees = df_trees, fillBy = 'response', sizeNodes = TRUE)
+#' }
 #'
 #' @export
 

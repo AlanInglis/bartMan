@@ -15,8 +15,9 @@
 #' @importFrom dplyr group_by mutate
 #'
 #' @examples
+#'  \dontrun{
 #' treeDataWithObservations <- getObservations(data = my_data, treeData = my_trees)
-#'
+#' }
 #' @export
 
 getObservations <- function(data, treeData){
@@ -152,9 +153,10 @@ terminalFunction <- function(data){
 #'         detailing the tree's parent-child node relationships.
 #'
 #' @examples
+#'  \dontrun{
 #' # Assuming `treeData` has been prepared with terminal node indicators
 #' treeData <- getChildren(data = treeData)
-#'
+#' }
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
 

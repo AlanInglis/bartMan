@@ -11,10 +11,6 @@
 #' letter-value plot 'lvp'.
 #' @param metric Whether to show the 'mean' or 'median' importance values. Note, this has
 #' no effect when using plotType = 'lvp'.
-#' @param combineFact If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-#' Note that q dummies are created if q>2 and one dummy is created if q=2, where q is the number of levels of the factor.
-#' If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-#' inclusion proportions.
 #'
 #' @return A plot of variable importance.
 #'
@@ -36,8 +32,7 @@
 vimpPlot <- function(trees,
                      type = "prop",
                      plotType = "barplot",
-                     metric = "median",
-                     combineFact = FALSE) {
+                     metric = "median") {
 
   # warning
   if (!(type %in% c("val", "prop"))) {
@@ -56,10 +51,6 @@ vimpPlot <- function(trees,
   vimp <- vimpBart(trees, type = type)
   vimp <- as.data.frame(vimp)
 
-  # combine factor variables
-  if(combineFact){
-    vimp <- combineFactors(trees = trees, dataCombine = vimp)
-  }
 
   # get quantiles of proportions
   vimp25 <- apply(vimp, 2, function(x) quantile(x, c(.25)))

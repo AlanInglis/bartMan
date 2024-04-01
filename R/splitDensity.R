@@ -12,6 +12,7 @@
 #'   assuming even spacing between baselines.
 #' @param display Choose how to display the plot. Either histogram, facet wrap, ridges
 #' or display both the split value and density of the predictor by using dataSplit.
+#' @param scaleFactor A numerical value to scale the plot.
 #'
 #' @return A faceted group of density plots
 #'

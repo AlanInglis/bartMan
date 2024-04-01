@@ -35,7 +35,11 @@ utils::globalVariables(c("var", "iteration", "treeNum",
                          'value...5', 'value...3', 'splitID',
                          'variable', 'nodes', 'val',
                          'colors', 'vimpMedian', 'props',
-                         'upperCI', 'Value'))
+                         'upperCI', 'Value',
+                         'terminal', 'depth', 'childLeft', 'childRight',
+                         'isStump',
+                         'obsNode', 'depth',
+                         'dynamic_weight', 'LV'))
 
 
 

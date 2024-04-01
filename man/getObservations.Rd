@@ -23,6 +23,7 @@ which nodes of a tree, based on a tree structure defined in `treeData`.
 The treeData object must include `iteration`, `treeNum`, `var`, and `splitValue` columns.
 }
 \examples{
+ \dontrun{
 treeDataWithObservations <- getObservations(data = my_data, treeData = my_trees)
-
+}
 }
