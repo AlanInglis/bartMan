@@ -17,7 +17,7 @@
 #' @return A `ggplot` object representing the bar plot of tree frequencies.
 #'
 #' @examples
-#' #' \dontrun{
+#' \dontrun{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' plot <- treeBarPlot(trees = df_trees, topTrees = 10, removeStump = TRUE)
 #' }
@@ -30,9 +30,6 @@
 #' @import patchwork
 #' @importFrom cowplot plot_grid get_legend
 #' @importFrom tidygraph activate bind_nodes bind_edges
-
-
-
 #' @export
 
 treeBarPlot <- function(trees, iter = NULL, topTrees = NULL, removeStump = FALSE) {
