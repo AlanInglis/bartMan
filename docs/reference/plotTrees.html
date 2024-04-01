@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>viviBartMatrix — viviBartMatrix • bartMan</title>
+<title>Plot Trees with Customizations — plotTrees • bartMan</title>
 
 
 <!-- jquery -->
@@ -39,11 +39,10 @@
 
 
 
-<meta property="og:title" content="viviBartMatrix — viviBartMatrix" />
-<meta property="og:description" content="Returns a matrix or list of matrices. If type = 'standard' a
-matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
-One with the actual values and another matrix of uncertainty values.
-If type = 'quantiles', three matrices are returned. One for the 25" />
+<meta property="og:title" content="Plot Trees with Customizations — plotTrees" />
+<meta property="og:description" content="This function plots trees from a list of tidygraph objects. It allows for various
+customisations such as fill colour based on node response or value, node size adjustments,
+and color palettes." />
 
 
 
@@ -118,24 +117,28 @@ If type = 'quantiles', three matrices are returned. One for the 25" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>viviBartMatrix</h1>
+    <h1>Plot Trees with Customizations</h1>
     
-    <div class="hidden name"><code>viviBartMatrix.Rd</code></div>
+    <div class="hidden name"><code>plotTrees.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Returns a matrix or list of matrices. If type = 'standard' a
-matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
-One with the actual values and another matrix of uncertainty values.
-If type = 'quantiles', three matrices are returned. One for the 25<!-- %, 50%, and 75% quantiles. --></p>
+    <p>This function plots trees from a list of tidygraph objects. It allows for various
+customisations such as fill colour based on node response or value, node size adjustments,
+and color palettes.</p>
     </div>
 
-    <pre class="usage"><span><span class='fu'>viviBartMatrix</span><span class='op'>(</span></span>
+    <pre class="usage"><span><span class='fu'>plotTrees</span><span class='op'>(</span></span>
 <span>  <span class='va'>trees</span>,</span>
-<span>  type <span class='op'>=</span> <span class='st'>"standard"</span>,</span>
-<span>  metric <span class='op'>=</span> <span class='st'>"propMean"</span>,</span>
-<span>  metricError <span class='op'>=</span> <span class='st'>"CV"</span>,</span>
-<span>  reorder <span class='op'>=</span> <span class='cn'>FALSE</span></span>
+<span>  iter <span class='op'>=</span> <span class='cn'>NULL</span>,</span>
+<span>  treeNo <span class='op'>=</span> <span class='cn'>NULL</span>,</span>
+<span>  fillBy <span class='op'>=</span> <span class='cn'>NULL</span>,</span>
+<span>  sizeNodes <span class='op'>=</span> <span class='cn'>FALSE</span>,</span>
+<span>  removeStump <span class='op'>=</span> <span class='cn'>FALSE</span>,</span>
+<span>  selectedVars <span class='op'>=</span> <span class='cn'>NULL</span>,</span>
+<span>  pal <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/rev.html'>rev</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/grDevices/colorRamp.html'>colorRampPalette</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"steelblue"</span>, <span class='st'>"#f7fcfd"</span>, <span class='st'>"orange"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>(</span><span class='fl'>5</span><span class='op'>)</span><span class='op'>)</span>,</span>
+<span>  center_Mu <span class='op'>=</span> <span class='cn'>TRUE</span>,</span>
+<span>  cluster <span class='op'>=</span> <span class='cn'>NULL</span></span>
 <span><span class='op'>)</span></span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -143,31 +146,65 @@ If type = 'quantiles', three matrices are returned. One for the 25<!-- %, 50%, a
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>trees</th>
-      <td><p>A data frame created by `extractTreeData` function.</p></td>
+      <td><p>A data frame of trees.</p></td>
     </tr>
     <tr>
-      <th>type</th>
-      <td><p>Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'</p></td>
+      <th>iter</th>
+      <td><p>An integer specifying the iteration number of trees to be included in the output.
+If NULL, trees from all iterations are included.</p></td>
     </tr>
     <tr>
-      <th>metric</th>
-      <td><p>Which metric to use to fill the actual values matrix. Either 'propMean' or 'count'.</p></td>
+      <th>treeNo</th>
+      <td><p>An integer specifying the number of the tree to include in the output.
+If NULL, all trees are included.</p></td>
     </tr>
     <tr>
-      <th>metricError</th>
-      <td><p>Which metric to use to fill the uncertainty matrix. Either 'SD', 'CV' or 'SE'.</p></td>
+      <th>fillBy</th>
+      <td><p>A character string specifying the attribute to color nodes by.
+Options are 'response' for coloring nodes based on their mean response values or
+'mu' for coloring nodes based on their predicted value, or NULL for no
+specific fill attribute.</p></td>
     </tr>
     <tr>
-      <th>reorder</th>
-      <td><p>LOGICAL. If TRUE then the matrix is reordered so high values are pushed to the top left.</p></td>
+      <th>sizeNodes</th>
+      <td><p>A logical value indicating whether to adjust node sizes.
+If TRUE, node sizes are adjusted; if FALSE, all nodes are given the same size.</p></td>
+    </tr>
+    <tr>
+      <th>removeStump</th>
+      <td><p>A logical value. If TRUE, then stumps are removed from plot.</p></td>
+    </tr>
+    <tr>
+      <th>selectedVars</th>
+      <td><p>A vector of selected variables to display. Either a character vector of names
+or the variables column number.</p></td>
+    </tr>
+    <tr>
+      <th>pal</th>
+      <td><p>A colour palette for node colouring. Palette is used when 'fillBy' is specified for gradient colouring.</p></td>
+    </tr>
+    <tr>
+      <th>center_Mu</th>
+      <td><p>A logical value indicating whether to center the color scale for the 'mu'
+attribute around zero. Applicable only when 'fillBy' is set to "mu".</p></td>
+    </tr>
+    <tr>
+      <th>cluster</th>
+      <td><p>A character string that specifies the criterion for reordering trees in the output.
+Currently supports "depth" for ordering by the maximum depth of nodes, and "var" for a
+clustering based on variables. If NULL, no reordering is performed.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A heatmap plot showing variable importance on the diagonal
-and variable interaction on the off-diagonal.</p>
+    <p>A ggplot object representing the plotted trees with the specified customizations.</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='r-in'><span><span class='fu'>plotFun</span><span class='op'>(</span><span class='va'>my_trees</span>, fillBy <span class='op'>=</span> <span class='st'>'response'</span>, sizeNodes <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></span></span>
+<span class='r-err co'><span class='r-pr'>#&gt;</span> <span class='error'>Error in plotFun(my_trees, fillBy = "response", sizeNodes = TRUE):</span> could not find function "plotFun"</span>
+<span class='r-in'><span></span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

@@ -88,7 +88,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -124,16 +124,16 @@
     <p>Displays a selection of diagnostic plots for a BART model.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>bartDiag</span><span class='op'>(</span>
-  <span class='va'>model</span>,
-  <span class='va'>data</span>,
-  <span class='va'>response</span>,
-  burnIn <span class='op'>=</span> <span class='fl'>0</span>,
-  threshold <span class='op'>=</span> <span class='st'>"Youden"</span>,
-  pNorm <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  showInterval <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  combineFact <span class='op'>=</span> <span class='cn'>FALSE</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span><span class='fu'>bartDiag</span><span class='op'>(</span></span>
+<span>  <span class='va'>model</span>,</span>
+<span>  <span class='va'>data</span>,</span>
+<span>  <span class='va'>response</span>,</span>
+<span>  burnIn <span class='op'>=</span> <span class='fl'>0</span>,</span>
+<span>  threshold <span class='op'>=</span> <span class='st'>"Youden"</span>,</span>
+<span>  pNorm <span class='op'>=</span> <span class='cn'>FALSE</span>,</span>
+<span>  showInterval <span class='op'>=</span> <span class='cn'>TRUE</span>,</span>
+<span>  combineFactors <span class='op'>=</span> <span class='cn'>FALSE</span></span>
+<span><span class='op'>)</span></span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -168,11 +168,8 @@ by default the Youden index is shown.</p></td>
       <td><p>LOGICAL if TRUE then show 5% and 95% quantile intervals on ROC an PC curves (classification only).</p></td>
     </tr>
     <tr>
-      <th>combineFact</th>
-      <td><p>If a variable is a factor in a data frame, when building the BART model it is replaced with dummies.
-Note that q dummies are created if q&gt;2 and one dummy is created if q=2, where q is the number of levels of the factor.
-If combineFact = TRUE, then the importance is calculated for the entire factor by aggregating the dummy variables’
-inclusion proportions.</p></td>
+      <th>combineFactors</th>
+      <td><p>Whether or not to combine dummy variables (if present) in display.</p></td>
     </tr>
     </table>
 
@@ -180,6 +177,11 @@ inclusion proportions.</p></td>
 
     <p>A selection of diagnostic plots</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='r-in'><span><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span></span>
+<span class='r-in'><span><span class='fu'>bartDiag</span><span class='op'>(</span>model <span class='op'>=</span> <span class='va'>my_model</span>, response <span class='op'>=</span> <span class='va'>data</span><span class='op'>$</span><span class='va'>response</span>, burnIn <span class='op'>=</span> <span class='fl'>100</span>, data <span class='op'>=</span> <span class='va'>my_data</span><span class='op'>)</span></span></span>
+<span class='r-in'><span><span class='op'>}</span></span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

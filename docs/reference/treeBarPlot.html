@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>treeBarPlot — treeBarPlot • bartMan</title>
+<title>Plot Frequency of Tree Structures — treeBarPlot • bartMan</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,10 @@
 
 
 
-<meta property="og:title" content="treeBarPlot — treeBarPlot" />
-<meta property="og:description" content="Creates a barplot displaying the frequency of different tree structures." />
+<meta property="og:title" content="Plot Frequency of Tree Structures — treeBarPlot" />
+<meta property="og:description" content="Generates a bar plot showing the frequency of different tree structures
+represented in a list of tree graphs. Optionally, it can filter to show only the top N trees
+and handle stump trees specially." />
 
 
 
@@ -88,7 +90,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -115,53 +117,56 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>treeBarPlot</h1>
+    <h1>Plot Frequency of Tree Structures</h1>
     
     <div class="hidden name"><code>treeBarPlot.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Creates a barplot displaying the frequency of different tree structures.</p>
+    <p>Generates a bar plot showing the frequency of different tree structures
+represented in a list of tree graphs. Optionally, it can filter to show only the top N trees
+and handle stump trees specially.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>treeBarPlot</span><span class='op'>(</span>
-  <span class='va'>treeData</span>,
-  iter <span class='op'>=</span> <span class='cn'>NULL</span>,
-  treeNo <span class='op'>=</span> <span class='cn'>NULL</span>,
-  topTrees <span class='op'>=</span> <span class='cn'>NULL</span>,
-  removeStump <span class='op'>=</span> <span class='cn'>FALSE</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span><span class='fu'>treeBarPlot</span><span class='op'>(</span><span class='va'>trees</span>, iter <span class='op'>=</span> <span class='cn'>NULL</span>, topTrees <span class='op'>=</span> <span class='cn'>NULL</span>, removeStump <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>treeData</th>
-      <td><p>A list of tree attributes created using the extractTreeData function.</p></td>
+      <th>trees</th>
+      <td><p>A list of tree graphs to display</p></td>
     </tr>
     <tr>
       <th>iter</th>
-      <td><p>The selected iteration</p></td>
-    </tr>
-    <tr>
-      <th>treeNo</th>
-      <td><p>The selected tree number.</p></td>
+      <td><p>Optional; specifies the iteration to display.</p></td>
     </tr>
     <tr>
       <th>topTrees</th>
-      <td><p>integer value to show the top x variables.</p></td>
+      <td><p>Optional; the number of top tree structures to display. If NULL, displays all.</p></td>
     </tr>
     <tr>
       <th>removeStump</th>
-      <td><p>LOGICAL. If TRUE, then stumps are removed from plot. If False, stumps
-remain in plot and are coloured grey.</p></td>
+      <td><p>Logical; if TRUE, trees with no edges (stumps) are excluded from the display</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A barplot plot.</p>
+    <p>A `ggplot` object representing the bar plot of tree frequencies.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
+    <p>This function processes a list of tree structures to compute the frequency of each unique structure,
+represented by a bar plot. It has options to exclude stump trees (trees with no edges) and to limit
+the plot to the top N most frequent structures.</p>
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='r-in'><span><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span></span></span>
+<span class='r-in'><span><span class='va'>df_trees</span> <span class='op'>&lt;-</span> <span class='fu'><a href='extractTreeData.html'>extractTreeData</a></span><span class='op'>(</span>model <span class='op'>=</span> <span class='va'>my_model</span>, data <span class='op'>=</span> <span class='va'>my_data</span><span class='op'>)</span></span></span>
+<span class='r-in'><span><span class='va'>plot</span> <span class='op'>&lt;-</span> <span class='fu'>treeBarPlot</span><span class='op'>(</span>trees <span class='op'>=</span> <span class='va'>df_trees</span>, topTrees <span class='op'>=</span> <span class='fl'>10</span>, removeStump <span class='op'>=</span> <span class='cn'>TRUE</span><span class='op'>)</span></span></span>
+<span class='r-in'><span><span class='op'>}</span></span></span>
+<span class='r-in'><span></span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

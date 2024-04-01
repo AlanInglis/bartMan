@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>viviBartMatrix — viviBartMatrix • bartMan</title>
+<title>Transform tree data into a structured dataframe — tree_dataframe • bartMan</title>
 
 
 <!-- jquery -->
@@ -39,11 +39,12 @@
 
 
 
-<meta property="og:title" content="viviBartMatrix — viviBartMatrix" />
-<meta property="og:description" content="Returns a matrix or list of matrices. If type = 'standard' a
-matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
-One with the actual values and another matrix of uncertainty values.
-If type = 'quantiles', three matrices are returned. One for the 25" />
+<meta property="og:title" content="Transform tree data into a structured dataframe — tree_dataframe" />
+<meta property="og:description" content="This function takes raw data and a tree structure, then processes it to form a detailed and structured dataframe.
+The data is transformed to indicate terminal nodes, calculate leaf values, and determine split values. It then
+assigns labels, calculates node depth, and establishes hierarchical relationships within the tree.
+Additional metadata about the tree, such as maximum depth, parent and child node relationships, and observation
+nodes are also included. The final dataframe is organized and enriched with necessary attributes for further analysis." />
 
 
 
@@ -118,55 +119,44 @@ If type = 'quantiles', three matrices are returned. One for the 25" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>viviBartMatrix</h1>
+    <h1>Transform tree data into a structured dataframe</h1>
     
-    <div class="hidden name"><code>viviBartMatrix.Rd</code></div>
+    <div class="hidden name"><code>tree_dataframe.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Returns a matrix or list of matrices. If type = 'standard' a
-matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
-One with the actual values and another matrix of uncertainty values.
-If type = 'quantiles', three matrices are returned. One for the 25<!-- %, 50%, and 75% quantiles. --></p>
+    <p>This function takes raw data and a tree structure, then processes it to form a detailed and structured dataframe.
+The data is transformed to indicate terminal nodes, calculate leaf values, and determine split values. It then
+assigns labels, calculates node depth, and establishes hierarchical relationships within the tree.
+Additional metadata about the tree, such as maximum depth, parent and child node relationships, and observation
+nodes are also included. The final dataframe is organized and enriched with necessary attributes for further analysis.</p>
     </div>
 
-    <pre class="usage"><span><span class='fu'>viviBartMatrix</span><span class='op'>(</span></span>
-<span>  <span class='va'>trees</span>,</span>
-<span>  type <span class='op'>=</span> <span class='st'>"standard"</span>,</span>
-<span>  metric <span class='op'>=</span> <span class='st'>"propMean"</span>,</span>
-<span>  metricError <span class='op'>=</span> <span class='st'>"CV"</span>,</span>
-<span>  reorder <span class='op'>=</span> <span class='cn'>FALSE</span></span>
-<span><span class='op'>)</span></span></pre>
+    <pre class="usage"><span><span class='fu'>tree_dataframe</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>trees</span>, response <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>data</th>
+      <td><p>A dataframe containing the raw data used for building the tree.</p></td>
+    </tr>
+    <tr>
       <th>trees</th>
-      <td><p>A data frame created by `extractTreeData` function.</p></td>
+      <td><p>A dataframe representing the initial tree structure, including variables and values for splits.</p></td>
     </tr>
     <tr>
-      <th>type</th>
-      <td><p>Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'</p></td>
-    </tr>
-    <tr>
-      <th>metric</th>
-      <td><p>Which metric to use to fill the actual values matrix. Either 'propMean' or 'count'.</p></td>
-    </tr>
-    <tr>
-      <th>metricError</th>
-      <td><p>Which metric to use to fill the uncertainty matrix. Either 'SD', 'CV' or 'SE'.</p></td>
-    </tr>
-    <tr>
-      <th>reorder</th>
-      <td><p>LOGICAL. If TRUE then the matrix is reordered so high values are pushed to the top left.</p></td>
+      <th>response</th>
+      <td><p>Optional character of the name of the response variable in your BART model. Including the response
+will remove it from the list elements `Variable names` and `nVar`.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A heatmap plot showing variable importance on the diagonal
-and variable interaction on the off-diagonal.</p>
+    <p>A list containing a detailed dataframe of the tree structure (`structure`) with added information such as
+node depth, parent and child nodes, and observational data, along with meta-information about the tree like
+variable names (`varNames`), number of MCMC iterations (`nMCMC`), number of trees (`nTree`), and number of variables (`nVar`).</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

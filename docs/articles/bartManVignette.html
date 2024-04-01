@@ -47,7 +47,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -69,7 +69,7 @@
 
       
 
-      </header><script src="bartManVignette_files/header-attrs-2.10/header-attrs.js"></script><div class="row">
+      </header><script src="bartManVignette_files/header-attrs-2.24/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>bartMan</h1>
@@ -93,8 +93,10 @@
 <a href="#introduction" class="anchor"></a>Introduction</h1>
 <!-- badges: start -->
 <p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/badge/bartmanLogo1.png" width="240" height="276" align="right"><!-- badges: end --></p>
-<p>Tree-based regression and classification has become a standard tool
-in modern data science. Bayesian Additive Regression Trees (BART)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> has in
+<p>For more detailed information and a comprehensive discussion, please
+refer to our paper associated with this document, available at DOI: <a href="https://doi.org/10.52933/jdssv.v4i1.79">10.52933/jdssv.v4i1.79</a>.
+Tree-based regression and classification has become a standard tool in
+modern data science. Bayesian Additive Regression Trees (BART)<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> has in
 particular gained wide popularity due its flexibility in dealing with
 interactions and non-linear effects. BART is a Bayesian tree-based
 machine learning method that can be applied to both regression and
@@ -102,28 +104,93 @@ classification problems and yields competitive or superior results when
 compared to other predictive models. As a Bayesian model, BART allows
 the practitioner to explore the uncertainty around predictions through
 the posterior distribution. In the <code>bartMan</code> package, we
-present new visualization techniques for exploring BART models. We
+present new visualisation techniques for exploring BART models. We
 construct conventional plots to analyze a model’s performance and
 stability as well as create new tree-based plots to analyze variable
 importance, interaction, and tree structure. We employ Value Suppressing
 Uncertainty Palettes (VSUP)<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> to construct heatmaps that display variable
 importance and interactions jointly using color scale to represent
-posterior uncertainty. Our new visualizations are designed to work with
+posterior uncertainty. Our new visualisations are designed to work with
 the most popular BART R packages available, namely <code>BART</code><a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>,
 <code>dbarts</code><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>, and <code>bartMachine</code><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>.</p>
-<p>In this document, we demonstrate our visualizations for evaluation of
+<p>In this document, we demonstrate our visualisations for evaluation of
 BART models using the <code>bartMan</code> (BART Model ANalysis)
 package.</p>
-<div id="install-instructions" class="section level2">
+</div>
+<div id="background" class="section level1">
+<h1 class="hasAnchor">
+<a href="#background" class="anchor"></a>Background</h1>
+<p>BART (Bayesian Additive Regression Trees) is a Bayesian
+non-parametric model using an ensemble of trees for predicting
+continuous and multi-class responses. Unlike linear regression, BART
+adapts a flexible functional form, uncovering main and interaction
+effects. The model is formulated as</p>
+<p><span class="math display">\[ y_i = \sum_{j=1}^m g(x_i, T_j, M_j) +
+\varepsilon_i \]</span></p>
+<p>with <span class="math inline">\(\varepsilon_i \sim N(0,
+\sigma^2)\)</span>, where <span class="math inline">\(g(x_i, T_j, M_j) =
+\mu_{j\ell}\)</span> maps observations to predicted values in the
+terminal node <span class="math inline">\(\ell\)</span> of tree <span class="math inline">\(j\)</span>. <span class="math inline">\(T_j\)</span> and <span class="math inline">\(M_j\)</span> denote the tree’s structure and the
+set of predicted values at its terminal nodes, respectively. Tree
+structures involve binary splits <span class="math inline">\([x_j \leq
+c]\)</span>, with variables and splits randomly chosen and updated
+through the model fitting process. This updating occurs via Markov chain
+Monte Carlo methods, involving tree modifications like growing, pruning,
+changing, or swapping nodes, with specifics depending on the
+implementation.</p>
+<div id="inclusion-variable-importance" class="section level2">
 <h2 class="hasAnchor">
-<a href="#install-instructions" class="anchor"></a>Install instructions</h2>
+<a href="#inclusion-variable-importance" class="anchor"></a>Inclusion Variable Importance</h2>
+<p>Chipman et al. (2010) propose a method called the inclusion
+proportion to evaluate the variable importance in a BART (Bayesian
+Additive Regression Trees) model from the posterior samples of the tree
+structures. This measure of variable importance first calculates for
+each iteration the proportion of times a variable is used to split nodes
+considering all <span class="math inline">\(m\)</span> trees, and then
+averages these proportions across all iterations.</p>
+<p>More formally, let <span class="math inline">\(K\)</span> be the
+number of posterior samples obtained from a BART model. Let <span class="math inline">\(c_{rk}\)</span> be the number of splitting rules
+using the <span class="math inline">\(r\)</span>th predictor as a split
+variable in the <span class="math inline">\(k\)</span>th posterior
+sample of the trees’ structure across <span class="math inline">\(m\)</span> trees. Additionally, let <span class="math inline">\(c_{.k} = \sum_{r=1}^p c_{rk}\)</span> represent
+the total number of splitting rules found in the <span class="math inline">\(k\)</span>th posterior sample across the total
+<span class="math inline">\(p\)</span> variables. Therefore, <span class="math inline">\(z_{rk} = \frac{c_{rk}}{c_{.k}}\)</span> is the
+proportion of splitting rules for the <span class="math inline">\(r\)</span>th variable, and the average use per
+splitting rule is given by:</p>
+<p><span class="math display">\[ \text{VImp}_{\text{r}} = \frac{1}{K}
+\sum_{k=1}^K z_{rk} \]</span></p>
+</div>
+<div id="inclusion-variable-interactions" class="section level2">
+<h2 class="hasAnchor">
+<a href="#inclusion-variable-interactions" class="anchor"></a>Inclusion Variable Interactions</h2>
+<p>Variable interaction refers to the combined effect of two or more
+variables on the response. We focus on bivariate interactions,
+identifying them through the dependency of tree structures on multiple
+variables. Chipman et al. (2010)<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a> and Kapelner &amp; Bleich (2016)<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a> introduced
+interaction measures based on the analysis of successive splitting rules
+in tree models. Similar approaches are applied in random forests, using
+minimal depth to evaluate interaction and importance. In contrast to
+random forests, where splits are optimized, BART models employ a
+stochastic search, treating the order of splits as inconsequential. The
+interaction strength between two variables <span class="math inline">\(r\)</span> and <span class="math inline">\(q\)</span> is quantified by</p>
+<p><span class="math display">\[ \text{VInt}_{\text{rq}} = \frac{1}{K}
+\sum_{k=1}^K z_{rqk} \]</span></p>
+</div>
+</div>
+<div id="install-instructions" class="section level1">
+<h1 class="hasAnchor">
+<a href="#install-instructions" class="anchor"></a>Install instructions</h1>
 <p>To install the development version from GitHub, use:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># install.packages("devtools")</span>
-<span class="co">#devtools::install_github("AlanInglis/bartMan")</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">bartMan</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># install.packages("devtools")</span></span>
+<span><span class="co">#devtools::install_github("AlanInglis/bartMan")</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">bartMan</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div id="bartman" class="section level1">
+<h1 class="hasAnchor">
+<a href="#bartman" class="anchor"></a>bartMan</h1>
 <p>The data used in the following examples is simulated from the
-Friedman benchmark problem 7<a href="#fn6" class="footnote-ref" id="fnref6"><sup>6</sup></a>. This benchmark problem is commonly used
+Friedman benchmark problem 7<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>. This benchmark problem is commonly used
 for testing purposes. The output is created according to the
 equation:</p>
 <center>
@@ -131,149 +198,203 @@ equation:</p>
 10 x_4 + 5 x_5 + e\]</span>
 </center>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co">## Create some data</span>
-<span class="va">f</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fl">10</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> <span class="fl">20</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span><span class="op">[</span>, <span class="fl">3</span><span class="op">]</span> <span class="op">-</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span>
-    <span class="fl">10</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">4</span><span class="op">]</span> <span class="op">+</span> <span class="fl">5</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">5</span><span class="op">]</span>
-<span class="op">}</span>
-
-<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1701</span><span class="op">)</span>
-<span class="va">sigma</span> <span class="op">&lt;-</span> <span class="fl">1.0</span>
-<span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">200</span>
-<span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="fl">10</span><span class="op">)</span>, <span class="va">n</span>, <span class="fl">10</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">)</span>
-<span class="va">Ey</span> <span class="op">&lt;-</span> <span class="fu">f</span><span class="op">(</span><span class="va">x</span><span class="op">)</span>
-<span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">Ey</span>, <span class="va">sigma</span><span class="op">)</span>
-<span class="va">fData</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span>
-
-<span class="va">x</span> <span class="op">&lt;-</span> <span class="va">fData</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span>
-<span class="va">y</span> <span class="op">&lt;-</span> <span class="va">fData</span><span class="op">$</span><span class="va">y</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co">## Create Friedman data</span></span>
+<span><span class="va">fData</span>  <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span> <span class="op">=</span> <span class="fl">200</span>, <span class="va">sigma</span> <span class="op">=</span> <span class="fl">1.0</span>, <span class="va">seed</span> <span class="op">=</span> <span class="fl">1701</span>, <span class="va">nvar</span> <span class="op">=</span> <span class="fl">5</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="va">seed</span><span class="op">)</span></span>
+<span>  <span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html">runif</a></span><span class="op">(</span><span class="va">n</span> <span class="op">*</span> <span class="va">nvar</span><span class="op">)</span>, <span class="va">n</span>, <span class="va">nvar</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"x"</span>, <span class="fl">1</span><span class="op">:</span><span class="va">nvar</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">Ey</span> <span class="op">&lt;-</span> <span class="fl">10</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Trig.html">sin</a></span><span class="op">(</span><span class="va">pi</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">1</span><span class="op">]</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">2</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span> <span class="fl">20</span> <span class="op">*</span> <span class="op">(</span><span class="va">x</span><span class="op">[</span>, <span class="fl">3</span><span class="op">]</span> <span class="op">-</span> <span class="fl">0.5</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span> <span class="op">+</span> <span class="fl">10</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">4</span><span class="op">]</span> <span class="op">+</span> <span class="fl">5</span> <span class="op">*</span> <span class="va">x</span><span class="op">[</span>, <span class="fl">5</span><span class="op">]</span></span>
+<span>  <span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html">rnorm</a></span><span class="op">(</span><span class="va">n</span>, <span class="va">Ey</span>, <span class="va">sigma</span><span class="op">)</span></span>
+<span>  </span>
+<span>  <span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html">as.data.frame</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">data</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="va">f_data</span> <span class="op">&lt;-</span> <span class="fu">fData</span><span class="op">(</span>nvar <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="va">f_data</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">10</span><span class="op">]</span></span>
+<span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">f_data</span><span class="op">$</span><span class="va">y</span></span></code></pre></div>
 <p>Now we will create a basic BART model using the <code>dbarts</code>
-package. However, the process is identical for any of the
-<code>dbarts</code>, <code>BART</code>, or <code>bartMachine</code> BART
-packages.</p>
+package. However, the visualisation process outlined in this document is
+identical for any of the <code>dbarts</code>, <code>BART</code>, or
+<code>bartMachine</code> BART packages.</p>
 <p>To begin we load the libraries and then create our models.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># load libraries</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vdorie/dbarts">dbarts</a></span><span class="op">)</span> <span class="co"># for model</span>
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span> <span class="co"># for plots</span></code></pre></div>
+<code class="sourceCode R"><span><span class="co"># load libraries</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/vdorie/dbarts">dbarts</a></span><span class="op">)</span> <span class="co"># for model</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org">ggplot2</a></span><span class="op">)</span> <span class="co"># for plots</span></span></code></pre></div>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R">
-<span class="co"># create dbarts model:</span>
-<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">99</span><span class="op">)</span>
-<span class="va">dbartModel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/dbarts/man/bart.html">bart</a></span><span class="op">(</span><span class="va">x</span>,
-                   <span class="va">y</span>,
-                   ntree <span class="op">=</span> <span class="fl">50</span>,
-                   keeptrees <span class="op">=</span> <span class="cn">TRUE</span>,
-                   nskip <span class="op">=</span> <span class="fl">100</span>,
-                   ndpost <span class="op">=</span> <span class="fl">1000</span>
-<span class="op">)</span></code></pre></div>
-<p>The first step in using <code>bartMan</code> is to create a data
-frame of the trees used to build each model. This data frame is used by
-many of the <code>bartMan</code> functions to create the visualizations.
-We extract the tree data for each model via:</p>
+<code class="sourceCode R"><span></span>
+<span><span class="co"># create dbarts model:</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1701</span><span class="op">)</span></span>
+<span><span class="va">dbartModel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/dbarts/man/bart.html">bart</a></span><span class="op">(</span><span class="va">x</span>,</span>
+<span>                   <span class="va">y</span>,</span>
+<span>                   ntree <span class="op">=</span> <span class="fl">20</span>,</span>
+<span>                   keeptrees <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                   nskip <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                   ndpost <span class="op">=</span> <span class="fl">1000</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>In <code>dbartModel</code> we have selected there to be 20 trees,
+1000 iterations, and a burn-in of 100. Once the model is built we can
+extract the data concerning the trees via the
+<code>extractTreeData</code> function.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Create data frames ------------------------------------------------------</span>
-<span class="va">dbT</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractTreeData.html">extractTreeData</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">fData</span><span class="op">)</span></code></pre></div>
-<p>The structure of the data frame of trees created by
-<code>extractTreeData</code> is the same, no matter which BART package
-is used to build the model. Taking a look at the output from the
-<code>dbarts</code> model gives us:</p>
+<code class="sourceCode R"><span><span class="co"># Create data frames ------------------------------------------------------</span></span>
+<span><span class="va">trees_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractTreeData.html">extractTreeData</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">fData</span><span class="op">)</span></span></code></pre></div>
+<p>The object created by the <code>extractTreeData</code> function is a
+list containing five elements. These are:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Tree Data Frame</strong> - A data frame containing tree
+attributes.</li>
+<li>
+<strong>Variable Name</strong> - The names of the variables used in
+building the model.</li>
+<li>
+<strong>nMCMC</strong> - The total number of iterations (posterior
+draws) after burn in.</li>
+<li>
+<strong>nTree</strong> - The total number of trees grown in the
+sum-of-trees model.</li>
+<li>
+<strong>nVar</strong> - The total number of covariates used in the
+model.</li>
+</ol>
+<p>The tree data frame created from the <code>extractTreeData</code>
+function contains 17 columns concerning different attributes associated
+with the trees, and the structure of which is the same across all BART
+packages. It can be accessed via <code>$structure</code>. This data
+frame is used by many of the <code>bartMan</code> functions to create
+the visualisations shown later. In the code below, we take a look at the
+structure of the data frame of trees.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">dbT</span><span class="op">$</span><span class="va">structure</span>
-<span class="co">#&gt; # A tibble: 188,306 × 12</span>
-<span class="co">#&gt;    var   splitValue  node isLeaf leafValue iteration treeNum label         value</span>
-<span class="co">#&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;int&gt; &lt;lgl&gt;      &lt;dbl&gt;     &lt;int&gt;   &lt;int&gt; &lt;chr&gt;         &lt;dbl&gt;</span>
-<span class="co">#&gt;  1 x5        0.754      1 FALSE    NA              1       1 x5 ≤ 0.7541  0.754 </span>
-<span class="co">#&gt;  2 &lt;NA&gt;     NA          2 TRUE      0.0134         1       1 0.0134       0.0134</span>
-<span class="co">#&gt;  3 &lt;NA&gt;     NA          3 TRUE      0.0664         1       1 0.0664       0.0664</span>
-<span class="co">#&gt;  4 x6        0.602      1 FALSE    NA              1       2 x6 ≤ 0.6016  0.602 </span>
-<span class="co">#&gt;  5 &lt;NA&gt;     NA          2 TRUE     -0.0453         1       2 -0.0453     -0.0453</span>
-<span class="co">#&gt;  6 &lt;NA&gt;     NA          3 TRUE     -0.0383         1       2 -0.0383     -0.0383</span>
-<span class="co">#&gt;  7 x10       0.0687     1 FALSE    NA              1       3 x10 ≤ 0.06…  0.0687</span>
-<span class="co">#&gt;  8 x7        0.376      2 FALSE    NA              1       3 x7 ≤ 0.3756  0.376 </span>
-<span class="co">#&gt;  9 &lt;NA&gt;     NA          3 TRUE     -0.015          1       3 -0.015      -0.015 </span>
-<span class="co">#&gt; 10 &lt;NA&gt;     NA          4 TRUE      0.023          1       3 0.023        0.023 </span>
-<span class="co">#&gt; # … with 188,296 more rows, and 3 more variables: depthMax &lt;dbl&gt;,</span>
-<span class="co">#&gt; #   obsNode &lt;list&gt;, noObs &lt;int&gt;</span></code></pre></div>
-<p>Here we can see that <code>extractTreeData</code> gives back a data
-frame with 12 columns, which are outlined below.</p>
-<p><br></p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html">options</a></span><span class="op">(</span>tibble.width <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span> <span class="co"># used to display full tibble in output</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">trees_data</span><span class="op">$</span><span class="va">structure</span>, <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; # A tibble: 5 × 17</span></span>
+<span><span class="co">#&gt;   var   splitValue terminal leafValue iteration treeNum  node childLeft</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;      &lt;dbl&gt; &lt;lgl&gt;        &lt;dbl&gt;     &lt;int&gt;   &lt;int&gt; &lt;int&gt;     &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1 x2         0.893 FALSE      NA              1       1     1         2</span></span>
+<span><span class="co">#&gt; 2 x1         0.564 FALSE      NA              1       1     2         3</span></span>
+<span><span class="co">#&gt; 3 x8         0.515 FALSE      NA              1       1     3         4</span></span>
+<span><span class="co">#&gt; 4 &lt;NA&gt;      NA     TRUE       -0.0403         1       1     4        NA</span></span>
+<span><span class="co">#&gt; 5 &lt;NA&gt;      NA     TRUE       -0.0381         1       1     5        NA</span></span>
+<span><span class="co">#&gt;   childRight parent depth depthMax isStump label         value obsNode     noObs</span></span>
+<span><span class="co">#&gt;        &lt;int&gt;  &lt;int&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;lgl&gt;   &lt;chr&gt;         &lt;dbl&gt; &lt;list&gt;      &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1          7     NA     0        4 FALSE   x2  ≤  0.89  0.893  &lt;dbl [200]&gt;   200</span></span>
+<span><span class="co">#&gt; 2          6      1     1        4 FALSE   x1  ≤  0.56  0.564  &lt;dbl [171]&gt;   171</span></span>
+<span><span class="co">#&gt; 3          5      2     2        4 FALSE   x8  ≤  0.51  0.515  &lt;dbl [95]&gt;     95</span></span>
+<span><span class="co">#&gt; 4         NA      3     3        4 FALSE   -0.04       -0.0403 &lt;dbl [57]&gt;     57</span></span>
+<span><span class="co">#&gt; 5         NA      3     3        4 FALSE   -0.04       -0.0381 &lt;dbl [38]&gt;     38</span></span></code></pre></div>
+<p>In the following table, each of the columns of
+<code>trees_data$structure</code> are explained:</p>
 <table class="table">
-<table class="table">
+<colgroup>
+<col width="12%">
+<col width="87%">
+</colgroup>
 <thead><tr class="header">
-<th align="left">Column Name</th>
-<th align="right">Description</th>
+<th align="left">Column</th>
+<th align="left">Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">var</td>
-<td align="right">The name of the variable used in the splitting
-rule.</td>
+<td align="left"><strong>var</strong></td>
+<td align="left">Variable name used for splitting.</td>
 </tr>
 <tr class="even">
-<td align="left">splitValue</td>
-<td align="right">The split value.</td>
+<td align="left"><strong>splitValue</strong></td>
+<td align="left">Value of the variable at which the split occurs.</td>
 </tr>
 <tr class="odd">
-<td align="left">node</td>
-<td align="right">The number of the node in the tree (following
-left-side traversal).</td>
+<td align="left"><strong>terminal</strong></td>
+<td align="left">Logical indicator if the node is terminal (TRUE) or not
+(FALSE).</td>
 </tr>
 <tr class="even">
-<td align="left">isLeaf</td>
-<td align="right">Is the node a leaf node or not.</td>
+<td align="left"><strong>leafValue</strong></td>
+<td align="left">Value at the leaf node, NA for non-terminal nodes.</td>
 </tr>
 <tr class="odd">
-<td align="left">leafValue</td>
-<td align="right">The leaf node value.</td>
+<td align="left"><strong>iteration</strong></td>
+<td align="left">Iteration number.</td>
 </tr>
 <tr class="even">
-<td align="left">iteration</td>
-<td align="right">The iteration number.</td>
+<td align="left"><strong>treeNum</strong></td>
+<td align="left">Tree number.</td>
 </tr>
 <tr class="odd">
-<td align="left">treeNum</td>
-<td align="right">The tree number per iteration.</td>
+<td align="left"><strong>node</strong></td>
+<td align="left">Unique identifier for the node (following
+depth-first-left-side traversal).</td>
 </tr>
 <tr class="even">
-<td align="left">label</td>
-<td align="right">Displays the split rule.</td>
+<td align="left"><strong>childLeft</strong></td>
+<td align="left">Identifier for the left child of the node, NA for
+terminal nodes.</td>
 </tr>
 <tr class="odd">
-<td align="left">value</td>
-<td align="right">The value in a node (i.e., either the split value or
+<td align="left"><strong>childRight</strong></td>
+<td align="left">Identifier for the right child of the node, NA for
+terminal nodes.</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>parent</strong></td>
+<td align="left">Identifier for the parent of the node, NA for root
+nodes.</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>depth</strong></td>
+<td align="left">Depth of the node in the tree, starting from 0 for root
+nodes.</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>depthMax</strong></td>
+<td align="left">Maximum depth of the tree.</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>isStump</strong></td>
+<td align="left">Logical indicator if the node is a stump (TRUE) or not
+(FALSE).</td>
+</tr>
+<tr class="even">
+<td align="left"><strong>label</strong></td>
+<td align="left">Node label.</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>value</strong></td>
+<td align="left">The value in a node (i.e., either the split value or
 leaf value).</td>
 </tr>
 <tr class="even">
-<td align="left">depthMax</td>
-<td align="right">The maximum depth of the tree.</td>
+<td align="left"><strong>obsNode</strong></td>
+<td align="left">List of observations in the node, represented in a
+compact form.</td>
 </tr>
 <tr class="odd">
-<td align="left">obsNode</td>
-<td align="right">A list containing the observations contained in each
-node.</td>
-</tr>
-<tr class="even">
-<td align="left">noObs</td>
-<td align="right">The number of observations in a particular node.</td>
+<td align="left"><strong>noObs</strong></td>
+<td align="left">Number of observations in the node.</td>
 </tr>
 </tbody>
 </table>
-<center>
-<caption>
-<span id="tab:table2">Table 1: </span>Data frame of tree structures.
+<p>The trees in the data frame are ordered in a depth-first left-side
+traversal method. An example of this is shown below in Figure 1. Here we
+can see the ordering and node number used in this method. For clarity,
+the <code>$structure$var</code> column (created from the
+<code><a href="../reference/extractTreeData.html">extractTreeData()</a></code> function) would be ordered as
+<code>X1, NA, X2, X2,  NA, NA, NA</code>, where <code>NA</code>
+indicates terminal (or leaf) nodes.</p>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/tree_example.png?raw=true" width="60%" style="display: block; margin: auto;"><caption>
+<span id="fig1:fig1">Figure 1: </span> Example tree with the nodes
+numbered in a depth-first left-side traversal manner.
 </caption>
-</center>
-</table>
-<p>In all of the following visualizations we use the <code>dbarts</code>
-model fit (unless otherwise stated). However, the process is identical
-for any of the aforementioned BART packages.</p>
 </div>
+<div id="visualisations" class="section level1">
+<h1 class="hasAnchor">
+<a href="#visualisations" class="anchor"></a>Visualisations</h1>
 <div id="vivi-vsup" class="section level2">
 <h2 class="hasAnchor">
 <a href="#vivi-vsup" class="anchor"></a>VIVI-VSUP</h2>
-<p>In Inglis et al. (2022)<a href="#fn7" class="footnote-ref" id="fnref7"><sup>7</sup></a>, the authors propose using a heatmap to
+<p>In Inglis et al. (2022)<a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>, the authors propose using a heatmap to
 display both variable importance (VImp) and variable interactions (VInt)
 simultaneously (together VIVI), where the importance values are on the
 diagonal and interaction values on the off-diagonal. We adapt the
@@ -281,9 +402,9 @@ heatmap displays of importance and interactions to include the
 uncertainty by use of a VSUP. To begin we fist generate a heatmap
 containing the raw VIVI values without uncertainty.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">stdMat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBartMatrix.html">viviBartMatrix</a></span><span class="op">(</span><span class="va">dbT</span>,
-                          type <span class="op">=</span> <span class="st">'standard'</span>,
-                          metric <span class="op">=</span> <span class="st">'propMean'</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">stdMat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBartMatrix.html">viviBartMatrix</a></span><span class="op">(</span><span class="va">trees_data</span>,</span>
+<span>                          type <span class="op">=</span> <span class="st">'standard'</span>,</span>
+<span>                          metric <span class="op">=</span> <span class="st">'propMean'</span><span class="op">)</span></span></code></pre></div>
 <p>Now we create a list of two matrices. One containing the raw
 inclusion proportions and one containing the uncertainties. Here we use
 the coefficient of variation as our uncertainty measure. However the
@@ -291,143 +412,190 @@ standard deviation or standard error is also available by setting
 <code>metricError = 'SD'</code> or <code>metricError = 'SE'</code>, in
 the code below.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">vsupMat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBartMatrix.html">viviBartMatrix</a></span><span class="op">(</span><span class="va">dbT</span>,
-                          type <span class="op">=</span> <span class="st">'vsup'</span>,
-                          metric <span class="op">=</span> <span class="st">'propMean'</span>,
-                          metricError <span class="op">=</span> <span class="st">"CV"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">vsupMat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBartMatrix.html">viviBartMatrix</a></span><span class="op">(</span><span class="va">trees_data</span>,</span>
+<span>                          type <span class="op">=</span> <span class="st">'vsup'</span>,</span>
+<span>                          metric <span class="op">=</span> <span class="st">'propMean'</span>,</span>
+<span>                          metricError <span class="op">=</span> <span class="st">"CV"</span><span class="op">)</span></span></code></pre></div>
 <p>Once the matrices have been created, they can be plotted displaying a
-VSUP plot with the uncertainty included. For illustration purposes only
-we show the plot without uncertainty in Figure 1 and with uncertainty in
+VSUP plot with the uncertainty included. For illustration purposes, we
+show the plot without uncertainty in Figure 1 and with uncertainty in
 Figure 2:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/viviBartPlot.html">viviBartPlot</a></span><span class="op">(</span><span class="va">stdMat</span>, impLims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.16</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vivi.png"><!-- --></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/viviBartPlot.html">viviBartPlot</a></span><span class="op">(</span><span class="va">stdMat</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/heatmap_vivid_1.png?raw=true" width="100%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig1:fig1">Figure 1: </span> Variable importance and
+<span id="fig2:fig2">Figure 2: </span> Variable importance and
 interaction plot without uncertainty. The interaction between <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> is clear. The five important
 variables (<span class="math inline">\(x_1\)</span> to <span class="math inline">\(x_5\)</span>) are highlighted. We can also see
 spurious importance and interaction values among the noise variables.
 </caption>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/viviBartPlot.html">viviBartPlot</a></span><span class="op">(</span><span class="va">vsupMat</span>,
-             max_desat <span class="op">=</span> <span class="fl">1</span>,
-             pow_desat <span class="op">=</span> <span class="fl">0.6</span>,
-             max_light <span class="op">=</span> <span class="fl">0.6</span>,
-             pow_light <span class="op">=</span> <span class="fl">1</span>,
-             label <span class="op">=</span> <span class="st">'CV'</span>,
-             impLims <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.16</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vsup.png"><!-- --></p>
-<caption>
-<span id="fig2:fig2">Figure 2: </span> Variable importance and
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/viviBartPlot.html">viviBartPlot</a></span><span class="op">(</span><span class="va">vsupMat</span>,</span>
+<span>             max_desat <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>             pow_desat <span class="op">=</span> <span class="fl">0.6</span>,</span>
+<span>             max_light <span class="op">=</span> <span class="fl">0.6</span>,</span>
+<span>             pow_light <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>             label <span class="op">=</span> <span class="st">'CV'</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/heatmap_vsup_1.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig3:fig3">Figure 3: </span> Variable importance and
 interaction plot with uncertainty. We can see that the interaction
 values for the noise variables have a high coefficient of variation
-associated with them..
+associated with them.
 </caption>
+<p>In Figure 3, when we include uncertainty, both the importance and
+interaction values for the noise variables have a high coefficient of
+variation associated with them and as such, the most influential
+variables are highlighted.</p>
+<p>When plotting the VSUP with uncertainty, some of the relevant
+function arguments include:</p>
+<ul>
+<li>
+<code>unc_levels</code>: The number of uncertainty levels</li>
+<li>
+<code>max_desat</code>: The maximum desaturation level of the
+uncertainty palette</li>
+<li>
+<code>pow_desat</code>: The power of desaturation level</li>
+<li>
+<code>max_light</code>: The maximum light brightness of the
+uncertainty palette</li>
+<li>
+<code>pow_light</code>: The power of light level</li>
+</ul>
 </div>
 <div id="tree-based-plots" class="section level2">
 <h2 class="hasAnchor">
 <a href="#tree-based-plots" class="anchor"></a>Tree Based Plots</h2>
-<p>Here examine more closely the structure of the decision trees created
-when building a BART model. Examining the tree structure may yield
-information on the stability and variability of the tree structures as
-the algorithm iterates to create the posterior. By sorting and coloring
-the trees appropriately we can identify important variables and common
-interactions between variables for a given iteration. Alternatively we
-can look at how a single tree evolves through the iteration to explore
-the fitting algorithm’s stability.</p>
+<p>Here we examine more closely the structure of the decision trees
+created when building a BART model. Examining the tree structure may
+yield information on the stability and variability of the tree
+structures as the algorithm iterates to create the posterior. By sorting
+and colouring the trees appropriately we can identify important
+variables and common interactions between variables for a given
+iteration. Alternatively we can look at how a single tree evolves
+through the iteration to explore the fitting algorithm’s stability.</p>
 <p>To plot an individual tree, we can choose to display it either in
 dendrogram format, or icicle format. Additionally, we can choose which
 tree number or iteration to display:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plotTree.html">plotTree</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, treeNo <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">1</span>, plotType <span class="op">=</span> <span class="st">"dendrogram"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/plotTree.html">plotTree</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, treeNo <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">1</span>, plotType <span class="op">=</span> <span class="st">"icicle"</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/dendice.png" width="100%"><caption>
-<span id="fig3:fig3">Figure 3: </span>A dendrogram plot of a selected
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotSingleTree.html">plotSingleTree</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, treeNo <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">1</span>, plotType <span class="op">=</span> <span class="st">"dendrogram"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plotSingleTree.html">plotSingleTree</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, treeNo <span class="op">=</span> <span class="fl">1</span>, iter <span class="op">=</span> <span class="fl">1</span>, plotType <span class="op">=</span> <span class="st">"icicle"</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/single_trees_1.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig4:fig4">Figure 4: </span>A dendrogram plot of a selected
 tree (left) and an icicle plot of a selected tree (right). In the icicle
 plot, the nodes are colored by the variable used in the splitting rule.
 Leaf (terminal) nodes are colored grey.
 </caption>
-<p>The <code>plotAllTrees</code> function allows for a few different
-options when plotting. For example, we can chose to display all the
-trees from a selected iteration:</p>
+<p>The <code>plotTrees</code> function allows for a few different
+options when plotting. The function arguments for <code>plotTrees</code>
+are outlined as follows:</p>
+<p>• <code>trees</code>: A data frame of trees, usually created via
+<code><a href="../reference/extractTreeData.html">extractTreeData()</a></code>.</p>
+<p>• <code>iter</code>: An integer specifying the iteration number of
+trees to be included in the output. If NULL, trees from all iterations
+are included.</p>
+<p>• <code>treeNo</code>: An integer specifying the number of the tree
+to include in the output. If NULL, all trees are included.</p>
+<p>• <code>fillBy</code>: A character string specifying the attribute to
+color nodes by. Options are ‘response’ for coloring nodes based on their
+mean response values or ‘mu’ for coloring nodes based on their predicted
+value, or NULL for no specific fill attribute.</p>
+<p>• <code>sizeNodes</code> A logical value indicating whether to adjust
+node sizes. If TRUE, node sizes are adjusted; if FALSE, all nodes are
+given the same size.</p>
+<p>• <code>removeStump</code> A logical value. If TRUE, then stumps are
+removed from plot.</p>
+<p>• <code>selectedVars</code> A vector of selected variables to
+display. Either a character vector of names or the variables column
+number.</p>
+<p>• <code>pal</code> A colour palette for node colouring. Palette is
+used when ‘fillBy’ is specified for gradient colouring.</p>
+<p>• <code>center_Mu</code> A logical value indicating whether to center
+the color scale for the ‘mu’ attribute around zero. Applicable only when
+‘fillBy’ is set to “mu”.</p>
+<p>• <code>cluster</code> A character string that specifies the
+criterion for reordering trees in the output. Currently supports “depth”
+for ordering by the maximum depth of nodes, and “var” for a clustering
+based on variables. If NULL, no reordering is performed.</p>
+<p>For example, we can chose to display all the trees from a selected
+iteration:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/allTrees.png" width="100%"><caption>
-<span id="fig4:fig4">Figure 4: </span>All trees from a single iteration.
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/trees_iter_1_1.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig5:fig5">Figure 5: </span>All trees from a single iteration.
 In this case the first iteration is shown.
 </caption>
-<p>When the number of variables or trees is large it can become harder
-to identify interesting features. We provide a plot that can be used to
-highlight interesting features by accentuating selected variables by
-coloring them brightly while uniformly coloring the remaining variables
-a light grey. We can then couple this with a sorting step to order the
-trees by the most frequent tree structure.</p>
+<p>When the number of variables or trees is large it can become hard to
+identify interesting features. By using the <code>selectedVars</code>
+argument, we can highlight selected variables by colouring them brightly
+while uniformly colouring the remaining variables a light grey.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>,
-             iter <span class="op">=</span> <span class="fl">1</span>,
-             removeStump <span class="op">=</span> <span class="cn">TRUE</span>,
-             selectedVars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'x1'</span>,<span class="st">'x2'</span>,<span class="st">'x3'</span>,<span class="st">'x4'</span>,<span class="st">'x5'</span><span class="op">)</span>,
-             cluster <span class="op">=</span> <span class="st">'var'</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/allTreesFilter.png" width="100%"><caption>
-<span id="fig5:fig5">Figure 5: </span>All trees from a single iteration.
-In this case the first iteration is shown, the stumps have been removed,
-and the trees have been sorted according to their structure.
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>,</span>
+<span>          iter <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>          removeStump <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>          selectedVars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"x1"</span>, <span class="st">"x2"</span><span class="op">)</span></span>
+<span>          <span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/trees_selected_1.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig6:fig6">Figure 6: </span>All trees from a single iteration.
+In this case the first iteration is shown with <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> selected. Additionally, the stumps
+have been removed.
 </caption>
-<p>Additionally, we can plot a single tree over all iterations by
-selecting a tree vis the <code>treeNo</code> argument. This shows us
-visually BART’s <em>grow, prune, change, swap</em> mechanisms in
-action.</p>
+<p>We can plot a single tree over all iterations by selecting a tree via
+the <code>treeNo</code> argument. This shows us visually BART’s
+<em>grow, prune, change, swap</em> mechanisms in action.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, treeNo <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/treeNo.png" width="100%"><caption>
-<span id="fig6:fig6">Figure 6: </span>A single tree over all iterations.
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, treeNo <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/trees_treeNum_1_1.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig7:fig7">Figure 7: </span>A single tree over all iterations.
 </caption>
 <p>When viewing the trees, it can be useful to view different aspects or
 metrics. In Figure 7 we show some of these aspects by displaying all the
-trees in a selected iteration. For example, in (a) we color terminal
-nodes and stumps by the mean response. In (b) we color them by the
-terminal node parameter value. In (c) we sort the trees by structure
-starting with the most common tree and descending to the least common
+trees in a selected iteration. For example, in (a) we color them by the
+terminal node parameter value. In (b) we color terminal nodes and stumps
+by the mean response. In (c) we sort the trees by structure starting
+with the most common tree structure and descending to the least common
 tree found (useful for identifying the most important splits). Finally,
-in (d) we sort the trees by depth. As the <span class="math inline">\(\mu\)</span> values in (b) are centered around
-zero, we use a single-hue, colorblind friendly, diverging color palette
-to display the values. For comparison, we use the same palette to
-represent the mean response values in (a).</p>
+in (d) we sort the trees by depth. As the <span class="math inline">\(\mu\)</span> values in (a) are centered around
+zero by default, we use a single-hue, colorblind friendly, diverging
+color palette to display the values. For comparison, we use the same
+palette to represent the mean response values in (b).</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'mu'</span><span class="op">)</span>
-<span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span>
-<span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, cluster <span class="op">=</span> <span class="st">"depth"</span><span class="op">)</span>
-<span class="fu"><a href="../reference/plotAllTrees.html">plotAllTrees</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, iter <span class="op">=</span> <span class="fl">1</span>, cluster <span class="op">=</span> <span class="st">"var"</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/treesmet.png" width="100%"><caption>
-<span id="fig7:fig7">Figure 7: </span>All trees in a selected iteration.
-In (a) the terminal nodes and stumps are colored by the mean response.
-In (b) the terminal nodes and stumps are colored by the predicted value
-<span class="math inline">\(\mu\)</span>. In (c) we sort the trees by
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'mu'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, iter <span class="op">=</span> <span class="fl">1</span>, sizeNode <span class="op">=</span> <span class="cn">T</span>, fillBy <span class="op">=</span> <span class="st">'response'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, iter <span class="op">=</span> <span class="fl">1</span>, cluster <span class="op">=</span> <span class="st">"var"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, iter <span class="op">=</span> <span class="fl">1</span>, cluster <span class="op">=</span> <span class="st">"depth"</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/tree_quad_1.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig8:fig8">Figure 8: </span>All trees in a selected iteration.
+In (a) the terminal nodes and stumps are colored by the predicted value
+<span class="math inline">\(\mu\)</span>. In (b) the terminal nodes and
+stumps are colored by the mean response. In (c) we sort the trees by
 structure starting with the most common tree and descending to the least
 common tree shape and in (d) we sort the trees by tree depth.
 </caption>
 <p>As an alternative to the sorting of the tree structures, seen in
-Figure 7 (c), we provide a bar plot summarizing the tree structures.
+Figure 8 (c), we provide a bar plot summarizing the tree structures.
 Here we choose to display the top 10 most frequent tree structures,
-however displaying a single tree across iterations or displaying all
-trees in a single iteration is possible via the <code>iter</code> and
-<code>treeNo</code> arguments.</p>
+however displaying a single tree across iterations is possible via the
+<code>iter</code> argument.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/treeBarPlot.html">treeBarPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, topTrees <span class="op">=</span> <span class="fl">10</span>, iter <span class="op">=</span> <span class="cn">NULL</span>, treeNo <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/barplot.png" width="80%"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/treeBarPlot.html">treeBarPlot</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, topTrees <span class="op">=</span> <span class="fl">10</span>, iter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/trees_barplot_1.png?raw=true" width="80%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig8:fig8">Figure 8: </span> Bar plot of the top 10 most
-frequent tree types over all iterations. Trees with a single binary
-split on Petal.Length occur the most often.
+<span id="fig9:fig9">Figure 9: </span> Bar plot of the top 10 most
+frequent tree types over all iterations.
 </caption>
+<p>An interesting finding from looking at Figure 9 is we can see that
+the most frequent tree is a tree with a single binary split on <span class="math inline">\(x_3\)</span>. However, looking at the rest of the
+trees, we can see the prevalence of splits on <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>, indicating that these are important
+variables.</p>
 </div>
 <div id="proximity-matrix-and-multidimensional-scaling" class="section level2">
 <h2 class="hasAnchor">
 <a href="#proximity-matrix-and-multidimensional-scaling" class="anchor"></a>Proximity Matrix and Multidimensional Scaling</h2>
 <p>Proximity matrices combined with multidimensional scaling (MDS) are
-commonly used in random forests to identify outlying observations<a href="#fn8" class="footnote-ref" id="fnref8"><sup>8</sup></a>. When two
-observations lie in the same terminal node repeatedly they can be said
-to be similar, and so an <span class="math inline">\(N × N\)</span>
+commonly used in random forests to identify outlying observations<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>. When
+two observations lie in the same terminal node repeatedly they can be
+said to be similar, and so an <span class="math inline">\(N × N\)</span>
 proximity matrix is obtained by accumulating the number of times at
 which this occurs for each pair of observations, and subsequently
 divided by the total number of trees. A higher value indicates that two
@@ -440,21 +608,18 @@ we can choose to get the proximity matrix for a single iteration (as
 shown below) or over all iterations, the latter is achieved by setting
 <code>iter = NUll</code>.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">bmProx</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proximityMatrix.html">proximityMatrix</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>,
-                          data <span class="op">=</span> <span class="va">fData</span>,
-                          reorder <span class="op">=</span> <span class="cn">TRUE</span>,
-                          normalize <span class="op">=</span> <span class="cn">TRUE</span>,
-                          iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">bmProx</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/proximityMatrix.html">proximityMatrix</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>,</span>
+<span>                          reorder <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                          normalize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>                          iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 <p>We can then visualize the proximity matrix using the
-<code>plotProximity</code> function. In the interest of space, we only
-display the first 50 rows and columns of the proximity matrix.</p>
+<code>plotProximity</code> function.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/plotProximity.html">plotProximity</a></span><span class="op">(</span>matrix <span class="op">=</span> <span class="va">bmProx</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">50</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">50</span><span class="op">]</span><span class="op">)</span> <span class="op">+</span>
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">90</span>,<span class="op">)</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/prox.png" width="80%"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotProximity.html">plotProximity</a></span><span class="op">(</span>matrix <span class="op">=</span> <span class="va">bmProx</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html">theme</a></span><span class="op">(</span>axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">90</span>,<span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/proximity_plot_1.png?raw=true" width="80%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig9:fig9">Figure 9: </span>Proximity matrix displaying only
-the first 50 rows and columns.
+<span id="fig10:fig10">Figure 10: </span>Proximity matrix.
 </caption>
 <p>The proximity matrix can then be visualized using classical MDS
 (henceforth MDS) to plot their relationship in a lower dimensional
@@ -467,23 +632,22 @@ target iteration (as shown above) and apply MDS. For each subsequent
 iteration we rotate the MDS solution matrix to match this target as
 closely as possible using Procrustes’ method. We end up with a point for
 each observation per iteration per MDS dimension.We then group the
-observations by the mean of each group and produce a scatterplot, where
+observations by the mean of each group and produce a scatter plot, where
 each point represents the centroid of the location of each observation
-across all the MDS solutions. We extend this further by displaying the
-95% confidence ellipses around each observation’s posterior location in
-the reduced space. Since these are often overlapping we have created an
-interactive version that highlights an observation’s ellipse and
-displays the observation number when hovering the mouse pointer above
-the ellipse (Figure 10 shows a screenshot of this interaction in use).
-However, non-interactive versions are available via the
-<code>plotType</code> argument. To change the confidence ellipse size,
-adjust the <code>level</code> argument.</p>
+across all the MDS solutions. We extend this further by displaying
+confidence ellipses around each observation’s posterior location in the
+reduced space (via the <code>level</code> argument). Since these are
+often overlapping we have created an interactive version that highlights
+an observation’s ellipse and displays the observation number when
+hovering the mouse pointer above the ellipse (Figure 11 shows a
+screenshot of this interaction in use). However, non-interactive
+versions are available via the <code>plotType</code> argument.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/mdsBart.html">mdsBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, data <span class="op">=</span> <span class="va">fData</span>, target <span class="op">=</span>  <span class="va">bmProx</span>,
-        plotType <span class="op">=</span> <span class="st">'interactive'</span>, level <span class="op">=</span> <span class="fl">0.95</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/mds.png" width="80%"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/mdsBart.html">mdsBart</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, data <span class="op">=</span> <span class="va">f_data</span>, target <span class="op">=</span>  <span class="va">bmProx</span>,</span>
+<span>        plotType <span class="op">=</span> <span class="st">'interactive'</span>, level <span class="op">=</span> <span class="fl">0.25</span>, response <span class="op">=</span> <span class="st">'y'</span><span class="op">)</span> </span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/mds.png?raw=true" width="80%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig10:fig10">Figure 10: </span>Interactive MDS plot. Each 95%
+<span id="fig11:fig11">Figure 11: </span>Interactive MDS plot. Each 25%
 confidence ellipse corresponds to each observation’s posterior location.
 When hovering the mouse pointer over an ellipse, the ellipse is
 highlighted and the observation is displayed.
@@ -492,7 +656,7 @@ highlighted and the observation is displayed.
 <div id="enhanced-bart-model-diagnostics" class="section level2">
 <h2 class="hasAnchor">
 <a href="#enhanced-bart-model-diagnostics" class="anchor"></a>Enhanced BART model diagnostics</h2>
-<p>In addition to the above, we also provide visualizations for general
+<p>In addition to the above, we also provide visualisations for general
 diagnostics of a BART model. These include checking for convergence, the
 stability of the trees, the efficiency of the algorithm, and the
 predictive performance of the model. To begin we take a look at some
@@ -501,10 +665,10 @@ general diagnostics to assess the stability of the model fit. The
 when building the model and indicates the separation between the pre and
 post burn-in period in the plot.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/bartDiag.html">bartDiag</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, response <span class="op">=</span> <span class="va">fData</span><span class="op">$</span><span class="va">y</span>, burnIn <span class="op">=</span> <span class="fl">100</span>, data <span class="op">=</span> <span class="va">fData</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/diag.png" width="80%"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/bartDiag.html">bartDiag</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, response <span class="op">=</span> <span class="va">f_data</span><span class="op">$</span><span class="va">y</span>, burnIn <span class="op">=</span> <span class="fl">100</span>, data <span class="op">=</span> <span class="va">fData</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/diagnostics_1.png?raw=true" width="80%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig11:fig11">Figure 11: </span>General diagnostic plots for a
+<span id="fig12:fig12">Figure 12: </span>General diagnostic plots for a
 BART regression fit. Top left: A QQ-plot of the residuals after fitting
 the model. Top right: <span class="math inline">\(\sigma\)</span> by
 MCMC iteration. Middle left: Residuals versus fitted values with 95%
@@ -521,10 +685,10 @@ also be visualized, where each point represents a single iteration. A
 regression line is shown to indicate the changes in acceptance rate
 across iterations and to identify the mean rate.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/acceptRate.html">acceptRate</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/accept.png" width="50%" style="display: block; margin: auto;"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/acceptRate.html">acceptRate</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/accept_rate_1.png?raw=true" width="60%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig12:fig12">Figure 12: </span> Post burn-in acceptance rate
+<span id="fig13:fig13">Figure 13: </span> Post burn-in acceptance rate
 of trees per iteration. A black regression line is shown to indicate the
 changes in acceptance rate across iterations and to identify the mean
 rate.
@@ -536,15 +700,15 @@ rate.
 <p>As with the acceptance rate, the average tree depth and average
 number of all nodes per iteration can give an insight into the fit’s
 stability. Figure 11 displays these two metrics. A locally estimated
-scatterplot smoothing (LOESS) regression line is shown to indicate the
+scatter plot smoothing (LOESS) regression line is shown to indicate the
 changes in both the average tree depth and the average number of nodes
 across iterations:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/treeDepth.html">treeDepth</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span><span class="op">)</span>
-<span class="fu"><a href="../reference/treeNodes.html">treeNodes</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/treeDepthNode.png" width="100%"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/treeDepth.html">treeDepth</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/treeNodes.html">treeNodes</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/tree_depth_node_1.png?raw=true" width="100%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig13:fig13">Figure 13: </span> In (a) we show the post
+<span id="fig14:fig14">Figure 14: </span> In (a) we show the post
 burn-in average tree depth per iteration. In (b) we show the post
 burn-in average number of nodes per iteration. A black LOESS regression
 curve is shown to indicate the changes in both the average tree depth
@@ -558,77 +722,129 @@ and number of nodes across iterations.
 iterations for each variable for both models (in green), combined with
 the densities of the predictor variables (labeled “data”, in red):</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/splitDensity.html">splitDensity</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, data <span class="op">=</span> <span class="va">fData</span>, display <span class="op">=</span> <span class="st">'dataSplit'</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/splitDens.png" width="100%"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/splitDensity.html">splitDensity</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, data <span class="op">=</span> <span class="va">f_data</span>, display <span class="op">=</span> <span class="st">'dataSplit'</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/split_density_1.png?raw=true" width="100%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig14:fig14">Figure 14: </span> Split values densities (in
+<span id="fig15:fig15">Figure 15: </span> Split values densities (in
 green) over all iterations for each variable overlayed on the densities
 of the predictors (in red).
+</caption>
+<p>Alternatively, we can just examine the plit value densities in a
+ridge plot style.</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/splitDensity.html">splitDensity</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, data <span class="op">=</span> <span class="va">f_data</span>, display <span class="op">=</span> <span class="st">'ridges'</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/ridges_1.png?raw=true" width="100%" style="display: block; margin: auto;"></p>
+<caption>
+<span id="fig16:fig16">Figure 16: </span>Split values densities in a
+ridge plot style.
 </caption>
 </div>
 </div>
 <div id="additional-importance-and-interaction-plots-" class="section level2">
 <h2 class="hasAnchor">
 <a href="#additional-importance-and-interaction-plots-" class="anchor"></a>Additional Importance and Interaction plots.</h2>
-<p>The assess the inclusion proportions for use with variable importance
-or variable interactions. We also provide some useful functions for
-extracting these values and for visualizing them. For example, to
-retrieve a list containing both the variable importance and variable
-interactions (and associated error metrics) we can use the
-<code>viviBart</code> function. To select either just the importance or
-just the interactions, we set the <code>out</code> argument to ‘vimp’ or
-vint’ respectively. The <code>combineFact</code> argument is discussed
-in greater detail below.</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># show both vimp and vint</span>
-<span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, combineFact <span class="op">=</span> <span class="cn">F</span>, out <span class="op">=</span> <span class="st">'vivi'</span><span class="op">)</span></code></pre></div>
+<p>To assess inclusion proportions related to variable importance and
+interactions, we offer functions that facilitate the extraction and
+visualisation of these metrics. For instance, the <code>viviBart</code>
+function allows retrieval of a list encompassing both variable
+importance and interactions, along with their associated error metrics,
+an example of which is shown below. To select either just the importance
+or just the interactions, the <code>out</code> argument should be set to
+<code>'vimp'</code> or <code>'vint'</code>, respectively.</p>
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># show both vimp and vint</span></span>
+<span><span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, out <span class="op">=</span> <span class="st">'vivi'</span><span class="op">)</span></span>
+<span><span class="co">#&gt; $Vimp</span></span>
+<span><span class="co">#&gt;     variable count   propMean         SD        CV           SE    lowerCI</span></span>
+<span><span class="co">#&gt; x1        x1  7966 0.22571216 0.03254446 0.1441857 0.0010291463 0.22369504</span></span>
+<span><span class="co">#&gt; x2        x2  6366 0.18049674 0.03495082 0.1936368 0.0011052419 0.17833047</span></span>
+<span><span class="co">#&gt; x3        x3  5898 0.16736770 0.03651604 0.2181786 0.0011547387 0.16510441</span></span>
+<span><span class="co">#&gt; x4        x4  5645 0.16047108 0.03099483 0.1931490 0.0009801426 0.15855000</span></span>
+<span><span class="co">#&gt; x5        x5  4094 0.11537889 0.03484564 0.3020105 0.0011019159 0.11321914</span></span>
+<span><span class="co">#&gt; x6        x6   619 0.01743208 0.02085356 1.1962747 0.0006594474 0.01613957</span></span>
+<span><span class="co">#&gt; x7        x7  1244 0.03477908 0.02367593 0.6807519 0.0007486986 0.03331163</span></span>
+<span><span class="co">#&gt; x8        x8  1691 0.04786435 0.03205731 0.6697534 0.0010137411 0.04587742</span></span>
+<span><span class="co">#&gt; x9        x9   682 0.01926840 0.02344669 1.2168473 0.0007414496 0.01781515</span></span>
+<span><span class="co">#&gt; x10      x10  1119 0.03122951 0.03109255 0.9956142 0.0009832327 0.02930238</span></span>
+<span><span class="co">#&gt;        upperCI     lowerQ     median     upperQ</span></span>
+<span><span class="co">#&gt; x1  0.22772929 0.20000000 0.22222222 0.25000000</span></span>
+<span><span class="co">#&gt; x2  0.18266302 0.15625000 0.17948718 0.20000000</span></span>
+<span><span class="co">#&gt; x3  0.16963099 0.13888889 0.17073171 0.19444444</span></span>
+<span><span class="co">#&gt; x4  0.16239216 0.13888889 0.15625000 0.18181818</span></span>
+<span><span class="co">#&gt; x5  0.11753865 0.08823529 0.11111111 0.13513514</span></span>
+<span><span class="co">#&gt; x6  0.01872460 0.00000000 0.00000000 0.02857143</span></span>
+<span><span class="co">#&gt; x7  0.03624653 0.02631579 0.02941176 0.05405405</span></span>
+<span><span class="co">#&gt; x8  0.04985128 0.02777778 0.03225806 0.06250000</span></span>
+<span><span class="co">#&gt; x9  0.02072164 0.00000000 0.00000000 0.02941176</span></span>
+<span><span class="co">#&gt; x10 0.03315665 0.00000000 0.02777778 0.05555556</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; $Vint</span></span>
+<span><span class="co">#&gt; # A tibble: 55 × 10</span></span>
+<span><span class="co">#&gt;    var    count propMean      SD    CV       SE lowerQ median upperQ adjusted</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;  &lt;dbl&gt;    &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt;  1 x1:x1  1.96   0.0728  0.0282  0.388 0.000893 0.0588 0.0694 0.0833   0.0969</span></span>
+<span><span class="co">#&gt;  2 x1:x2  2.75   0.101   0.0343  0.339 0.00108  0.0741 0.0938 0.12     0.299 </span></span>
+<span><span class="co">#&gt;  3 x1:x3  0.843  0.0291  0.0263  0.904 0.000833 0      0.0345 0.0435   0     </span></span>
+<span><span class="co">#&gt;  4 x1:x4  0.136  0.00463 0.0134  2.89  0.000423 0      0      0        0     </span></span>
+<span><span class="co">#&gt;  5 x1:x5  1.20   0.0424  0.0419  0.988 0.00133  0      0.0357 0.0741   0.102 </span></span>
+<span><span class="co">#&gt;  6 x1:x6  0.09   0.00328 0.0111  3.37  0.000350 0      0      0        0     </span></span>
+<span><span class="co">#&gt;  7 x1:x7  0.058  0.00215 0.00887 4.13  0.000281 0      0      0        0     </span></span>
+<span><span class="co">#&gt;  8 x1:x8  0.334  0.0124  0.0216  1.74  0.000683 0      0      0.0296   0.0156</span></span>
+<span><span class="co">#&gt;  9 x1:x9  0.136  0.00523 0.0148  2.83  0.000468 0      0      0        0.0133</span></span>
+<span><span class="co">#&gt; 10 x1:x10 0.105  0.00381 0.0124  3.25  0.000392 0      0      0        0     </span></span>
+<span><span class="co">#&gt; # ℹ 45 more rows</span></span></code></pre></div>
 <p>To visualize the inclusion proportion variable importance (with their
 25% to 75% quantile interval included) we use the <code>vimpPlot</code>
 function.</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># plot inclusion proportions of each variable:</span>
-<span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, plotType <span class="op">=</span> <span class="st">'point'</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vimp1.png" width="60%" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># plot inclusion proportions of each variable:</span></span>
+<span><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, plotType <span class="op">=</span> <span class="st">'point'</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, plotType <span class="op">=</span> <span class="st">'barplot'</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/vimp_point_bar_1.png?raw=true" width="100%" height="100%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig15:fig15">Figure 15: </span> Inclusion proportions for each
+<span id="fig17:fig17">Figure 17: </span> Inclusion proportions for each
 variable shown with the 25% to 75% quantile interval extending from the
-points.
+points. In (a) a point plot is shown. In (b) a barplot is shown.
 </caption>
 <p>An alternative method to display the inclusion proportions is by
-using a <em>Letter-value plot</em><a href="#fn9" class="footnote-ref" id="fnref9"><sup>9</sup></a>. This type of plot is useful for
+using a <em>Letter-value plot</em><a href="#fn11" class="footnote-ref" id="fnref11"><sup>11</sup></a>. This type of plot is useful for
 visualizing the distribution of a continuous variable (here variable
 inclusion proportions), with the inner-most box showing the lower and
-upper fourths, as with a conventional boxplot, the median value being
+upper fourths, as with a conventional box plot, the median value being
 shown as a black line and outliers as blue triangles. Each extending
 section is drawn at incremental steps of upper and lower eights,
 sixteenths and so on until a stopping rule has been reached. The color
 of each box corresponds to the density of the data with darker shades
-indicating higher data density.</p>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, plotType <span class="op">=</span> <span class="st">'lvp'</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html">coord_flip</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/lvp.png" width="60%" style="display: block; margin: auto;"></p>
+indicating higher data density. Note, when
+<code>plotType = 'lvp'</code>, the <code>geom_lv</code> function from
+the <code>lvplot</code> package is used. This function requires the
+<code>ggplot2</code> package to be loaded.</p>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ggplot2.tidyverse.org">"ggplot2"</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, plotType <span class="op">=</span> <span class="st">'lvp'</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_flip.html">coord_flip</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/vimp_lvp_1.png?raw=true" width="100%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig16:fig16">Figure 16: </span> Letter-value plot of the
+<span id="fig18:fig18">Figure 18: </span> Letter-value plot of the
 inclusion proportions for each variable.
 </caption>
 <p>Similarly, we provide a function for viewing the inclusion
-proportions for interactions (this time displayed as a barplot, again
-with 25% to 75% quantile interval included):</p>
-<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># plot inclusion proportions of each variable pair:</span>
-<span class="fu"><a href="../reference/vintPlot.html">vintPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>, top <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vint1.png" width="60%" style="display: block; margin: auto;"></p>
+proportions for interactions, again with 25% to 75% quantile interval
+included. In Figure 19, we display only the top 5 strongest variable
+pair interactions.</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># plot inclusion proportions of each variable pair:</span></span>
+<span><span class="fu"><a href="../reference/vintPlot.html">vintPlot</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, top <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/vint_point_bar_1.png?raw=true" width="100%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig17:fig17">Figure 17: </span> Inclusion proportions for each
-variable pair shown with the 25% to 75% quantile interval extending from
-the bars
+<span id="fig19:fig19">Figure 19: </span> Inclusion proportions for each
+variable pair shown with the 25% to 75% quantile interval included.
 </caption>
 </div>
 <div id="null-model-inclusion-proportions" class="section level2">
 <h2 class="hasAnchor">
 <a href="#null-model-inclusion-proportions" class="anchor"></a>Null model inclusion proportions</h2>
 <p>In our package we also implement one of the variable selection
-procedures developed in Bleich et al. (2014)<a href="#fn10" class="footnote-ref" id="fnref10"><sup>10</sup></a>, specifically, the
+procedures developed in Bleich et al. (2014)<a href="#fn12" class="footnote-ref" id="fnref12"><sup>12</sup></a>, specifically, the
 so-called <em>local threshold procedure</em>. In this method, the
 proportion of splitting rules is calculated, then the response variable
 is randomly permuted, which has the effect of breaking the relationship
@@ -647,23 +863,25 @@ inclusion proportion exceeds the 1 − <span class="math inline">\(\alpha\)</spa
 distribution. If setting <code>shift = TRUE</code>, the inclusion
 proportions are shifted by the difference in distance between the
 quantile and the value of the inclusion proportion point.</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/localProcedure.html">localProcedure</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>,
-               data <span class="op">=</span> <span class="va">fData</span>,
-               numRep <span class="op">=</span> <span class="fl">5</span>,
-               numTreesRep <span class="op">=</span> <span class="fl">5</span>,
-               alpha <span class="op">=</span> <span class="fl">0.5</span>,
-               shift <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<p><img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/local.png" width="60%" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/localProcedure.html">localProcedure</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>,</span>
+<span>               data <span class="op">=</span> <span class="va">f_data</span>,</span>
+<span>               numRep <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>               numTreesRep <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>               alpha <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>               shift <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/local_procedure_both.png?raw=true" width="100%" style="display: block; margin: auto;"></p>
 <caption>
-<span id="fig18:fig18">Figure 18: </span> Visualization of the local
+<span id="fig20:fig20">Figure 20: </span> Visualisation of the local
 procedure variable selection method. The blue lines are the threshold
 levels determined from the permutation distributions that must be
 exceeded for a variable to be deemed important. The points are the
 variable inclusion proportions for the observed data (averaged over a
 selected number of duplicate BART models). If the observed value is
 higher than the bar, the variable is deemed important and is displayed
-as a solid dot; if not, it is displayed as an X.
+as a solid dot; if not, it is displayed as an X. In the left plot,
+<code>shift = FALSE</code>, whereas in the right plot,
+<code>shift = TRUE</code>.
 </caption>
 <div id="single-permutation-null-model" class="section level3">
 <h3 class="hasAnchor">
@@ -674,29 +892,38 @@ the model, and calculating the inclusion proportion on the null model.
 The final result displayed is the original model’s inclusion proportion
 minus the null inclusion proportion. This function is available for both
 the importance and the interactions.</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/permVimp.html">permVimp</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">fData</span>, response <span class="op">=</span> <span class="st">'y'</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/permvimp.png" width="60%" style="display: block; margin: auto;"><caption>
-<span id="fig19:fig19">Figure 19: </span> Variable importance calculated
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/permVimp.html">permVimp</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">f_data</span>, response <span class="op">=</span> <span class="st">'y'</span>,  numTreesPerm <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/permVimp.html">permVimp</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">f_data</span>, response <span class="op">=</span> <span class="st">'y'</span>,  numTreesPerm <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/permVimp.html">permVimp</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">f_data</span>, response <span class="op">=</span> <span class="st">'y'</span>,  numTreesPerm <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/permvimp_all.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig21:fig21">Figure 21: </span> Variable importance calculated
 from permuting the response and rebuilding the model. The importance
 score is measured as the original model’s inclusion proportion minus the
-null inclusion proportion
+null inclusion proportion. Here we compare the difference in importance
+when <code>numTreesPerm</code> is equal to 5, 10, and 20.
 </caption>
+<p>In Figure 21, we compare the difference in importance when
+<code>numTreesPerm</code> is equal to 5, 10, and 20. We can see that as
+we increase the number of trees to be used in the replicates, variable
+<span class="math inline">\(\x_1\)</span> and <span class="math inline">\(\x_2\)</span> start to emerge as the most
+important variables.</p>
 <p>For assessing the interactions using the single permutation method we
 have:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/permVint.html">permVint</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">dbT</span>,model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">fData</span>, response <span class="op">=</span> <span class="st">'y'</span>, top <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/permvint.png" width="60%" style="display: block; margin: auto;"><caption>
-<span id="fig20:fig20">Figure 20: </span> Variable interactions
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/permVint.html">permVint</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>,model <span class="op">=</span> <span class="va">dbartModel</span>, data <span class="op">=</span> <span class="va">f_data</span>, response <span class="op">=</span> <span class="st">'y'</span>, top <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/permvint_1.png?raw=true" width="60%" style="display: block; margin: auto;"><caption>
+<span id="fig22:fig22">Figure 22: </span> Variable interactions
 calculated from permuting the response and rebuilding the model. The
 interaction score is measured as the original model’s inclusion
 proportion minus the null inclusion proportion
 </caption>
 </div>
 </div>
-<div id="combining-categorical-variables" class="section level2">
-<h2 class="hasAnchor">
-<a href="#combining-categorical-variables" class="anchor"></a>Combining Categorical Variables</h2>
+</div>
+<div id="combining-categorical-variables" class="section level1">
+<h1 class="hasAnchor">
+<a href="#combining-categorical-variables" class="anchor"></a>Combining Categorical Variables</h1>
 <p>If any of the variables used to build the BART model are categorical,
 the aforementioned BART packages replace the categorical variables with
 <span class="math inline">\(d\)</span> dummy variables, where <span class="math inline">\(d\)</span> is the number of factor levels.
@@ -707,72 +934,307 @@ factor, rather than that associated with individual factor levels.</p>
 <p>In the following example, we build a BART model using the
 <code>BART</code> package where one of the covariates is a factor and
 extract the tree data.</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">BART</span><span class="op">)</span>
-<span class="co">#&gt; Loading required package: nlme</span>
-<span class="co">#&gt; Loading required package: nnet</span>
-<span class="co">#&gt; Loading required package: survival</span>
-
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1701</span><span class="op">)</span>
-<span class="va">bartModel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BART/man/wbart.html">wbart</a></span><span class="op">(</span>x.train <span class="op">=</span> <span class="va">iris</span><span class="op">[</span>,<span class="fl">2</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>,
-                   y.train <span class="op">=</span> <span class="va">iris</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>,
-                   nskip <span class="op">=</span> <span class="fl">100</span>,
-                   ndpost <span class="op">=</span> <span class="fl">1000</span>,
-                   nkeeptreedraws <span class="op">=</span> <span class="fl">1000</span>,
-                   ntree <span class="op">=</span> <span class="fl">20</span>
-<span class="op">)</span>
-
-<span class="va">btt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractTreeData.html">extractTreeData</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">bartModel</span>, data <span class="op">=</span> <span class="va">iris</span><span class="op">)</span></code></pre></div>
-<p>As species is a factor with three levels, it is split into three
-dummy variables when building the model. For a practical example of what
-this looks like, we examine the variable importance inclusion
-proportions both before and after aggregating over the factor
-levels.</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># extract the vimp data</span>
-<span class="va">vimpData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">FALSE</span>, out <span class="op">=</span> <span class="st">'vimp'</span><span class="op">)</span>
-<span class="va">vimpData</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span> <span class="co"># looking at the relevant columns</span>
-<span class="co">#&gt;                  variable count   propMean</span>
-<span class="co">#&gt; Sepal.Width   Sepal.Width  4242 0.17806077</span>
-<span class="co">#&gt; Petal.Length Petal.Length  8474 0.35732883</span>
-<span class="co">#&gt; Petal.Width   Petal.Width  2312 0.09563009</span>
-<span class="co">#&gt; Species1         Species1  3647 0.15492454</span>
-<span class="co">#&gt; Species2         Species2  2751 0.11552589</span>
-<span class="co">#&gt; Species3         Species3  2324 0.09852989</span></code></pre></div>
-<p>In the above output we can see that species has been split into three
-dummy variables. Plotting the data now would include each dummy
-factor.</p>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va">BART</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Loading required package: nlme</span></span>
+<span><span class="co">#&gt; Loading required package: nnet</span></span>
+<span><span class="co">#&gt; Loading required package: survival</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="va">iris</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html">set.seed</a></span><span class="op">(</span><span class="fl">1701</span><span class="op">)</span></span>
+<span><span class="va">bartModel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/BART/man/wbart.html">wbart</a></span><span class="op">(</span>x.train <span class="op">=</span> <span class="va">iris</span><span class="op">[</span>,<span class="fl">2</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span>,</span>
+<span>                   y.train <span class="op">=</span> <span class="va">iris</span><span class="op">[</span>,<span class="fl">1</span><span class="op">]</span>,</span>
+<span>                   nskip <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>                   ndpost <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                   nkeeptreedraws <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>                   ntree <span class="op">=</span> <span class="fl">5</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">bt_trees</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extractTreeData.html">extractTreeData</a></span><span class="op">(</span>model <span class="op">=</span> <span class="va">bartModel</span>, data <span class="op">=</span> <span class="va">iris</span><span class="op">)</span></span></code></pre></div>
+<p>As <code>Species</code> is a factor with three levels, it is split
+into three dummy variables when building the model. For a practical
+example of what this looks like, we examine the variable importance
+inclusion proportions both before and after aggregating over the factor
+levels.</p>
 <div class="sourceCode" id="cb33"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vimpDum.png" width="60%" style="display: block; margin: auto;"><caption>
-<span id="fig21:fig21">Figure 21: </span>Variable inclusion proportions
-with dummy factors included.
-</caption>
-<p>However, if we set <code>combineFact = TRUE</code>, we then apply our
-adjustment and aggregate over the factor levels. Applying the same
-process as above now yields:</p>
+<code class="sourceCode R"><span><span class="co"># extract the vimp data</span></span>
+<span><span class="va">vimpData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">bt_trees</span>,  out <span class="op">=</span> <span class="st">'vimp'</span><span class="op">)</span></span>
+<span><span class="va">vimpData</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span> <span class="co"># looking at the relevant columns</span></span>
+<span><span class="co">#&gt;                  variable count   propMean</span></span>
+<span><span class="co">#&gt; Sepal.Width   Sepal.Width   234 0.23382715</span></span>
+<span><span class="co">#&gt; Petal.Length Petal.Length   416 0.40474595</span></span>
+<span><span class="co">#&gt; Petal.Width   Petal.Width   181 0.19423754</span></span>
+<span><span class="co">#&gt; Species1         Species1    95 0.09627939</span></span>
+<span><span class="co">#&gt; Species2         Species2    32 0.02590565</span></span>
+<span><span class="co">#&gt; Species3         Species3    38 0.04500433</span></span></code></pre></div>
+<p>To combine the dummy factor variables, we use the
+<code><a href="../reference/combineDummy.html">combineDummy()</a></code> function. This function takes in a tree data
+created by <code><a href="../reference/extractTreeData.html">extractTreeData()</a></code>, combines the dummy factors,
+and outputs a new tree data object with the combined dummies.</p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># extract the vimp data</span>
-<span class="va">vimpData</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">TRUE</span>, out <span class="op">=</span> <span class="st">'vimp'</span><span class="op">)</span>
-<span class="va">vimpData</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span> <span class="co"># looking at the relevant columns</span>
-<span class="co">#&gt;                  variable count   propMean</span>
-<span class="co">#&gt; Sepal.Width   Sepal.Width  4242 0.17806077</span>
-<span class="co">#&gt; Petal.Length Petal.Length  8474 0.35732883</span>
-<span class="co">#&gt; Petal.Width   Petal.Width  2312 0.09563009</span>
-<span class="co">#&gt; Species           Species  8722 0.36898032</span></code></pre></div>
-<p>In the above output species has been combined into a single variable.
-Plotting the variable importance now looks like:</p>
+<code class="sourceCode R"><span><span class="va">bt_trees_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/combineDummy.html">combineDummy</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">bt_trees</span><span class="op">)</span></span></code></pre></div>
+<p>Looking again we see the dummies are combined:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/vimpPlot.html">vimpPlot</a></span><span class="op">(</span>treeData <span class="op">=</span> <span class="va">btt</span>, combineFact <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
-<img src="https://raw.githubusercontent.com/AlanInglis/bartMan/master/vigplots/vimpDum2.png" width="60%" style="display: block; margin: auto;"><caption>
-<span id="fig22:fig22">Figure 22: </span>Variable inclusion proportions
-after aggregating over the dummy factor levels
+<code class="sourceCode R"><span><span class="co"># extract the vimp data</span></span>
+<span><span class="va">vimpData_combined</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/viviBart.html">viviBart</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">bt_trees_combined</span>,  out <span class="op">=</span> <span class="st">'vimp'</span><span class="op">)</span></span>
+<span><span class="va">vimpData_combined</span><span class="op">[</span>,<span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span> <span class="co"># looking at the relevant columns</span></span>
+<span><span class="co">#&gt;                  variable count  propMean</span></span>
+<span><span class="co">#&gt; Sepal.Length Sepal.Length     0 0.0000000</span></span>
+<span><span class="co">#&gt; Sepal.Width   Sepal.Width   234 0.2338271</span></span>
+<span><span class="co">#&gt; Petal.Length Petal.Length   416 0.4047459</span></span>
+<span><span class="co">#&gt; Petal.Width   Petal.Width   181 0.1942375</span></span>
+<span><span class="co">#&gt; Species           Species   165 0.1671894</span></span></code></pre></div>
+<p>Taking a look at the trees before and after combining the dummy
+variables</p>
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">bt_trees</span>, iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">bt_trees_combined</span>, iter <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/trees_dummy_1.png?raw=true" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig23:fig23">Figure 23: </span>Example of trees before
+combining dummy variables in (a) and after combining dummy variables in
+(b).
 </caption>
-<p>This method of aggregating over the factor levels can also be applied
-to the interactions and in any functions that contain the
-<code>combineFact</code> argument.</p>
 </div>
+<div id="creating-your-own-data-frame-of-trees-to-plot" class="section level1">
+<h1 class="hasAnchor">
+<a href="#creating-your-own-data-frame-of-trees-to-plot" class="anchor"></a>Creating Your Own Data Frame Of Trees To Plot</h1>
+<p>The <code>bartMan</code> package, initially designed for three
+primary BART packages, also allows users to input their own data to
+create an object comparable with the <code><a href="../reference/extractTreeData.html">extractTreeData()</a></code>
+function output. This integration is facilitated through the
+<code><a href="../reference/tree_dataframe.html">tree_dataframe()</a></code> function, which ensures its output aligns
+with <code><a href="../reference/extractTreeData.html">extractTreeData()</a></code>. The <code><a href="../reference/tree_dataframe.html">tree_dataframe()</a></code>
+function requires the original dataset used to build the model and a
+tree data frame. The tree data frame must include a <code>var</code>
+column that follows a depth-first left-side traversal order, a
+<code>value</code> column with the split or terminal node values, and
+columns for <code>iteration</code> and <code>treeNum</code> to denote
+the specific iteration and tree number, respectively.</p>
+<p>In the example below, we have both a data set <code>f_data</code> and
+a tree data frame <code>df_tree</code> containing the needed
+columns.</p>
+<div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># Original Data</span></span>
+<span><span class="va">f_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span></span>
+<span>  x1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.127393428</span>, <span class="fl">0.766723202</span>, <span class="fl">0.054421675</span>, <span class="fl">0.561384595</span>, <span class="fl">0.937597936</span>,</span>
+<span>         <span class="fl">0.296445079</span>, <span class="fl">0.665117463</span>, <span class="fl">0.652215607</span>, <span class="fl">0.002313313</span>, <span class="fl">0.661490602</span><span class="op">)</span>,</span>
+<span>  x2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.85600486</span>, <span class="fl">0.02407293</span>, <span class="fl">0.51942589</span>, <span class="fl">0.20590965</span>, <span class="fl">0.71206404</span>,</span>
+<span>         <span class="fl">0.27272126</span>, <span class="fl">0.66765977</span>, <span class="fl">0.94837341</span>, <span class="fl">0.46710461</span>, <span class="fl">0.84157353</span><span class="op">)</span>,</span>
+<span>  x3 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.4791849</span>, <span class="fl">0.8265008</span>, <span class="fl">0.1076198</span>, <span class="fl">0.2213454</span>, <span class="fl">0.6717478</span>,</span>
+<span>         <span class="fl">0.5053170</span>, <span class="fl">0.8849426</span>, <span class="fl">0.3560469</span>, <span class="fl">0.5732139</span>, <span class="fl">0.5091688</span><span class="op">)</span>,</span>
+<span>  x4 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.55089910</span>, <span class="fl">0.35612092</span>, <span class="fl">0.80230714</span>, <span class="fl">0.73043828</span>, <span class="fl">0.72341749</span>,</span>
+<span>         <span class="fl">0.98789408</span>, <span class="fl">0.04751297</span>, <span class="fl">0.06630861</span>, <span class="fl">0.55040341</span>, <span class="fl">0.95719901</span><span class="op">)</span>,</span>
+<span>  x5 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.9201376</span>, <span class="fl">0.9279873</span>, <span class="fl">0.5993939</span>, <span class="fl">0.1135139</span>, <span class="fl">0.2472984</span>,</span>
+<span>         <span class="fl">0.4514940</span>, <span class="fl">0.3097986</span>, <span class="fl">0.2608917</span>, <span class="fl">0.5375610</span>, <span class="fl">0.9608329</span><span class="op">)</span>,</span>
+<span>  y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">14.318655</span>, <span class="fl">12.052513</span>, <span class="fl">13.689970</span>, <span class="fl">13.433919</span>, <span class="fl">18.542184</span>,</span>
+<span>        <span class="fl">14.927344</span>, <span class="fl">14.843248</span>, <span class="fl">13.611167</span>, <span class="fl">7.777591</span>, <span class="fl">23.895456</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span></span>
+<span><span class="co"># Your own data frame of trees</span></span>
+<span><span class="va">df_tree</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html">data.frame</a></span><span class="op">(</span></span>
+<span>  var <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"x3"</span>, <span class="st">"x1"</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"x1"</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"x3"</span>, <span class="cn">NA</span>, <span class="cn">NA</span>, <span class="st">"x1"</span>, <span class="cn">NA</span>, <span class="cn">NA</span><span class="op">)</span>,</span>
+<span>  value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0.823</span>,<span class="fl">0.771</span>,<span class="op">-</span><span class="fl">0.0433</span>,<span class="fl">0.0188</span>,<span class="op">-</span><span class="fl">0.252</span>,<span class="fl">0.215</span>,<span class="op">-</span><span class="fl">0.269</span>,<span class="fl">0.117</span>,<span class="fl">0.823</span>,<span class="fl">0.0036</span>,<span class="op">-</span><span class="fl">0.244</span>,<span class="fl">0.215</span>,<span class="op">-</span><span class="fl">0.222</span>,<span class="fl">0.0783</span><span class="op">)</span>,</span>
+<span>  iteration <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>  treeNum <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">2</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># take a look at the dataframe of trees</span></span>
+<span><span class="va">df_tree</span></span>
+<span><span class="co">#&gt;     var   value iteration treeNum</span></span>
+<span><span class="co">#&gt; 1    x3  0.8230         1       1</span></span>
+<span><span class="co">#&gt; 2    x1  0.7710         1       1</span></span>
+<span><span class="co">#&gt; 3  &lt;NA&gt; -0.0433         1       1</span></span>
+<span><span class="co">#&gt; 4  &lt;NA&gt;  0.0188         1       1</span></span>
+<span><span class="co">#&gt; 5  &lt;NA&gt; -0.2520         1       1</span></span>
+<span><span class="co">#&gt; 6    x1  0.2150         1       2</span></span>
+<span><span class="co">#&gt; 7  &lt;NA&gt; -0.2690         1       2</span></span>
+<span><span class="co">#&gt; 8  &lt;NA&gt;  0.1170         1       2</span></span>
+<span><span class="co">#&gt; 9    x3  0.8230         2       1</span></span>
+<span><span class="co">#&gt; 10 &lt;NA&gt;  0.0036         2       1</span></span>
+<span><span class="co">#&gt; 11 &lt;NA&gt; -0.2440         2       1</span></span>
+<span><span class="co">#&gt; 12   x1  0.2150         2       2</span></span>
+<span><span class="co">#&gt; 13 &lt;NA&gt; -0.2220         2       2</span></span>
+<span><span class="co">#&gt; 14 &lt;NA&gt;  0.0783         2       2</span></span></code></pre></div>
+<p>Applying the <code><a href="../reference/tree_dataframe.html">tree_dataframe()</a></code> function creates an object
+that aligns with the output of <code><a href="../reference/extractTreeData.html">extractTreeData()</a></code>. The
+<code>response</code> argument is an optional character argument of the
+name of the response variable in your BART model. Including the response
+will remove it from the list elements <code>Variable names</code> and
+<code>nVar</code>.</p>
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">trees_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tree_dataframe.html">tree_dataframe</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">f_data</span> , trees <span class="op">=</span> <span class="va">df_tree</span>, response <span class="op">=</span> <span class="st">'y'</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># look at tree data object</span></span>
+<span><span class="va">trees_data</span></span>
+<span><span class="co">#&gt; Tree dataframe:</span></span>
+<span><span class="co">#&gt; # A tibble: 14 × 17</span></span>
+<span><span class="co">#&gt;    var   splitValue terminal leafValue iteration treeNum  node childLeft</span></span>
+<span><span class="co">#&gt;    &lt;chr&gt;      &lt;dbl&gt; &lt;lgl&gt;        &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;int&gt;     &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1 x3         0.823 FALSE      NA              1       1     1         2</span></span>
+<span><span class="co">#&gt;  2 x1         0.771 FALSE      NA              1       1     2         3</span></span>
+<span><span class="co">#&gt;  3 &lt;NA&gt;      NA     TRUE       -0.0433         1       1     3        NA</span></span>
+<span><span class="co">#&gt;  4 &lt;NA&gt;      NA     TRUE        0.0188         1       1     4        NA</span></span>
+<span><span class="co">#&gt;  5 &lt;NA&gt;      NA     TRUE       -0.252          1       1     5        NA</span></span>
+<span><span class="co">#&gt;  6 x1         0.215 FALSE      NA              1       2     1         2</span></span>
+<span><span class="co">#&gt;  7 &lt;NA&gt;      NA     TRUE       -0.269          1       2     2        NA</span></span>
+<span><span class="co">#&gt;  8 &lt;NA&gt;      NA     TRUE        0.117          1       2     3        NA</span></span>
+<span><span class="co">#&gt;  9 x3         0.823 FALSE      NA              2       1     1         2</span></span>
+<span><span class="co">#&gt; 10 &lt;NA&gt;      NA     TRUE        0.0036         2       1     2        NA</span></span>
+<span><span class="co">#&gt; 11 &lt;NA&gt;      NA     TRUE       -0.244          2       1     3        NA</span></span>
+<span><span class="co">#&gt; 12 x1         0.215 FALSE      NA              2       2     1         2</span></span>
+<span><span class="co">#&gt; 13 &lt;NA&gt;      NA     TRUE       -0.222          2       2     2        NA</span></span>
+<span><span class="co">#&gt; 14 &lt;NA&gt;      NA     TRUE        0.0783         2       2     3        NA</span></span>
+<span><span class="co">#&gt;    childRight parent depth depthMax isStump label         value obsNode    noObs</span></span>
+<span><span class="co">#&gt;         &lt;int&gt;  &lt;int&gt; &lt;dbl&gt;    &lt;dbl&gt; &lt;lgl&gt;   &lt;chr&gt;         &lt;dbl&gt; &lt;list&gt;     &lt;int&gt;</span></span>
+<span><span class="co">#&gt;  1          5     NA     0        2 FALSE   x3  ≤  0.82  0.823  &lt;dbl [10]&gt;    10</span></span>
+<span><span class="co">#&gt;  2          4      1     1        2 FALSE   x1  ≤  0.77  0.771  &lt;dbl [8]&gt;      8</span></span>
+<span><span class="co">#&gt;  3         NA      2     2        2 FALSE   -0.04       -0.0433 &lt;dbl [7]&gt;      7</span></span>
+<span><span class="co">#&gt;  4         NA      2     2        2 FALSE   0.02         0.0188 &lt;dbl [1]&gt;      1</span></span>
+<span><span class="co">#&gt;  5         NA      1     1        2 FALSE   -0.25       -0.252  &lt;dbl [2]&gt;      2</span></span>
+<span><span class="co">#&gt;  6          3     NA     0        1 FALSE   x1  ≤  0.22  0.215  &lt;dbl [10]&gt;    10</span></span>
+<span><span class="co">#&gt;  7         NA      1     1        1 FALSE   -0.27       -0.269  &lt;dbl [3]&gt;      3</span></span>
+<span><span class="co">#&gt;  8         NA      1     1        1 FALSE   0.12         0.117  &lt;dbl [7]&gt;      7</span></span>
+<span><span class="co">#&gt;  9          3     NA     0        1 FALSE   x3  ≤  0.82  0.823  &lt;dbl [10]&gt;    10</span></span>
+<span><span class="co">#&gt; 10         NA      1     1        1 FALSE   0            0.0036 &lt;dbl [8]&gt;      8</span></span>
+<span><span class="co">#&gt; 11         NA      1     1        1 FALSE   -0.24       -0.244  &lt;dbl [2]&gt;      2</span></span>
+<span><span class="co">#&gt; 12          3     NA     0        1 FALSE   x1  ≤  0.22  0.215  &lt;dbl [10]&gt;    10</span></span>
+<span><span class="co">#&gt; 13         NA      1     1        1 FALSE   -0.22       -0.222  &lt;dbl [3]&gt;      3</span></span>
+<span><span class="co">#&gt; 14         NA      1     1        1 FALSE   0.08         0.0783 &lt;dbl [7]&gt;      7</span></span>
+<span><span class="co">#&gt; Variable names:</span></span>
+<span><span class="co">#&gt; [1] "x1" "x2" "x3" "x4" "x5"</span></span>
+<span><span class="co">#&gt; nMCMC:</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="co">#&gt; nTree:</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="co">#&gt; nVar:</span></span>
+<span><span class="co">#&gt; [1] 5</span></span></code></pre></div>
+<p>Once we have our newly created object, it can be used in any of the
+plotting functions, for example:</p>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plotTrees.html">plotTrees</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, iter <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<img src="https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/own_trees_iter_null_1.png?raw=true%0A" width="100%" style="display: block; margin: auto;"><caption>
+<span id="fig24:fig24">Figure 24: </span>Trees plot created using tree
+data created via the <code><a href="../reference/tree_dataframe.html">tree_dataframe()</a></code> function.
+</caption>
+</div>
+<div id="utility-functions" class="section level1">
+<h1 class="hasAnchor">
+<a href="#utility-functions" class="anchor"></a>Utility Functions</h1>
+<div id="tree-list" class="section level2">
+<h2 class="hasAnchor">
+<a href="#tree-list" class="anchor"></a>Tree List</h2>
+<p>In addition to the data frame of trees, we also provide an option for
+separating the trees into a list, where each element is a
+<code>tidygraph</code> object, containing the structure of every
+individual tree. This allows a user to quickly access each tree for
+custom data analysis or visualisation, with options for selection of
+either a specific iteration, tree number, or both together. Each
+<code>tidygraph</code> object includes node and edge information. For
+example, if we want to create a list of the trees used in the first
+iteration, we would do the following:</p>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tree_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/treeList.html">treeList</a></span><span class="op">(</span>trees <span class="op">=</span> <span class="va">trees_data</span>, iter <span class="op">=</span> <span class="fl">1</span>, treeNo <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Iteration 1 Selected.</span></span></code></pre></div>
+<p>Examine the first tree yields:</p>
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tree_list</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span>
+<span><span class="co">#&gt; # A tbl_graph: 5 nodes and 4 edges</span></span>
+<span><span class="co">#&gt; #</span></span>
+<span><span class="co">#&gt; # A rooted tree</span></span>
+<span><span class="co">#&gt; #</span></span>
+<span><span class="co">#&gt; # A tibble: 5 × 11</span></span>
+<span><span class="co">#&gt;   var    node iteration treeNum label         value depthMax noObs respNode</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt; &lt;int&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;         &lt;dbl&gt;    &lt;dbl&gt; &lt;int&gt;    &lt;dbl&gt;</span></span>
+<span><span class="co">#&gt; 1 x3        1         1       1 x3  ≤  0.82  0.823         2    10     5.5 </span></span>
+<span><span class="co">#&gt; 2 x1        2         1       1 x1  ≤  0.77  0.771         2     8     5.75</span></span>
+<span><span class="co">#&gt; 3 &lt;NA&gt;      3         1       1 -0.04       -0.0433        2     7     5.86</span></span>
+<span><span class="co">#&gt; 4 &lt;NA&gt;      4         1       1 0.02         0.0188        2     1     5   </span></span>
+<span><span class="co">#&gt; 5 &lt;NA&gt;      5         1       1 -0.25       -0.252         2     2     4.5 </span></span>
+<span><span class="co">#&gt;   obsNode    isStump</span></span>
+<span><span class="co">#&gt;   &lt;list&gt;     &lt;lgl&gt;  </span></span>
+<span><span class="co">#&gt; 1 &lt;dbl [10]&gt; FALSE  </span></span>
+<span><span class="co">#&gt; 2 &lt;dbl [8]&gt;  FALSE  </span></span>
+<span><span class="co">#&gt; 3 &lt;dbl [7]&gt;  FALSE  </span></span>
+<span><span class="co">#&gt; 4 &lt;dbl [1]&gt;  FALSE  </span></span>
+<span><span class="co">#&gt; 5 &lt;dbl [2]&gt;  FALSE  </span></span>
+<span><span class="co">#&gt; #</span></span>
+<span><span class="co">#&gt; # A tibble: 4 × 2</span></span>
+<span><span class="co">#&gt;    from    to</span></span>
+<span><span class="co">#&gt;   &lt;int&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1     1     2</span></span>
+<span><span class="co">#&gt; 2     2     3</span></span>
+<span><span class="co">#&gt; 3     2     4</span></span>
+<span><span class="co">#&gt; # ℹ 1 more row</span></span></code></pre></div>
+<p>As we can see, it contains many of the same columns found in the data
+frame of trees. Specifically, <strong>var</strong>,
+<strong>node</strong>, <strong>iteration</strong>,
+<strong>treeNum</strong>, <strong>label</strong>,
+<strong>value</strong>, <strong>depthMax</strong>,
+<strong>noObs</strong>, <strong>respNode</strong>,
+<strong>obsNode</strong>, <strong>isStump</strong>, where each of the
+columns has the same meaning as outlined previously. The one exception
+is <strong>respNode</strong>, which contains the average response value
+over all observations found in a particular node.</p>
+</div>
+<div id="tree-dataframe-functions" class="section level2">
+<h2 class="hasAnchor">
+<a href="#tree-dataframe-functions" class="anchor"></a>Tree Dataframe Functions</h2>
+<p>The <code><a href="../reference/tree_dataframe.html">tree_dataframe()</a></code> function internally utilises a set
+of utility functions that are also available for direct use. These
+functions are instrumental in processing and analysing tree
+structures:</p>
+<ul>
+<li>
+<code>node_depth</code>: This function calculates the depth of each
+node within the tree, assuming a binary tree structure. It requires the
+tree data frame to have a <code>terminal</code> column that indicates
+whether a node is terminal. The function is typically used as
+follows:</li>
+</ul>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">depthList</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/split.html">split</a></span><span class="op">(</span><span class="va">trees</span>, <span class="op">~</span><span class="va">treeNum</span> <span class="op">+</span> <span class="va">iteration</span><span class="op">)</span>,</span>
+<span>                      <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html">cbind</a></span><span class="op">(</span><span class="va">x</span>, depth <span class="op">=</span> <span class="fu"><a href="../reference/node_depth.html">node_depth</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="va">trees</span> <span class="op">&lt;-</span> <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html">bind_rows</a></span><span class="op">(</span><span class="va">depthList</span>, .id <span class="op">=</span> <span class="st">"list_id"</span><span class="op">)</span></span></code></pre></div>
+<p>In this example, node_depth is applied to each subset of the tree
+data frame to compute and then bind the depth information, creating an
+enriched tree data frame.</p>
+<ul>
+<li>
+<code>getChildren</code>: This function adds <code>childLeft</code>,
+<code>childRight</code>, and <code>parent</code> columns to the tree
+data frame, establishing parent-child relationships between the nodes.
+This structural information is crucial for understanding and navigating
+the hierarchy of the tree.</li>
+</ul>
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span> <span class="fu"><a href="../reference/getChildren.html">getChildren</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">trees</span><span class="op">)</span></span></code></pre></div>
+<ul>
+<li>
+<code>getObservations</code>: Identifies which observations from a
+dataset correspond to which nodes in a tree, given the tree’s structural
+data (<code>treeData</code>). The <code>treeData</code> must include
+columns for <code>iteration</code>, <code>treeNum</code>,
+<code>var</code>, and <code>splitValue</code>, which is used in mapping
+the dataset observations to the appropriate nodes of the tree.
+Additionally, the original data used to build the model is
+required.</li>
+</ul>
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/getObservations.html">getObservations</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">original_dataframe</span>, treeData <span class="op">=</span> <span class="va">trees_data</span><span class="op">)</span></span></code></pre></div>
+</div>
+</div>
+<div id="conclusion" class="section level1">
+<h1 class="hasAnchor">
+<a href="#conclusion" class="anchor"></a>Conclusion</h1>
+<p>The <code>bartMan</code> package offers a comprehensive suite of
+tools for visualizing and interpreting the outputs of Bayesian Additive
+Regression Trees (BART) models. Through its intuitive functions and
+detailed analyses, users can effectively uncover the underlying
+structure and interactions within their data, enhancing their
+understanding of model behavior and decision-making processes.</p>
 </div>
 <div class="footnotes footnotes-end-of-document">
 <hr>
@@ -792,21 +1254,27 @@ Regression Trees Sampler, 2020<a href="#fnref4" class="footnote-back">↩︎</a>
 <li id="fn5"><p>Adam Kapelner, Justin Bleich (2016). bartMachine:
 Machine Learning with Bayesian Additive Regression Trees. <em>Journal of
 Statistical Software</em><a href="#fnref5" class="footnote-back">↩︎</a></p></li>
-<li id="fn6"><p>Friedman, Jerome H. (1991) Multivariate adaptive
+<li id="fn6"><p>Chipman, H. A., George, E. I., &amp; McCulloch, R. E.
+(2010). BART: Bayesian additive regression trees. <em>The Annals of
+Applied Statistics</em>, 4(1), 266-298.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
+<li id="fn7"><p>Adam Kapelner, Justin Bleich (2016). bartMachine:
+Machine Learning with Bayesian Additive Regression Trees. <em>Journal of
+Statistical Software</em><a href="#fnref7" class="footnote-back">↩︎</a></p></li>
+<li id="fn8"><p>Friedman, Jerome H. (1991) Multivariate adaptive
 regression splines. <em>The Annals of Statistics</em> 19 (1), pages
-1-67.<a href="#fnref6" class="footnote-back">↩︎</a></p></li>
-<li id="fn7"><p>Inglis, A., Parnell, A., &amp; Hurley, C. B. (2022).
+1-67.<a href="#fnref8" class="footnote-back">↩︎</a></p></li>
+<li id="fn9"><p>Inglis, A., Parnell, A., &amp; Hurley, C. B. (2022).
 Visualizing Variable Importance and Variable Interaction Effects in
 Machine Learning Models. Journal of Computational and Graphical
-Statistics, 1-13.<a href="#fnref7" class="footnote-back">↩︎</a></p></li>
-<li id="fn8"><p>Breiman, L. (2001). Random forests. Machine learning,
-45(1), 5-32.Chicago<a href="#fnref8" class="footnote-back">↩︎</a></p></li>
-<li id="fn9"><p>Hofmann, H., Wickham, H., &amp; Kafadar, K. (2017).
-value plots: Boxplots for large data. Journal of Computational and
-Graphical Statistics, 26(3), 469-477.<a href="#fnref9" class="footnote-back">↩︎</a></p></li>
-<li id="fn10"><p>Bleich, J., Kapelner, A., George, E. I., &amp; Jensen,
+Statistics, 1-13.<a href="#fnref9" class="footnote-back">↩︎</a></p></li>
+<li id="fn10"><p>Breiman, L. (2001). Random forests. Machine learning,
+45(1), 5-32.Chicago<a href="#fnref10" class="footnote-back">↩︎</a></p></li>
+<li id="fn11"><p>Hofmann, H., Wickham, H., &amp; Kafadar, K. (2017).
+value plots: Box plots for large data. Journal of Computational and
+Graphical Statistics, 26(3), 469-477.<a href="#fnref11" class="footnote-back">↩︎</a></p></li>
+<li id="fn12"><p>Bleich, J., Kapelner, A., George, E. I., &amp; Jensen,
 S. T. (2014). Variable selection for BART: an application to gene
-regulation. The Annals of Applied Statistics, 8(3), 1750-1781.<a href="#fnref10" class="footnote-back">↩︎</a></p></li>
+regulation. The Annals of Applied Statistics, 8(3), 1750-1781.<a href="#fnref12" class="footnote-back">↩︎</a></p></li>
 </ol>
 </div>
   </div>

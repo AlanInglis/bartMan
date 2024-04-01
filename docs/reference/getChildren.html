@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>viviBartMatrix — viviBartMatrix • bartMan</title>
+<title>Generate Child and Parent Node Relationships — getChildren • bartMan</title>
 
 
 <!-- jquery -->
@@ -39,11 +39,9 @@
 
 
 
-<meta property="og:title" content="viviBartMatrix — viviBartMatrix" />
-<meta property="og:description" content="Returns a matrix or list of matrices. If type = 'standard' a
-matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
-One with the actual values and another matrix of uncertainty values.
-If type = 'quantiles', three matrices are returned. One for the 25" />
+<meta property="og:title" content="Generate Child and Parent Node Relationships — getChildren" />
+<meta property="og:description" content="Populates `childLeft`, `childRight`, and `parent` columns in the dataset to establish
+parent-child relationships between nodes based on tree structure." />
 
 
 
@@ -118,56 +116,40 @@ If type = 'quantiles', three matrices are returned. One for the 25" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>viviBartMatrix</h1>
+    <h1>Generate Child and Parent Node Relationships</h1>
     
-    <div class="hidden name"><code>viviBartMatrix.Rd</code></div>
+    <div class="hidden name"><code>getChildren.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Returns a matrix or list of matrices. If type = 'standard' a
-matrix filled with vivi values is returned. If type = 'vsup' two matrices are returned.
-One with the actual values and another matrix of uncertainty values.
-If type = 'quantiles', three matrices are returned. One for the 25<!-- %, 50%, and 75% quantiles. --></p>
+    <p>Populates `childLeft`, `childRight`, and `parent` columns in the dataset to establish
+parent-child relationships between nodes based on tree structure.</p>
     </div>
 
-    <pre class="usage"><span><span class='fu'>viviBartMatrix</span><span class='op'>(</span></span>
-<span>  <span class='va'>trees</span>,</span>
-<span>  type <span class='op'>=</span> <span class='st'>"standard"</span>,</span>
-<span>  metric <span class='op'>=</span> <span class='st'>"propMean"</span>,</span>
-<span>  metricError <span class='op'>=</span> <span class='st'>"CV"</span>,</span>
-<span>  reorder <span class='op'>=</span> <span class='cn'>FALSE</span></span>
-<span><span class='op'>)</span></span></pre>
+    <pre class="usage"><span><span class='fu'>getChildren</span><span class='op'>(</span><span class='va'>data</span><span class='op'>)</span></span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>trees</th>
-      <td><p>A data frame created by `extractTreeData` function.</p></td>
-    </tr>
-    <tr>
-      <th>type</th>
-      <td><p>Which type of matrix to return. Either 'standard', 'vsup', 'quantiles'</p></td>
-    </tr>
-    <tr>
-      <th>metric</th>
-      <td><p>Which metric to use to fill the actual values matrix. Either 'propMean' or 'count'.</p></td>
-    </tr>
-    <tr>
-      <th>metricError</th>
-      <td><p>Which metric to use to fill the uncertainty matrix. Either 'SD', 'CV' or 'SE'.</p></td>
-    </tr>
-    <tr>
-      <th>reorder</th>
-      <td><p>LOGICAL. If TRUE then the matrix is reordered so high values are pushed to the top left.</p></td>
+      <th>data</th>
+      <td><p>A data frame with tree structure, including `iteration`,
+`treeNum`, `node`, and `depth` columns, along with a `terminal` indicator.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A heatmap plot showing variable importance on the diagonal
-and variable interaction on the off-diagonal.</p>
+    <p>The modified data frame with `childLeft`, `childRight`, and `parent` columns added,
+        detailing the tree's parent-child node relationships.</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><span class='r-in'><span><span class='co'># Assuming `treeData` has been prepared with terminal node indicators</span></span></span>
+<span class='r-in'><span><span class='va'>treeData</span> <span class='op'>&lt;-</span> <span class='fu'>getChildren</span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>treeData</span><span class='op'>)</span></span></span>
+<span class='r-out co'><span class='r-pr'>#&gt;</span> Generating Child/Parent Mappings:</span>
+<span class='r-err co'><span class='r-pr'>#&gt;</span> <span class='error'>Error in eval(expr, envir, enclos):</span> object 'treeData' not found</span>
+<span class='r-in'><span></span></span>
+</pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
