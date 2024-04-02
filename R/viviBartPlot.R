@@ -98,7 +98,8 @@ viviPlot <- function(matrix,
                      pow_light = 1,
                      angle = 0,
                      border = FALSE,
-                     label = NULL) {
+                     label = NULL,
+                     ...) {
   UseMethod("viviPlot", matrix)
 }
 
@@ -122,7 +123,8 @@ viviPlot.standardMat <-function(matrix,
                                 pow_desat = 0.2,
                                 max_light = 0.6,
                                 pow_light = 1,
-                                label = NULL){
+                                label = NULL,
+                                ...){
 
   p <- bartHeatmap(mat = matrix,
                    intPal = intPal,
@@ -153,7 +155,8 @@ viviPlot.vsup <- function(matrix,
                           pow_light = 1,
                           angle = 0,
                           border = FALSE,
-                          label = NULL
+                          label = NULL,
+                          ...
 ){
 
   if(is.null(label)){
@@ -367,7 +370,8 @@ viviPlot.quantiles <- function(matrixList,
                                pow_desat = 0.2,
                                max_light = 0.6,
                                pow_light = 1,
-                               label = NULL
+                               label = NULL,
+                               ...
 ){
 
   # get each matirx

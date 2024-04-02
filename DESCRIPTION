@@ -1,12 +1,12 @@
 Type: Package
 Package: bartMan
-Title: Create Visualisations for BART models
+Title: Create Visualisations for BART Models
 Version: 0.1.0
 Authors@R: 
     c(person(given = "Alan",
              family = "Inglis",
              role = c("aut", "cre"),
-             email = "alan.n.inglis@gmail.com"),
+             email = "alan.inglis@mu.ie"),
       person(given = "Andrew",
              family = "Parnell",
              role = "aut",
@@ -19,7 +19,7 @@ Authors@R:
              family = "Wilke",
              role = "ctb",
              comment = "Developer of VSUP script"))
-Maintainer: <alan.inglis@mu.ie>
+Maintainer: Alan Inglis <alan.inglis@mu.ie>
 Description: Visualisations for examining trees, variable importance, and
     variable interactions in BART models.
 License: GPL (>=2)
