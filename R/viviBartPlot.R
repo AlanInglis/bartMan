@@ -84,22 +84,7 @@ viviBartPlot <- function(matrix,
 # -------------------------------------------------------------------------
 
 # Main function:
-viviPlot <- function(matrix,
-                     intPal = NULL,
-                     impPal = NULL,
-                     intLims = NULL,
-                     impLims = NULL,
-                     uncIntLims = NULL,
-                     uncImpLims = NULL,
-                     unc_levels = 4,
-                     max_desat = 0.6,
-                     pow_desat = 0.2,
-                     max_light = 0.6,
-                     pow_light = 1,
-                     angle = 0,
-                     border = FALSE,
-                     label = NULL,
-                     ...) {
+viviPlot <- function(matrix,...) {
   UseMethod("viviPlot", matrix)
 }
 
@@ -116,13 +101,13 @@ viviPlot.standardMat <-function(matrix,
                                 impLims = NULL,
                                 uncIntLims = NULL,
                                 uncImpLims = NULL,
-                                angle = 0,
-                                border = FALSE,
                                 unc_levels = 4,
                                 max_desat = 0.6,
                                 pow_desat = 0.2,
                                 max_light = 0.6,
                                 pow_light = 1,
+                                angle = 0,
+                                border = FALSE,
                                 label = NULL,
                                 ...){
 
@@ -356,28 +341,28 @@ viviPlot.vsup <- function(matrix,
 # Quantile plot -----------------------------------------------------------
 # -------------------------------------------------------------------------
 
-viviPlot.quantiles <- function(matrixList,
+viviPlot.quantiles <- function(matrix,
                                intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
                                impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  100)),
                                intLims = NULL,
                                impLims = NULL,
                                uncIntLims = NULL,
                                uncImpLims = NULL,
-                               angle = 0,
-                               border = FALSE,
                                unc_levels = 4,
                                max_desat = 0.6,
                                pow_desat = 0.2,
                                max_light = 0.6,
                                pow_light = 1,
+                               angle = 0,
+                               border = FALSE,
                                label = NULL,
                                ...
 ){
 
   # get each matirx
-  quant.05 <- matrixList$lowerQuantile
-  quant.50 <- matrixList$median
-  quant.95 <- matrixList$upperQuantile
+  quant.05 <- matrix$lowerQuantile
+  quant.50 <- matrix$median
+  quant.95 <- matrix$upperQuantile
 
   # Limits and Breaks ------------------------------------------------------------------
 
