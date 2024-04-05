@@ -13,7 +13,7 @@
 #' @param combineFactors Whether or not to combine dummy variables (if present) in display.
 #'
 #'
-#' @return A selection of diagnostic plots
+#' @return A selection of diagnostic plots.
 #'
 #' @import tidytreatment
 #' @importFrom patchwork area
@@ -29,9 +29,42 @@
 #' @import ggplot2
 #'
 #' @examples
-#' \dontrun{
-#' bartDiag(model = my_model, response = data$response, burnIn = 100, data = my_data)
+#' \donttest{
+#' # For Regression
+#' # Generate Friedman data
+#' fData <- function(n = 200, sigma = 1.0, seed = 1701, nvar = 5) {
+#'   set.seed(seed)
+#'   x <- matrix(runif(n * nvar), n, nvar)
+#'   colnames(x) <- paste0("x", 1:nvar)
+#'   Ey <- 10 * sin(pi * x[, 1] * x[, 2]) + 20 * (x[, 3] - 0.5)^2 + 10 * x[, 4] + 5 * x[, 5]
+#'   y <- rnorm(n, Ey, sigma)
+#'   data <- as.data.frame(cbind(x, y))
+#'   return(data)
 #' }
+#' f_data <- fData(nvar = 10)
+#' x <- f_data[, 1:10]
+#' y <- f_data$y
+#'
+#' # Create dbarts model
+#' library(dbarts)
+#' set.seed(1701)
+#' dbartModel <- bart(x, y, ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+#'
+#' bartDiag(model = dbartModel, response = "y", burnIn = 100, data = f_data)
+#'
+#'
+#' # For Classification
+#' data(iris)
+#' iris2 <- iris[51:150, ]
+#' iris2$Species <- factor(iris2$Species)
+#'
+#' # Create dbarts model
+#' dbartModel <- bart(iris2[, 1:4], iris2[, 5], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+#'
+#' bartDiag(model = dbartModel, data = iris2, response = "Species")
+#' }
+
+#'
 #' @export
 
 bartDiag <- function(model,
@@ -456,7 +489,7 @@ bartClassifDiag <- function(model,
   # get auc value
   auc <- ROCR::performance(pred, "auc")
   auc <- auc@y.values[[1]]
-  aucLab <- print(paste0("AUC: ", round(auc, 5)))
+  aucLab <- message(paste0("AUC: ", round(auc, 5)))
 
   # get false/true positive rates
   perfTF <- ROCR::performance(pred, "tpr", "fpr")
@@ -505,7 +538,7 @@ bartClassifDiag <- function(model,
   # get aucpr value
   aucpr <- ROCR::performance(pred, "aucpr")
   aucpr <- aucpr@y.values[[1]]
-  aucprLab <- print(paste0("AUCPR: ", round(aucpr, 5)))
+  aucprLab <- message(paste0("AUCPR: ", round(aucpr, 5)))
 
 
 

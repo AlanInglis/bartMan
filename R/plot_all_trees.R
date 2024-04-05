@@ -40,7 +40,7 @@
 #' @importFrom stats as.formula
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' plotFun(trees = df_trees, fillBy = 'response', sizeNodes = TRUE)
 #' }

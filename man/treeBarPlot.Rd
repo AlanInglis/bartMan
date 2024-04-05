@@ -29,7 +29,7 @@ represented by a bar plot. It has options to exclude stump trees (trees with no 
 the plot to the top N most frequent structures.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 plot <- treeBarPlot(trees = df_trees, topTrees = 10, removeStump = TRUE)
 }

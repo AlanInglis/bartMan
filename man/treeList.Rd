@@ -26,7 +26,7 @@ it into a list of tree structures. It allows for filtering based on iteration nu
 number, and optionally reordering based on the maximum depth of nodes or variables.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 trees_list <- treeList(df_trees)
 }

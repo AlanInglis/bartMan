@@ -23,7 +23,7 @@ in `trees$structure$var` for matches with these factor variables. If a match is 
 a dummy variable, the entry is replaced with the original factor variable name.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 combined_trees <- combineDummy(trees = df_trees)
 }

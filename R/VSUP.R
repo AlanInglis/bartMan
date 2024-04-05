@@ -19,6 +19,10 @@ zip <- function(...) purrr::transpose(list(...))
 #' @importFrom purrr transpose
 #' @param new New data on which to train.
 #' @param existing Existing range
+#' @return A tibble containing two columns, `range1` and `range2`, each representing the trained
+#' continuous range based on the new and existing data. This function is used to update or define
+#' the scales of a bivariate analysis by considering both new input data and any existing range
+#' specifications.
 #' @export
 
 train_bivariate <- function(new, existing = NULL) {
@@ -300,6 +304,12 @@ bivariatize_arg <- function(arg, name = "argument") {
 #' @importFrom scales colour_ramp
 #' @importFrom colorspace desaturate
 #' @importFrom colorspace lighten
+#' @return A function that takes two parameters, `v` (value) and `u` (uncertainty), both expected to be
+#' in the range of 0 to 1, and returns a color. This color is determined by the specified `values` colors
+#' at minimum uncertainty, and modified according to the given `v` and `u` parameters to represent
+#' uncertainty by adjusting lightness and saturation. The resulting function is useful for creating
+#' color palettes that can encode both value and uncertainty in visualizations.
+#'
 #' @export
 pal_vsup <- function(values, unc_levels = 4, max_light = 0.9, max_desat = 0, pow_light = 0.8, pow_desat = 1) {
   n <- 2^(unc_levels - 1)
@@ -826,6 +836,11 @@ guide_gengrob.colourfan <- function(guide, theme) {
 #' @importFrom grid convertHeight
 #' @importFrom grid grobHeight
 #'
+#' @return  A `grob` object representing a color fan. This `grob` can be added to a grid-based plot
+#' or a ggplot2 object to visualize a range of colors in a fan-like structure. Each segment of the fan
+#' corresponds to a color specified in the `colours` parameter, allowing for an intuitive representation
+#' of color gradients or palettes.
+
 #' @export
 #' @rdname guide_colourfan
 guide_colorfan <- guide_colourfan

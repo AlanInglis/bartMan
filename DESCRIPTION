@@ -20,8 +20,7 @@ Authors@R:
              role = "ctb",
              comment = "Developer of VSUP script"))
 Maintainer: Alan Inglis <alan.inglis@mu.ie>
-Description: Visualisations for examining trees, variable importance, and
-    variable interactions in BART models.
+Description: Investigating and visualising Bayesian Additive Regression Tree (BART) (Chipman, H. A., George, E. I., & McCulloch, R. E. 2010) <doi:10.1214/09-AOAS285> model fits. \n We construct conventional plots to analyze a model’s performance and stability \n as well as create new tree-based plots to analyze variable importance, interaction, and tree structure. \n We employ Value Suppressing Uncertainty Palettes (VSUP) to construct heatmaps that display variable importance \n and interactions jointly using colour scale to represent posterior uncertainty. \n Our visualisations are designed to work with the most popular BART R packages available,\n namely BART Rodney Sparapani and Charles Spanbauer and Robert McCulloch 2021 <doi:10.18637/jss.v097.i01>, \n dbarts  (Vincent Dorie 2023) <url:https://CRAN.R-project.org/package=dbarts>, \n and bartMachine (Adam Kapelner and Justin Bleich 2016) <doi:10.18637/jss.v070.i04>.
 License: GPL (>=2)
 Imports: 
     colorspace,

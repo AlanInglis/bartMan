@@ -16,7 +16,7 @@ A plot of average tree depths over iteration
 A plot of tree depth over iterations.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 treeDepth(trees = df_trees)
 }

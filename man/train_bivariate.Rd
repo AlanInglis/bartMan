@@ -11,6 +11,12 @@ train_bivariate(new, existing = NULL)
 
 \item{existing}{Existing range}
 }
+\value{
+A tibble containing two columns, `range1` and `range2`, each representing the trained
+continuous range based on the new and existing data. This function is used to update or define
+the scales of a bivariate analysis by considering both new input data and any existing range
+specifications.
+}
 \description{
 Train range for bivariate scale
 }

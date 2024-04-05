@@ -11,7 +11,7 @@
 #' @import ggraph
 #' @import ggplot2
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' plotSingleTree(trees = df_trees, treeNo = 1, iter = 1, plotType = "icicle")
 #' }

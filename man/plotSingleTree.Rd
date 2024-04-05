@@ -22,7 +22,7 @@ A plot of an individual tree
 Plots individual trees.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 plotSingleTree(trees = df_trees, treeNo = 1, iter = 1, plotType = "icicle")
 }

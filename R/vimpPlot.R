@@ -21,7 +21,7 @@
 #' @importFrom dplyr mutate
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' vimpPlot(trees = df_trees, plotType = 'point')
 #' }

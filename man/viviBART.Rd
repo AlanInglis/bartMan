@@ -20,7 +20,7 @@ Returns a list containing a dataframe of variable importance summaries
 and a dataframe of variable interaction summaries.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 viviBart(trees = df_trees, out = 'vivi')
 }

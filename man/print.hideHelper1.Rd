@@ -11,6 +11,12 @@
 
 \item{...}{Extra parameters}
 }
+\value{
+No return value; this function is called for its side effect of printing a formatted summary
+of the tree data frame. It displays parts of the data frame, such as the tree structure and various
+counts (like number of MCMC iterations, number of trees, and number of variables), while keeping
+the complete data accessible via indexing.
+}
 \description{
 This function hides parts from the print out
 but are still accessible via indexing.

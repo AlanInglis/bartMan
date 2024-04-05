@@ -15,7 +15,7 @@
 #' @importFrom dplyr group_by mutate
 #'
 #' @examples
-#'  \dontrun{
+#'  \donttest{
 #' treeDataWithObservations <- getObservations(data = my_data, treeData = my_trees)
 #' }
 #' @export
@@ -96,7 +96,7 @@ getObservations <- function(data, treeData){
 
 terminalFunction <- function(data){
 
-  cat("Generating Terminal Node Indicator:\n")
+  message("Generating Terminal Node Indicator:\n")
   # Set up the progress bar
   total_iterations <- nrow(data)
   pb <- txtProgressBar(min = 0, max = total_iterations, style = 3)
@@ -162,7 +162,7 @@ terminalFunction <- function(data){
 
 
 getChildren <- function(data) {
-  cat("Generating Child/Parent Mappings:\n")
+  message("Generating Child/Parent Mappings:\n")
 
   # Initialize the progress bar
   total_iterations <- nrow(data)
@@ -371,7 +371,7 @@ get_stump_colour_for_legend <- function(lims, mean_value, palette){
 #' a dummy variable, the entry is replaced with the original factor variable name.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' combined_trees <- combineDummy(trees = df_trees)
 #' }

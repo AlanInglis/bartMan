@@ -15,7 +15,7 @@
 #' @importFrom dplyr as_tibble
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' treeDepth(trees = df_trees)
 #' }

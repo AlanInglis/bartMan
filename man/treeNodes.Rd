@@ -16,7 +16,7 @@ A plot of tree number of nodes over iterations.
 A plot of number of nodes over iterations.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 treeNodes(trees = df_trees)
 }

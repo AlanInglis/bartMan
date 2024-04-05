@@ -52,7 +52,7 @@ tree_dataframe <- function(data, trees, response = NULL){
   trees <- getChildren(data = trees)
   trees <-  trees |> ungroup()
 
-  cat("Extracting Observation Data...\n")
+  message("Extracting Observation Data...\n")
   # get observations
   dat <- as.data.frame(data)
   trees <- getObservations(data = dat, treeData = trees)

@@ -20,7 +20,7 @@
 #' @importFrom tidygraph tbl_graph
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' trees_list <- treeList(df_trees)
 #' }

@@ -23,7 +23,7 @@ Plot the pair-wise variable interactions inclusion porportions
 for a BART model with the 25% and 75% quantile.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 vintPlot(trees = df_trees, top = 5)
 }

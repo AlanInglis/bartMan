@@ -38,7 +38,7 @@ A faceted group of density plots
 Density plots of the split value for each variable.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 splitDensity(trees = df_trees, data = my_data, display = 'dataSplit')
 }

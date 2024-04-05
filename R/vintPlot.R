@@ -19,7 +19,7 @@
 #' @importFrom purrr map
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' vintPlot(trees = df_trees, top = 5)
 #' }

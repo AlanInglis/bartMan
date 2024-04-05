@@ -25,7 +25,7 @@
 #' @return Either a heatmap, VSUP, or quantile heatmap plot.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' vsupMat <- viviBartMatrix(df_trees, type = 'vsup', metric = 'propMean', metricError = "CV")
 #' viviBartPlot(vsupMat, label = 'CV')

@@ -40,7 +40,7 @@
 #' @importFrom rJava .jcall is.jnull
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' }
 #' @export
@@ -207,7 +207,7 @@ extractTrees.wbart <- function(model, data){
   trees$structure <- getChildren(data = trees$structure)
   trees$structure <-  trees$structure |> dplyr::ungroup()
 
-  cat("Extracting Observation Data...\n")
+  message("Extracting Observation Data...\n")
   dataNew <- as.data.frame(data)
   dat <- BART::bartModelMatrix(dataNew)
   dat <- as.data.frame(dat)
@@ -327,7 +327,7 @@ extractTrees.bart <- function(model, data){
   trees$structure <- getChildren(data = trees$structure)
   trees$structure <-  trees$structure |> ungroup()
 
-  cat("Extracting Observation Data...\n")
+  message("Extracting Observation Data...\n")
   # get observations
   dat <- as.data.frame(model$fit$data@x)
   trees$structure <- getObservations(data = dat, treeData = trees$structure)
@@ -383,7 +383,7 @@ extractTrees.bartMachine <- function(model, data){
 
   # extract node data
   #  progress bar
-  cat("Extracting Node Data:\n")
+  message("Extracting Node Data:\n")
   pb <- txtProgressBar(min = 0, max = iter, style = 3)
 
   # Define wrapper for progress bar
@@ -470,7 +470,7 @@ extractTrees.bartMachine <- function(model, data){
 
 
 
-  cat("Extracting Observation Data...\n")
+  message("Extracting Observation Data...\n")
   # get which observations
   dat <- model$model_matrix_training_data
   dat <- as.data.frame(dat)
@@ -531,18 +531,22 @@ extractTrees.bartMachine <- function(model, data){
 #' but are still accessible via indexing.
 #' @param x A data frame of trees
 #' @param ... Extra parameters
+#' @return No return value; this function is called for its side effect of printing a formatted summary
+#' of the tree data frame. It displays parts of the data frame, such as the tree structure and various
+#' counts (like number of MCMC iterations, number of trees, and number of variables), while keeping
+#' the complete data accessible via indexing.
 #' @export
 
 print.hideHelper1 <- function(x, ...) {
-  cat("Tree dataframe:\n")
+  message("Tree dataframe:\n")
   print(x$structure)
-  cat("Variable names:\n")
+  message("Variable names:\n")
   print(x$varName)
-  cat("nMCMC:\n")
+  message("nMCMC:\n")
   print(x$nMCMC)
-  cat("nTree:\n")
+  message("nTree:\n")
   print(x$nTree)
-  cat("nVar:\n")
+  message("nVar:\n")
   print(x$nVar)
 }
 

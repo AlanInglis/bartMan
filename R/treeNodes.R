@@ -12,7 +12,7 @@
 #' @importFrom dplyr group_by
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' treeNodes(trees = df_trees)
 #' }

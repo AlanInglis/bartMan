@@ -72,6 +72,12 @@ guide_colorfan(
 
 \item{...}{Extra paramters}
 }
+\value{
+A `grob` object representing a color fan. This `grob` can be added to a grid-based plot
+or a ggplot2 object to visualize a range of colors in a fan-like structure. Each segment of the fan
+corresponds to a color specified in the `colours` parameter, allowing for an intuitive representation
+of color gradients or palettes.
+}
 \description{
 Colourfan guide
 }

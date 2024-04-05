@@ -28,7 +28,7 @@ Creates a list of all tree attributes for a model
 created by either the BART, dbarts or bartMachine packages.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 }
 }

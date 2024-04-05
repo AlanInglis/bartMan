@@ -17,7 +17,7 @@
 #' @return A `ggplot` object representing the bar plot of tree frequencies.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' plot <- treeBarPlot(trees = df_trees, topTrees = 10, removeStump = TRUE)
 #' }

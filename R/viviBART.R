@@ -10,7 +10,7 @@
 #' @return A list of dataframes of VIVI summaries.
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' viviBart(trees = df_trees, out = 'vivi')
 #' }

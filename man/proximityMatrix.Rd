@@ -26,7 +26,7 @@ A matrix containing proximity values.
 Creates a matrix of proximity values.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 bmProx <- proximityMatrix(trees = df_trees, reorder = TRUE, normalize = TRUE, iter = 1)
 }

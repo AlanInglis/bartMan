@@ -23,7 +23,7 @@
 #' @importFrom dplyr arrange
 #' @import ggplot2
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' df_trees <- extractTreeData(model = my_model, data = my_data)
 #' permVint(trees = df_trees, model = my_model, data = my_data, response = my_response, top = 5)
 #' }

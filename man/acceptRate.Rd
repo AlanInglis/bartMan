@@ -11,13 +11,13 @@ acceptRate(trees)
 Displays a division on the plot to separate prior and post burn-in iterations.}
 }
 \value{
-A plot of acceptance rate.
+A ggplot object plot of acceptance rate.
 }
 \description{
 Plots the acceptance rate of trees from a BART model.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 acceptRate(trees = df_trees)
 }

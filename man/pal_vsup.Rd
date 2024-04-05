@@ -28,6 +28,13 @@ at each level doubles.}
 
 \item{pow_desat}{Power exponent of desaturation}
 }
+\value{
+A function that takes two parameters, `v` (value) and `u` (uncertainty), both expected to be
+in the range of 0 to 1, and returns a color. This color is determined by the specified `values` colors
+at minimum uncertainty, and modified according to the given `v` and `u` parameters to represent
+uncertainty by adjusting lightness and saturation. The resulting function is useful for creating
+color palettes that can encode both value and uncertainty in visualizations.
+}
 \description{
 Returns a palette function that turns `v` (value) and `u` (uncertainty) (both between 0 and 1) into
 colors.
