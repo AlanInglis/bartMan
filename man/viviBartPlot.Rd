@@ -61,7 +61,7 @@ Plots a Heatmap showing variable importance on the diagonal
 and variable interaction on the off-diagonal with uncertainty included.
 }
 \examples{
-\dontrun{
+\donttest{
 df_trees <- extractTreeData(model = my_model, data = my_data)
 vsupMat <- viviBartMatrix(df_trees, type = 'vsup', metric = 'propMean', metricError = "CV")
 viviBartPlot(vsupMat, label = 'CV')
