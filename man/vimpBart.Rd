@@ -13,10 +13,25 @@ vimpBart(trees, type = "prop")
 the column means of the proportions 'propMean', or the median of the proportions 'propMedian'.}
 }
 \value{
-A matrix
+A matrix of importance values
 }
 \description{
 A matrix with nMCMC rows with each variable as a column.
 Each row represents an MCMC iteration. For each variable, the total count
 of the number of times that variable is used in a tree is given.
+}
+\examples{
+if(requireNamespace("dbarts", quietly = TRUE)){
+ # Load the dbarts package to access the bart function
+ library(dbarts)
+ # Get Data
+ df <- na.omit(airquality)
+ # Create Simple dbarts Model For Regression:
+ set.seed(1701)
+ dbartModel <- bart(df[2:6], df[, 1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+
+ # Tree Data
+ trees_data <- extractTreeData(model = dbartModel, data = df)
+ vimpBart(trees_data, type = 'prop')
+ }
 }

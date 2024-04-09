@@ -61,11 +61,26 @@ Plots a Heatmap showing variable importance on the diagonal
 and variable interaction on the off-diagonal with uncertainty included.
 }
 \examples{
-\donttest{
-df_trees <- extractTreeData(model = my_model, data = my_data)
-vsupMat <- viviBartMatrix(df_trees, type = 'vsup', metric = 'propMean', metricError = "CV")
-viviBartPlot(vsupMat, label = 'CV')
-}
+if(requireNamespace("dbarts", quietly = TRUE)){
+ # Load the dbarts package to access the bart function
+ library(dbarts)
+ # Get Data
+ df <- na.omit(airquality)
+ # Create Simple dbarts Model For Regression:
+ set.seed(1701)
+ dbartModel <- bart(df[2:6], df[, 1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+
+ # Tree Data
+ trees_data <- extractTreeData(model = dbartModel, data = df)
+
+ # VSUP Matrix
+ vsupMat <- viviBartMatrix(trees = trees_data,
+                           type = 'vsup',
+                           metric = 'propMean',
+                           metricError = 'CV')
+ # Plot
+ viviBartPlot(vsupMat, label = 'CV')
+ }
 
 
 }

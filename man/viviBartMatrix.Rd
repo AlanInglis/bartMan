@@ -33,3 +33,24 @@ matrix filled with vivi values is returned. If type = 'vsup' two matrices are re
 One with the actual values and another matrix of uncertainty values.
 If type = 'quantiles', three matrices are returned. One for the 25%, 50%, and 75% quantiles.
 }
+\examples{
+if(requireNamespace("dbarts", quietly = TRUE)){
+ # Load the dbarts package to access the bart function
+ library(dbarts)
+ # Get Data
+ df <- na.omit(airquality)
+ # Create Simple dbarts Model For Regression:
+ set.seed(1701)
+ dbartModel <- bart(df[2:6], df[, 1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+
+ # Tree Data
+ trees_data <- extractTreeData(model = dbartModel, data = df)
+
+ # VSUP Matrix
+ vsupMat <- viviBartMatrix(trees = trees_data,
+                           type = 'vsup',
+                           metric = 'propMean',
+                            metricError = 'CV')
+ }
+
+}

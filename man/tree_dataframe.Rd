@@ -26,3 +26,9 @@ assigns labels, calculates node depth, and establishes hierarchical relationship
 Additional metadata about the tree, such as maximum depth, parent and child node relationships, and observation
 nodes are also included. The final dataframe is organized and enriched with necessary attributes for further analysis.
 }
+\examples{
+data("input_data")
+data("tree_data_example")
+my_trees <- tree_dataframe(data = input_data, trees = tree_data_example, response = "y")
+
+}

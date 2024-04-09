@@ -20,10 +20,19 @@ Returns a list containing a dataframe of variable importance summaries
 and a dataframe of variable interaction summaries.
 }
 \examples{
-\donttest{
-df_trees <- extractTreeData(model = my_model, data = my_data)
-viviBart(trees = df_trees, out = 'vivi')
-}
+if(requireNamespace("dbarts", quietly = TRUE)){
+ # Load the dbarts package to access the bart function
+ library(dbarts)
+ # Get Data
+ df <- na.omit(airquality)
+ # Create Simple dbarts Model For Regression:
+ set.seed(1701)
+ dbartModel <- bart(df[2:6], df[, 1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+
+ # Tree Data
+ trees_data <- extractTreeData(model = dbartModel, data = df)
+ viviBart(trees = trees_data, out = 'vivi')
+ }
 
 
 }
