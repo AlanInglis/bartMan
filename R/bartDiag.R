@@ -61,9 +61,8 @@
 #' # Create dbarts model
 #' dbartModel <- bart(iris2[, 1:4], iris2[, 5], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
 #'
-#' bartDiag(model = dbartModel, data = iris2, response = "Species")
+#' bartDiag(model = dbartModel, data = iris2, response = iris2$Species)
 #' }
-
 #'
 #' @export
 

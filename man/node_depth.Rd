@@ -16,3 +16,14 @@ A vector of depths corresponding to each node in the tree.
 Computes the depth of each node in a given tree data frame, assuming a binary tree structure.
 Requires the tree data frame to contain a logical column `terminal` indicating terminal nodes.
 }
+\examples{
+data("tree_data_example")
+# Create Terminal Column
+tree_data_example <- transform(tree_data_example, terminal = ifelse(is.na(var), TRUE, FALSE))
+# Get depths
+depthList <- lapply(split(tree_data_example, ~treeNum + iteration),
+                    function(x) cbind(x, depth = node_depth(x)-1))
+# Turn into data frame
+tree_data_example <- dplyr::bind_rows(depthList, .id = "list_id")
+
+}

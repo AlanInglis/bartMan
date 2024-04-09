@@ -19,8 +19,23 @@ Populates `childLeft`, `childRight`, and `parent` columns in the dataset to esta
 parent-child relationships between nodes based on tree structure.
 }
 \examples{
- \dontrun{
-# Assuming `treeData` has been prepared with terminal node indicators
-treeData <- getChildren(data = treeData)
-}
+data("tree_data_example")
+# Create Terminal Column
+tree_data_example <- transform(tree_data_example,
+                               terminal = ifelse(is.na(var),
+                               TRUE,
+                               FALSE))
+# Get depths
+depthList <- lapply(split(tree_data_example, ~treeNum + iteration),
+                    function(x) cbind(x, depth = node_depth(x)-1))
+# Turn into data frame
+tree_data_example <- dplyr::bind_rows(depthList, .id = "list_id")
+# Add node number sequntially
+tree_data_example$node <- with(tree_data_example,
+                               ave(seq_along(iteration),
+                               list(iteration, treeNum),
+                               FUN = seq_along))
+# get children
+getChildren(data = tree_data_example)
+
 }

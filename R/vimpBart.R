@@ -8,13 +8,27 @@
 #' @param type What value to return. Either the raw count 'val', the proportion 'prop',
 #' the column means of the proportions 'propMean', or the median of the proportions 'propMedian'.
 #'
-#' @return A matrix
+#' @return A matrix of importance values
 #'
 #' @importFrom dplyr ungroup
 #' @importFrom dplyr %>%
 #' @importFrom dplyr group_by
 #' @importFrom dplyr select
 #'
+#' @examples
+#' if(requireNamespace("dbarts", quietly = TRUE)){
+#'  # Load the dbarts package to access the bart function
+#'  library(dbarts)
+#'  # Get Data
+#'  df <- na.omit(airquality)
+#'  # Create Simple dbarts Model For Regression:
+#'  set.seed(1701)
+#'  dbartModel <- bart(df[2:6], df[, 1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+#'
+#'  # Tree Data
+#'  trees_data <- extractTreeData(model = dbartModel, data = df)
+#'  vimpBart(trees_data, type = 'prop')
+#'  }
 #' @export
 #'
 

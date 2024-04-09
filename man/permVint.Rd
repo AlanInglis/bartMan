@@ -32,9 +32,3 @@ permuting the response, rebuilding the model, and calculating the inclusion prop
 of adjacent splits on the null model.
 The final result displayed is the original model's IP minus the null IP.
 }
-\examples{
-\donttest{
-df_trees <- extractTreeData(model = my_model, data = my_data)
-permVint(trees = df_trees, model = my_model, data = my_data, response = my_response, top = 5)
-}
-}

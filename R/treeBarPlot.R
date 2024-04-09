@@ -17,9 +17,18 @@
 #' @return A `ggplot` object representing the bar plot of tree frequencies.
 #'
 #' @examples
-#' \donttest{
-#' df_trees <- extractTreeData(model = my_model, data = my_data)
-#' plot <- treeBarPlot(trees = df_trees, topTrees = 10, removeStump = TRUE)
+#' if(requireNamespace("dbarts", quietly = TRUE)){
+#'  # Load the dbarts package to access the bart function
+#'  library(dbarts)
+#'  # Get Data
+#'  df <- na.omit(airquality)
+#'  # Create Simple dbarts Model For Regression:
+#'  set.seed(1701)
+#'  dbartModel <- bart(df[2:6], df[, 1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+#'
+#'  # Tree Data
+#'  trees_data <- extractTreeData(model = dbartModel, data = df)
+#'  plot <- treeBarPlot(trees = trees_data, topTrees = 3, removeStump = TRUE)
 #' }
 #'
 #' @importFrom dplyr mutate pull group_by arrange filter slice n

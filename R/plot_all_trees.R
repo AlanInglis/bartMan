@@ -1,4 +1,4 @@
-#' Plot Trees with Customizations
+#' Plot Trees with Customisations
 #'
 #' This function plots trees from a list of tidygraph objects. It allows for various
 #' customisations such as fill colour based on node response or value, node size adjustments,
@@ -25,7 +25,7 @@
 #'                Currently supports "depth" for ordering by the maximum depth of nodes, and "var" for a
 #'                clustering based on variables. If NULL, no reordering is performed.
 #'
-#' @return A ggplot object representing the plotted trees with the specified customizations.
+#' @return A ggplot object representing the plotted trees with the specified customisations.
 #'
 #' @importFrom purrr map
 #' @importFrom tidygraph activate pull tbl_graph
@@ -40,9 +40,23 @@
 #' @importFrom stats as.formula
 #'
 #' @examples
-#' \donttest{
-#' df_trees <- extractTreeData(model = my_model, data = my_data)
-#' plotFun(trees = df_trees, fillBy = 'response', sizeNodes = TRUE)
+#'if (requireNamespace("dbarts", quietly = TRUE)) {
+#'  # Load the dbarts package to access the bart function
+#'  library(dbarts)
+#'  # Get Data
+#'  df <- na.omit(airquality)
+#'  # Create Simple dbarts Model For Regression:
+#'  set.seed(1701)
+#'  dbartModel <- bart(df[2:6],
+#'    df[, 1],
+#'    ntree = 5,
+#'    keeptrees = TRUE,
+#'    nskip = 10,
+#'    ndpost = 10
+#'  )
+#'  # Tree Data
+#'  trees_data <- extractTreeData(model = dbartModel, data = df)
+#'  plotTrees(trees = trees_data, fillBy = 'response', sizeNodes = TRUE)
 #' }
 #'
 #' @export

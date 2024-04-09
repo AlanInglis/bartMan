@@ -11,9 +11,23 @@
 #' @import ggraph
 #' @import ggplot2
 #' @examples
-#' \donttest{
-#' df_trees <- extractTreeData(model = my_model, data = my_data)
-#' plotSingleTree(trees = df_trees, treeNo = 1, iter = 1, plotType = "icicle")
+#'if (requireNamespace("dbarts", quietly = TRUE)) {
+#'  # Load the dbarts package to access the bart function
+#'  library(dbarts)
+#'  # Get Data
+#'  df <- na.omit(airquality)
+#'  # Create Simple dbarts Model For Regression:
+#'  set.seed(1701)
+#'  dbartModel <- bart(df[2:6],
+#'    df[, 1],
+#'    ntree = 5,
+#'    keeptrees = TRUE,
+#'    nskip = 10,
+#'    ndpost = 10
+#'  )
+#'  # Tree Data
+#'  trees_data <- extractTreeData(model = dbartModel, data = df)
+#'  plotSingleTree(trees = trees_data, iter = 1, treeNo = 1)
 #' }
 #' @export
 

@@ -23,7 +23,18 @@ which nodes of a tree, based on a tree structure defined in `treeData`.
 The treeData object must include `iteration`, `treeNum`, `var`, and `splitValue` columns.
 }
 \examples{
- \donttest{
-treeDataWithObservations <- getObservations(data = my_data, treeData = my_trees)
-}
+data("tree_data_example")
+# Create Terminal Column
+tree_data_example <- transform(tree_data_example,
+                              terminal = ifelse(is.na(var),
+                              TRUE,
+                               FALSE))
+# Create Split Value Column
+tree_data_example <- transform(tree_data_example,
+                               splitValue = ifelse(terminal == FALSE,
+                               value,
+                               NA_integer_))
+# get the observations
+getObservations(data = input_data, treeData = tree_data_example)
+
 }

@@ -28,9 +28,23 @@ permuting the response, rebuilding the model, and calculating the inclusion prop
 The final result displayed is the original model's IP minus the null IP.
 }
 \examples{
-\donttest{
-permVimp(model = my_model, data = my_data, response = my_response,
-        numTreesPerm = 20, plotType = 'barplot')
+if (requireNamespace("dbarts", quietly = TRUE)) {
+ # Load the dbarts package to access the bart function
+ library(dbarts)
+ # Get Data
+ df <- na.omit(airquality)
+ # Create Simple dbarts Model For Regression:
+ set.seed(1701)
+ dbartModel <- bart(df[2:6],
+   df[, 1],
+   ntree = 5,
+   keeptrees = TRUE,
+   nskip = 10,
+   ndpost = 10
+ )
+ # Tree Data
+ trees_data <- extractTreeData(model = dbartModel, data = df)
+ permVimp(model = dbartModel, data = df, response = 'Ozone', numTreesPerm = 2, plotType = 'point')
 }
 
 }

@@ -15,11 +15,16 @@
 #' node depth, parent and child nodes, and observational data, along with meta-information about the tree like
 #' variable names (`varNames`), number of MCMC iterations (`nMCMC`), number of trees (`nTree`), and number of variables (`nVar`).
 #'
-#'
-#' @export
-#'
 #' @importFrom dplyr bind_rows group_by mutate ungroup select row_number
 #' @importFrom stats setNames
+#'
+#' @examples
+#' data("input_data")
+#' data("tree_data_example")
+#' my_trees <- tree_dataframe(data = input_data, trees = tree_data_example, response = "y")
+#'
+#' @export
+
 
 tree_dataframe <- function(data, trees, response = NULL){
   trees <- transform(trees, terminal = ifelse(is.na(var), TRUE, FALSE))

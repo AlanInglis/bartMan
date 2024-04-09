@@ -23,9 +23,15 @@ in `trees$structure$var` for matches with these factor variables. If a match is 
 a dummy variable, the entry is replaced with the original factor variable name.
 }
 \examples{
-\donttest{
-df_trees <- extractTreeData(model = my_model, data = my_data)
-combined_trees <- combineDummy(trees = df_trees)
+if(requireNamespace("dbarts", quietly = TRUE)){
+# Load the dbarts package to access the bart function
+ library(dbarts)
+ # Create Simple dbarts Model with Dummies
+ set.seed(1701)
+ dbartModel <- bart(iris[2:5], iris[,1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+ # Tree Data
+ trees_data <- extractTreeData(model = dbartModel, data = iris)
+ combined_trees <- combineDummy(trees = trees_data)
 }
 
 }

@@ -15,9 +15,20 @@
 #' @importFrom dplyr group_by mutate
 #'
 #' @examples
-#'  \donttest{
-#' treeDataWithObservations <- getObservations(data = my_data, treeData = my_trees)
-#' }
+#' data("tree_data_example")
+#' # Create Terminal Column
+#' tree_data_example <- transform(tree_data_example,
+#'                               terminal = ifelse(is.na(var),
+#'                               TRUE,
+#'                                FALSE))
+#' # Create Split Value Column
+#' tree_data_example <- transform(tree_data_example,
+#'                                splitValue = ifelse(terminal == FALSE,
+#'                                value,
+#'                                NA_integer_))
+#' # get the observations
+#' getObservations(data = input_data, treeData = tree_data_example)
+#'
 #' @export
 
 getObservations <- function(data, treeData){
@@ -153,10 +164,25 @@ terminalFunction <- function(data){
 #'         detailing the tree's parent-child node relationships.
 #'
 #' @examples
-#'  \dontrun{
-#' # Assuming `treeData` has been prepared with terminal node indicators
-#' treeData <- getChildren(data = treeData)
-#' }
+#' data("tree_data_example")
+#' # Create Terminal Column
+#' tree_data_example <- transform(tree_data_example,
+#'                                terminal = ifelse(is.na(var),
+#'                                TRUE,
+#'                                FALSE))
+#' # Get depths
+#' depthList <- lapply(split(tree_data_example, ~treeNum + iteration),
+#'                     function(x) cbind(x, depth = node_depth(x)-1))
+#' # Turn into data frame
+#' tree_data_example <- dplyr::bind_rows(depthList, .id = "list_id")
+#' # Add node number sequntially
+#' tree_data_example$node <- with(tree_data_example,
+#'                                ave(seq_along(iteration),
+#'                                list(iteration, treeNum),
+#'                                FUN = seq_along))
+#' # get children
+#' getChildren(data = tree_data_example)
+#'
 #' @importFrom utils txtProgressBar setTxtProgressBar
 #' @export
 
@@ -221,6 +247,17 @@ getChildren <- function(data) {
 #' @param tree A data frame representing a tree, must contain a `terminal` column.
 #'
 #' @return A vector of depths corresponding to each node in the tree.
+#'
+#' @examples
+#' data("tree_data_example")
+#' # Create Terminal Column
+#' tree_data_example <- transform(tree_data_example, terminal = ifelse(is.na(var), TRUE, FALSE))
+#' # Get depths
+#' depthList <- lapply(split(tree_data_example, ~treeNum + iteration),
+#'                     function(x) cbind(x, depth = node_depth(x)-1))
+#' # Turn into data frame
+#' tree_data_example <- dplyr::bind_rows(depthList, .id = "list_id")
+#'
 #' @export
 
 
@@ -371,9 +408,15 @@ get_stump_colour_for_legend <- function(lims, mean_value, palette){
 #' a dummy variable, the entry is replaced with the original factor variable name.
 #'
 #' @examples
-#' \donttest{
-#' df_trees <- extractTreeData(model = my_model, data = my_data)
-#' combined_trees <- combineDummy(trees = df_trees)
+#' if(requireNamespace("dbarts", quietly = TRUE)){
+#' # Load the dbarts package to access the bart function
+#'  library(dbarts)
+#'  # Create Simple dbarts Model with Dummies
+#'  set.seed(1701)
+#'  dbartModel <- bart(iris[2:5], iris[,1], ntree = 5, keeptrees = TRUE, nskip = 10, ndpost = 10)
+#'  # Tree Data
+#'  trees_data <- extractTreeData(model = dbartModel, data = iris)
+#'  combined_trees <- combineDummy(trees = trees_data)
 #' }
 #'
 #' @export
