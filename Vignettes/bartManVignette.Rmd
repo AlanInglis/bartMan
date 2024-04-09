@@ -163,7 +163,7 @@ column_descriptions <- data.frame(
                   "Value at the leaf node, NA for non-terminal nodes.",
                   "Iteration number.",
                   "Tree number.",
-                  "Unique identifier for the node (following depth-first-left-side                               traversal).",
+                  "Unique identifier for the node (following depth-first-left-side traversal).",
                   "Identifier for the left child of the node, NA for terminal nodes.",
                   "Identifier for the right child of the node, NA for terminal nodes.",
                   "Identifier for the parent of the node, NA for root nodes.",
@@ -468,7 +468,7 @@ knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartm
 
 Alternatively, we can just examine the plit value densities in a ridge plot style. 
 ```{r, split_2, eval=FALSE}
-splitDensity(trees = trees_data, data = f_data, display = 'ridges')
+splitDensity(trees = trees_data, data = f_data, display = 'ridge')
 
 ```
 
