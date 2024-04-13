@@ -1,0 +1,322 @@
+---
+title: "Quick Start Vignette for the `bartMan` Package"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{quick_start_vignette}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options:
+  chunk_output_type: console
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(rmarkdown.html_vignette.check_title = FALSE)
+```
+
+
+## Introduction.
+
+This document is intended to be a quick start guide for the `bartMan` package. This guide provides a concise demonstration of the package's core functionalities  without delving into the extensive background literature and is aimed at users who are already acquainted with BART models. For a more comprehensive exploration, please refer to the full vignette found [here](https://alaninglis.github.io/bartMan/articles/bartManVignette.html).
+
+---
+
+
+## Building a Model and Extracting Tree Data
+
+To begin we load the `bartMan` (for visualisations) and `dbarts` (to build the model) packages, prepare data, fit a BART model, and extract tree data via the `extractTreeData()` function. This function builds a dataframe of tree attributes which are used in the visualisations below:
+
+```{r setup, results='hide'}
+library(bartMan)
+library(dbarts)
+
+# Load and prepare data
+data(airquality)
+df <- na.omit(airquality)
+
+# Fit a BART model
+set.seed(1701)
+dbartModel <- bart(
+  x.train = df[2:6], 
+  y.train = df[, 1], 
+  ntree = 10, 
+  keeptrees = TRUE, 
+  nskip = 50, 
+  ndpost = 50
+)
+
+
+# Extract tree data
+trees_data <- extractTreeData(model = dbartModel, data = df)
+```
+
+--- 
+
+
+## Visualizing Variable Importance and Interactions and Uncertainty
+
+To analyze variable importance and interactions (VIVI) and uncertainty, we first generate a VIVI matrix:
+
+```{r vimp, eval=FALSE}
+# Generate a variable importance\interaction matrix
+vsupMat <- viviBartMatrix(
+  trees_data, 
+  type = 'vsup', 
+  metric = 'propMean', 
+  metricError = "CV"
+)
+```
+
+
+This matrix allows a user to create custom plots using the data. However, to view the importance and interactions jointly, with uncertainty included, we can use a value supressing uncertatiny palette (VSUP) plot, as shown below: 
+
+```{r,vimp_plot, eval = FALSE}
+# Plot the matrix
+viviBartPlot(vsupMat, label = 'CV')
+```
+
+```{r,vimp_plot_1, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_vsup.png?raw=true")
+```
+*Figure 1: Variable importance and interaction plot with uncertainty, highlighting the high coefficient of variation for noise variables.*
+
+## Displaying Trees and Their Characteristics
+
+
+We can also view the trees that are built in a BART model. To view how a single tree changes over iterations, we can select it with:
+
+```{r, trees_no1, eval=FALSE}
+plotTrees(trees = trees_data, treeNo = 1)
+```
+
+```{r,trees_no1_1, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_trees_treeno_1.png?raw=true")
+```
+*Figure 2: A single tree and how it changes over iterations.*
+
+We can also select a single iteration to examine, and visualise the trees in various ways, such as by predicted values, mean response, structure, and depth:
+
+```{r trees-visualization, eval=FALSE}
+plotTrees(trees = trees_data, iter = 1, fillBy = 'mu')
+plotTrees(trees = trees_data, iter = 1, fillBy = 'response')
+plotTrees(trees = trees_data, iter = 1, cluster = "var")
+plotTrees(trees = trees_data, iter = 1, cluster = "depth")
+```
+```{r,trees-visualization_1, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_trees_all.png?raw=true")
+```
+*Figure 3: All trees in a selected iteration. In (a) the terminal nodes and stumps are colored by the predicted value \(\mu\). In (b) the terminal nodes and stumps are colored by the mean response. In (c) we sort the trees by structure starting with the most common tree and descending to the least common tree shape and in (d) we sort the trees by tree depth.
+This approach allows for a detailed analysis of the trees, showing different characteristics and aiding in understanding the model's behavior.*
+
+
+## Examining Split Value Densities and Tree Metrics
+
+We can also view the distribution of the split values. In Figure 4, we show just the split value density
+```{r split-value-densities, eval=FALSE}
+splitDensity(trees = trees_data, display = 'ridge')
+```
+```{r,trees-visualization_2, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_splitdensity.png?raw=true")
+```
+*Figure 4: Split value densities shown in a ridge plot.*
+
+
+## Model Diagnostics
+
+Tree acceptance rate, depth and node counts can be analysed to understand the complexity of the trees:
+
+```{r tree-metrics, eval=FALSE}
+acceptRate(trees = trees_data)
+```
+```{r,tree-metrics_1, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_accept.png?raw=true")
+```
+*Figure 5: Post burn-in acceptance rate of trees per iteration. A black regression line is shown to indicate the changes in acceptance rate across iterations and to identify the mean rate.*
+
+```{r, eval=FALSE}
+treeDepth(trees = trees_data)
+```
+```{r,tree-metrics_2, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_treedepth.png?raw=true")
+```
+*Figure 6: Post burn-in average tree depth per iteration. A black LOESS regression curve is shown to indicate the changes in the average tree depth across iterations.*
+
+
+```{r,eval=FALSE}
+treeNodes(trees = trees_data)
+```
+```{r,tree-metrics_3, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_treenode.png?raw=true")
+```
+*Figure 7: Post burn-in average number of nodes per iteration. A black LOESS regression curve is shown to indicate the changes in the number of nodes across iterations.*
+
+Finally, conducting diagnostics on the BART model can help assess its performance and fit:
+
+```{r model-diagnostics, eval=FALSE}
+bartDiag(model = dbartModel, response = df$Ozone, burnIn = 100)
+```
+```{r, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_diag.png?raw=true")
+```
+*Figure 8: Diagnostic plots for BART model fit, including QQ-plot, residual analysis, and variable importance.*
+
+---
+
+## Proximity Matrix and Multidimensional Scaling
+Proximity matrices combined with multidimensional scaling (MDS) are commonly used in random forests to identify outlying observations^[Breiman, L. (2001). Random forests. Machine learning, 45(1), 5-32.Chicago]. When two observations lie in the same terminal node repeatedly they can be said to be similar, and so an $N × N$ proximity matrix is obtained by accumulating the number of times at which this occurs for each pair of observations, and subsequently divided by the total number of trees. A higher value indicates that two observations are more similar.
+
+To begin, we fist create a proximity matrix. This can be seriated to group similar observations together by setting `reorder = TRUE`. The `normailze` argument will divide the proximity scores by the total number of trees. Additionally, we can choose to get the proximity matrix for a single iteration (as shown below) or over all iterations, the latter is achieved by setting `iter = NUll`.
+
+```{r, bm_prox, eval=FALSE}
+bmProx <- proximityMatrix(trees = trees_data,
+                          reorder = TRUE,
+                          normalize = TRUE,
+                          iter = 1)
+```
+
+We can then visualize the proximity matrix using the `plotProximity` function.
+```{r, bm_prox_plot, out.width="100%", eval=FALSE}
+plotProximity(matrix = bmProx[1:50,1:50]) +
+  ggplot2::theme(axis.text.x = element_text(angle = 90,))
+```
+
+```{r, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_prox.png?raw=true")
+```
+*Figure 9:Proximity plot.*
+
+
+```{r, mds, eval=FALSE}
+mdsBart(trees = trees_data, data = f_data, target =  bmProx,
+        plotType = 'interactive', level = 0.25, response = 'y') 
+```
+
+```{r, mds_plot, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_mds.png?raw=true")
+```
+*Figure 10: MDS plot.*
+
+---
+
+# Combining Dummy Factors
+
+After building the BART model, you might need to combine dummy factors, especially when dealing with categorical variables transformed into dummy variables for model fitting. This process can aid in interpreting the model's decision-making with respect to the original categorical factors.
+
+First, ensure the categorical variable (e.g., `Month`) is correctly specified as a factor. Then, fit the BART model as usual:
+
+```{r combine-factors-setup, results='hide'}
+# Convert 'Month' to a factor
+df$Month <- as.factor(df$Month)
+
+# Fit the BART model
+set.seed(101)
+dbartModel <- bart(
+  x.train = df[2:6], 
+  y.train = df[, 1], 
+  ntree = 20, 
+  keeptrees = TRUE, 
+  nskip = 50, 
+  ndpost = 100
+)
+
+# Extract tree data
+trees_data <- extractTreeData(model = dbartModel, data = df)
+```
+
+Visualize the trees to understand their initial structure:
+
+```{r initial-trees, eval=FALSE}
+plotTrees(trees = trees_data, iter = 1, removeStump = TRUE)
+```
+
+```{r, intrees, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_trees_factors_1.png?raw=true")
+```
+*Figure 11: Trees example with dummy factors.*
+
+Next, use the `combineDummy` function to consolidate dummy variables back into a single factor, facilitating a more intuitive analysis:
+
+```{r combine-dummy, eval=FALSE}
+# Combine dummy variables
+new_tree_data <- combineDummy(trees = trees_data)
+
+# Plot the revised tree structure
+plotTrees(trees = new_tree_data, iter = 1, removeStump = TRUE)
+```
+```{r, intrees2, echo = F,  out.width = '80%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/qs_trees_factor_2.png?raw=true")
+```
+*Figure 12: Trees example with dummy factors combined.*
+
+This step simplifies the tree visualization by aggregating the effects of all dummy variables related to a single categorical variable, making it easier to interpret the tree decisions related to categorical factors.
+
+--- 
+
+
+# Creating Your Own Data Frame Of Trees To Plot
+
+The `bartMan` package, initially designed for three primary BART packages, also allows users to input their own data to create an object comparable with the `extractTreeData()` function output. This integration is facilitated through the `tree_dataframe()` function, which ensures its output aligns with `extractTreeData()`. The `tree_dataframe()` function requires the original dataset used to build the model and a tree data frame. The tree data frame must include a `var` column that follows a depth-first left-side traversal order, a `value` column with the split or terminal node values, and columns for `iteration` and `treeNum` to denote the specific iteration and tree number, respectively. 
+
+In the example below, we have both a data set `f_data` and a tree data frame `df_tree` containing the needed columns. 
+
+```{r, minimal_tree}
+
+# Original Data
+f_data <- data.frame(
+  x1 = c(0.127393428, 0.766723202, 0.054421675, 0.561384595, 0.937597936,
+         0.296445079, 0.665117463, 0.652215607, 0.002313313, 0.661490602),
+  x2 = c(0.85600486, 0.02407293, 0.51942589, 0.20590965, 0.71206404,
+         0.27272126, 0.66765977, 0.94837341, 0.46710461, 0.84157353),
+  x3 = c(0.4791849, 0.8265008, 0.1076198, 0.2213454, 0.6717478,
+         0.5053170, 0.8849426, 0.3560469, 0.5732139, 0.5091688),
+  x4 = c(0.55089910, 0.35612092, 0.80230714, 0.73043828, 0.72341749,
+         0.98789408, 0.04751297, 0.06630861, 0.55040341, 0.95719901),
+  x5 = c(0.9201376, 0.9279873, 0.5993939, 0.1135139, 0.2472984,
+         0.4514940, 0.3097986, 0.2608917, 0.5375610, 0.9608329),
+  y = c(14.318655, 12.052513, 13.689970, 13.433919, 18.542184,
+        14.927344, 14.843248, 13.611167, 7.777591, 23.895456)
+  )
+
+
+# Your own data frame of trees
+df_tree <- data.frame(
+  var = c("x3", "x1", NA, NA, NA, "x1", NA, NA, "x3", NA, NA, "x1", NA, NA),
+  value = c(0.823,0.771,-0.0433,0.0188,-0.252,0.215,-0.269,0.117,0.823,0.0036,-0.244,0.215,-0.222,0.0783),
+  iteration = c(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2),
+  treeNum = c(1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2)
+)
+
+# take a look at the dataframe of trees
+df_tree
+
+```
+
+
+Applying the `tree_dataframe()` function creates an object that aligns with the output of `extractTreeData()`. The `response` argument is an optional character argument of the name of the response variable in your BART model. Including the response will remove it from the list elements `Variable names` and `nVar`.
+
+```{r, results='hide'}
+trees_data <- tree_dataframe(data = f_data , trees = df_tree, response = 'y')
+```
+```{r}
+# look at tree data object
+trees_data
+```
+
+
+Once we have our newly created object, it can be used in any of the plotting functions, for example:
+
+```{r, own_trees_p, eval=FALSE}
+plotTrees(trees = trees_data, iter = NULL)
+```
+
+```{r, own_trees_plot, echo = F,  out.width = '100%', fig.align='center'}
+knitr::include_graphics("https://github.com/AlanInglis/bartMan/blob/master/bartman_vignettte_new_plots_1/own_trees_iter_null_1.png?raw=true
+")
+```
+*Figure 24: Trees plot created using tree data created via the `tree_dataframe()` function.*
+
+
+
