@@ -26,7 +26,13 @@ example of the package in use can be found in our detailed
 
 ## Installation
 
-You can install the development version from
+You can install the released version of `bartMan` from CRAN with:
+
+``` r
+install.packages("bartMan")
+```
+
+And the development version from
 [GitHub](https://github.com/AlanInglis/bartMan) with:
 
 ``` r

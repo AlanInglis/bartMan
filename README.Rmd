@@ -37,9 +37,13 @@ BART, dbarts, and bartMachine. A practical example of the package in use can be 
 
 ## Installation
 
+You can install the released version of `bartMan` from CRAN with:
 
+``` r
+install.packages("bartMan")
+```
 
-You can install the development version from [GitHub](https://github.com/AlanInglis/bartMan) with:
+And the development version from [GitHub](https://github.com/AlanInglis/bartMan) with:
 
 ``` r
 # install.packages("devtools")
