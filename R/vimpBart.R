@@ -51,7 +51,8 @@ vimpBart <- function(trees, type = 'prop'){
 
   # turn into matrix (with all values)
   nam <- trees$varName
-  mat <- matrix(0, nrow = trees$nMCMC, ncol = length(nam))
+ # mat <- matrix(0, nrow = trees$nMCMC, ncol = length(nam))
+  mat <- matrix(0, nrow = length(unique(df$iteration)), ncol = length(nam))
   colnames(mat) <- nam
 
   namesDat <- colnames(vCount)
