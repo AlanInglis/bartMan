@@ -28,7 +28,7 @@
 #' @importFrom dplyr summarize
 #' @importFrom dplyr tibble
 #' @importFrom ggiraph geom_polygon_interactive
-#' @importFrom ggiraph ggiraph
+#' @importFrom ggiraph girafe
 #' @importFrom ggiraph opts_hover_inv
 #' @importFrom ggiraph opts_hover
 #' @importFrom grDevices rainbow
@@ -239,7 +239,7 @@ mdsBart <- function(
                                                     alpha = 0.3)
 
 
-        pFinal <- ggiraph::ggiraph(ggobj = pp,
+        pFinal <- ggiraph::girafe(ggobj = pp,
                                    options = list(
                                      ggiraph::opts_hover_inv(css = "opacity:0.05;"),
                                      ggiraph::opts_hover(ggiraph::girafe_css(
