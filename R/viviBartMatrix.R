@@ -97,8 +97,6 @@ viviBartMatrix <- function(trees,
 # VIVI dataframe ----------------------------------------------------------
 # -------------------------------------------------------------------------
 viviBartInternal <- function(trees) {
-  trees <- trees_data
-
   # Vimps -------------------------------------------------------------------
 
   # get vimps
@@ -155,6 +153,16 @@ viviBartInternal <- function(trees) {
   df <- trees$structure
   nam <- trees$varName
 
+
+
+  # remap subset
+  # df <- df %>%
+  #   mutate(iteration_old = iteration) %>%
+  #   mutate(iteration = as.integer(factor(iteration, levels = unique(iteration))))
+
+
+
+
   # cycle through trees and create list of Vints
   mkTree <- function(x, pos = 1L) {
     var <- x[pos]
@@ -196,17 +204,38 @@ viviBartInternal <- function(trees) {
     }
   }
 
+  # f <- function(x) tabTree(mkTree(x))
+  # L <- tapply(df[["var"]], df[c("treeNum", "iteration")], f, simplify = FALSE)
+  #
+  # g <- function(l) {
+  #   x <- unlist(unname(l)) # UNLIST IS NOT SEPERATING THEMINT ITERATIONS IF ITERATIONS ARE EQUAL!!
+  #   tapply(x, names(x), sum)
+  # }
+  #
+  # if (n_iterations > 1) {
+  #   listVint <- apply(L, 2L, g)
+  #   listVint <- listVint[lengths(listVint) > 0] # remove empty list element
+  # }
+  # Define the function to apply to each element
   f <- function(x) tabTree(mkTree(x))
+
+  # Apply the function to each combination of treeNum and iteration, resulting in a list
   L <- tapply(df[["var"]], df[c("treeNum", "iteration")], f, simplify = FALSE)
 
+  # Define the function to process each list element
   g <- function(l) {
     x <- unlist(unname(l))
     tapply(x, names(x), sum)
   }
 
+  # Process the list if there are multiple iterations
   if (n_iterations > 1) {
-    listVint <- apply(L, 2L, g)
-    listVint <- listVint[lengths(listVint) > 0] # remove empty list element
+    listVint <- lapply(seq_len(ncol(L)), function(i) {
+      g(L[, i])
+    })
+
+    # Remove empty list elements
+    listVint <- listVint[lengths(listVint) > 0]
   } else {
     # Handle the single iteration case
     listVint <- list()
@@ -408,7 +437,7 @@ viviBartInternal <- function(trees) {
   myList <- list(Vimp = vimpData, Vint = dfFinal)
 
   return(myList)
-}
+  }
 
 
 

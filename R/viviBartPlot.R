@@ -195,6 +195,11 @@ viviPlot.vsup <- function(matrix,
     limitsImpUnc <- uncImpLims
   }
 
+  # set the limits manually if there is no deviation between iterations (ie identical importance)
+  if (identical(limitsImpUnc, c(-1, 0))) {
+    limitsImpUnc <- c(0, 1)
+  }
+
   # set the limits for uncert interactions
   if (is.null(uncIntLims)) {
     uncIntLims <- range(stats::as.dist(uncertMatrix))
@@ -202,6 +207,12 @@ viviPlot.vsup <- function(matrix,
   } else {
     limitsIntUnc <- uncIntLims
   }
+
+  # set the limits manually if there is no deviation between iterations (ie identical interactions)
+  if (identical(limitsIntUnc, c(-1, 0))) {
+    limitsIntUnc <- c(0, 1)
+  }
+
 
   # making sure the breaks are inside the limits
   vintBreaks <- list(c(limitsInt), c(limitsIntUnc))
