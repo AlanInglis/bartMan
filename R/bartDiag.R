@@ -794,6 +794,9 @@ rocCI <- function(model, response, data){
 
     nTree <- model$call$ntree
     nMCMC  <- model$call$ndpost
+    if(is.null(nMCMC)){
+      nMCMC <- 1000
+    }
     nVar  <- as.integer(length(colMeans((model$varcount))))
     varNames <- colnames(model$fit$data@x)
     burnIn <-  model$call$nskip
@@ -904,6 +907,9 @@ prCI <- function(model, response, data){
 
     nTree <- model$call$ntree
     nMCMC  <- model$call$ndpost
+    if(is.null(nMCMC)){
+      nMCMC <- 1000
+    }
     nVar  <- as.integer(length(colMeans((model$varcount))))
     varNames <- colnames(model$fit$data@x)
     burnIn <-  model$call$nskip
