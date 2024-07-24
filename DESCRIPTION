@@ -1,7 +1,7 @@
 Type: Package
 Package: bartMan
 Title: Create Visualisations for BART Models
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: 
     c(person(given = "Alan",
              family = "Inglis",
