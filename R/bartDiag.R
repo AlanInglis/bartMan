@@ -729,14 +729,18 @@ bartVimpClass <- function(model, data, combineFactors = FALSE){
 confMat <- function(model, data, response){
 
   respIdx <- which(sapply(data, identical, y = response))
-  if (inherits(model, 'bart') || inherits(model, 'pbart') || inherits(model, 'wbart')){
-    pred <-  round(colMeans(stats::predict(model, data[, -respIdx])), 0)
+  if (inherits(model, 'pbart') || inherits(model, 'wbart')){
+    pred <-  round(stats::predict(model, data[, -respIdx])$prob.test.mean, 0)
   }else{
-    pred <- round(stats::predict(model, data[, -respIdx]), 0)
+    if (inherits(model, 'bart')){
+      pred <-  round(colMeans(stats::predict(model, data[, -respIdx])), 0)
+    }else{
+      pred <- round(stats::predict(model, data[, -respIdx]), 0)
+    }
   }
 
 
-  if (inherits(model, 'pbart') || inherits(model, 'bart')){
+  if (inherits(model, 'bart')){
     pred <-  ifelse(pred == 2, 1, 0)
   }
 
