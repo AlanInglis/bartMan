@@ -767,7 +767,7 @@ confMat <- function(model, data, response){
       geom_tile(aes(fill = Freq)) +
       scale_fill_gradient(low = "white", high = "steelblue") +
       geom_text(aes(x = response, y = pred, label = Freq)) +
-      ylab('Prediciton') +
+      ylab('Prediction') +
       xlab("Response") +
       theme_bw() +
       theme(legend.position = "none") +
