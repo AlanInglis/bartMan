@@ -88,6 +88,10 @@ extractTrees.pbart <- function(model, data){
   extractTrees.wbart(model, data)
 }
 
+extractTrees.lbart <- function(model, data){
+  extractTrees.wbart(model, data)
+}
+
 extractTrees.wbart <- function(model, data){
   # variable names:
   varNames <- names(model$varcount.mean)
