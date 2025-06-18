@@ -915,8 +915,153 @@ matched_aes <- function(layer, guide, defaults) {
 }
 
 # not copied for now
-element_render <- ggplot2:::element_render
-ggname <- ggplot2:::ggname
-justify_grobs <- ggplot2:::justify_grobs
-is.waive <- ggplot2:::is.waive
+# element_render <- ggplot2:::element_render
+# ggname <- ggplot2:::ggname
+# justify_grobs <- ggplot2:::justify_grobs
+# is.waive <- ggplot2:::is.waive
+
+
+# ---- ggname --------------------------------------------------------------
+# Vendored and renamed from ggplot2 (original internal function)
+#
+# Description:
+# This function adds a name to a grob object using a prefix, useful for debugging and layout management.
+
+ggname <- function (prefix, grob)
+{
+  grob$name <- grid::grobName(grob, prefix)
+  grob
+}
+
+
+# ---- element_render ------------------------------------------------------
+# Vendored and renamed from ggplot2 (original internal function)
+#
+# Description:
+# Renders a theme element (like axis text or legend title) into a grob. If the element is missing,
+# returns a zeroGrob and informs the user.
+
+element_render <- function (theme, element, ..., name = NULL)
+{
+  el <- ggplot2::calc_element(element, theme)
+  if (is.null(el)) {
+    cli::cli_inform("Theme element {.var {element}} is missing")
+    return(ggplot2::zeroGrob())
+  }
+  grob <- ggplot2::element_grob(el, ...)
+  ggname(paste(element, name, sep = "."), grob)
+}
+
+# ---- justify_grobs -------------------------------------------------------
+# Vendored and modified from ggplot2 (original internal function)
+#
+# Description:
+# Justifies one or more grobs to a specific x/y position using horizontal/vertical justification.
+# Includes internal helpers for angle-based adjustment and input validation.
+
+stop_input_type_alter <- function (x, what, ..., allow_na = FALSE, allow_null = FALSE,
+                                   show_value = TRUE, arg = caller_arg(x), call = caller_env())
+{
+  cli <- rlang::env_get_list(nms = c("format_arg", "format_code"),
+                             last = topenv(), default = function(x) sprintf("`%s`",
+                                                                            x), inherit = TRUE)
+  if (allow_na) {
+    what <- c(what, cli$format_code("NA"))
+  }
+  if (allow_null) {
+    what <- c(what, cli$format_code("NULL"))
+  }
+  if (length(what)) {
+    what <- oxford_comma(what)
+  }
+  message <- sprintf("%s must be %s, not %s.", cli$format_arg(arg),
+                     what, obj_type_friendly(x, value = show_value))
+  abort(message, ..., call = call, arg = arg)
+}
+
+
+
+rotate_just_alter <-
+  function (angle, hjust, vjust)
+  {
+    angle <- (angle %||% 0)%%360
+    if (is.character(hjust)) {
+      hjust <- match(hjust, c("left", "right")) - 1
+      hjust[is.na(hjust)] <- 0.5
+    }
+    if (is.character(vjust)) {
+      vjust <- match(vjust, c("bottom", "top")) - 1
+      vjust[is.na(vjust)] <- 0.5
+    }
+    size <- vctrs::vec_size_common(angle, hjust, vjust)
+    angle <-  vctrs::vec_recycle(angle, size)
+    hjust <-  vctrs::vec_recycle(hjust, size)
+    vjust <-  vctrs::vec_recycle(vjust, size)
+    case <- findInterval(angle, c(0, 90, 180, 270, 360))
+    hnew <- hjust
+    vnew <- vjust
+    is_case <- which(case == 2)
+    hnew[is_case] <- 1 - vjust[is_case]
+    vnew[is_case] <- hjust[is_case]
+    is_case <- which(case == 3)
+    hnew[is_case] <- 1 - hjust[is_case]
+    vnew[is_case] <- 1 - vjust[is_case]
+    is_case <- which(case == 4)
+    hnew[is_case] <- vjust[is_case]
+    vnew[is_case] <- 1 - hjust[is_case]
+    list(hjust = hnew, vjust = vnew)
+  }
+
+
+
+justify_grobs <- function (grobs, x = NULL, y = NULL, hjust = 0.5, vjust = 0.5,
+                                 int_angle = 0, debug = FALSE)
+{
+  if (!inherits(grobs, "grob")) {
+    if (is.list(grobs)) {
+      return(lapply(grobs, justify_grobs, x, y, hjust,
+                    vjust, int_angle, debug))
+    }
+    else {
+      stop_input_type_alter(grobs,
+                            as_cli("an individual {.cls grob} or list of {.cls grob} objects"))
+    }
+  }
+  if (inherits(grobs, "zeroGrob")) {
+    return(grobs)
+  }
+  just <- rotate_just_alter(int_angle, hjust, vjust)
+  x <- x %||% unit(just$hjust, "npc")
+  y <- y %||% unit(just$vjust, "npc")
+  if (isTRUE(debug)) {
+    children <- grid::gList(grid::rectGrob(gp = grid::gpar(fill = "lightcyan",
+                                                           col = NA)), grobs)
+  }
+  else {
+    children = grid::gList(grobs)
+  }
+  result_grob <-  grid::gTree(children = children, vp = grid::viewport(x = x,
+                                                                 y = y,
+                                                                 width = grid::grobWidth(grobs),
+                                                                 height = grid::grobHeight(grobs),
+                                                                 just = unlist(just)))
+  if (isTRUE(debug)) {
+    grid::grobTree(result_grob, grid::pointsGrob(x, y, pch = 20, gp = grid::gpar(col = "mediumturquoise")))
+  }
+  else {
+    result_grob
+  }
+}
+
+
+# ---- is.waive -----------------------------------------------------------
+# Vendored from ggplot2 (trivial internal function)
+#
+# Description:
+# Checks whether an object is a ggplot2 'waiver' object, used to represent default behaviour.
+
+is.waive <- function(x) {
+  inherits(x, "waiver")
+}
+
 
