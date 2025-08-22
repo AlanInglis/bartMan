@@ -41,7 +41,6 @@
 #'}
 #'
 #' @export
-
 permVimp <- function(model, data, response, numTreesPerm = NULL, plotType = 'barplot') {
 
   vimp <- perBart(
@@ -62,6 +61,8 @@ permVimp <- function(model, data, response, numTreesPerm = NULL, plotType = 'bar
 # -------------------------------------------------------------------------
 
 # Main function:
+#' @noRd
+#' @keywords internal
 perBart <- function(model, data, response, numTreesPerm = NULL) {
   UseMethod("perBart")
 }
@@ -70,7 +71,8 @@ perBart <- function(model, data, response, numTreesPerm = NULL) {
 
 # BART --------------------------------------------------------------------
 
-
+#' @export
+#' @method perBart wbart
 perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
   if (!requireNamespace("BART", quietly = TRUE)) {
@@ -106,15 +108,15 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
     # capture.output is used to suppress output of building model
     capture.output(
-    bmodelPerm <- BART:: wbart(
-      x.train = x,
-      y.train = yPerm,
-      nskip = burnIn,
-      ndpost = nMCMC,
-      nkeeptreedraws = nMCMC,
-      ntree = numTreesPerm
-    ),
-    file = nullfile()
+      bmodelPerm <- BART:: wbart(
+        x.train = x,
+        y.train = yPerm,
+        nskip = burnIn,
+        ndpost = nMCMC,
+        nkeeptreedraws = nMCMC,
+        ntree = numTreesPerm
+      ),
+      file = nullfile()
     )
 
 
@@ -132,6 +134,8 @@ perBart.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
 # dbarts ------------------------------------------------------------------
 
+#' @export
+#' @method perBart bart
 perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
 
   if (!requireNamespace("dbarts", quietly = TRUE)) {
@@ -164,14 +168,14 @@ perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
 
 
     bmodelPerm <- dbarts::bart(x.train = x,
-                       y.train = yPerm,
-                       ntree = numTreesPerm,
-                       keeptrees = TRUE,
-                       nskip = burnIn,
-                       ndpost = nMCMC,
-                       combinechains = F,
-                       nchain = 1,
-                       verbose = FALSE
+                               y.train = yPerm,
+                               ntree = numTreesPerm,
+                               keeptrees = TRUE,
+                               nskip = burnIn,
+                               ndpost = nMCMC,
+                               combinechains = F,
+                               nchain = 1,
+                               verbose = FALSE
     )
 
 
@@ -191,6 +195,8 @@ perBart.bart <-  function(model, data,  response, numTreesPerm = NULL) {
 
 # bartMachine -------------------------------------------------------------
 
+#' @export
+#' @method perBart bartMachine
 perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
 
   if (!requireNamespace("bartMachine", quietly = TRUE)) {
@@ -223,12 +229,12 @@ perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
     x <- data[, -responseIdx]
 
     bmodelPerm <- bartMachine::bartMachine(X = x,
-                              y = yPerm,
-                              num_trees = numTreesPerm,
-                              flush_indices_to_save_RAM = FALSE,
-                              num_burn_in = burnIn,
-                              num_iterations_after_burn_in = nMCMC,
-                              verbose = FALSE)
+                                           y = yPerm,
+                                           num_trees = numTreesPerm,
+                                           flush_indices_to_save_RAM = FALSE,
+                                           num_burn_in = burnIn,
+                                           num_iterations_after_burn_in = nMCMC,
+                                           verbose = FALSE)
 
 
     varPropPerm <- bartMachine::get_var_counts_over_chain(bmodelPerm)
@@ -244,7 +250,6 @@ perBart.bartMachine <- function(model, data, response, numTreesPerm = NULL){
 
 
 # Plotting function -------------------------------------------------------
-
 
 permPlotFn <- function(dat, plotType = 'barplot'){
 

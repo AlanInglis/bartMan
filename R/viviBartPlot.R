@@ -98,7 +98,9 @@ viviBartPlot <- function(matrix,
 
 # -------------------------------------------------------------------------
 
-# Main function:
+# Generic viviPlot function ------------------------------------------------
+#' @noRd
+#' @keywords internal
 viviPlot <- function(matrix,...) {
   UseMethod("viviPlot", matrix)
 }
@@ -108,7 +110,9 @@ viviPlot <- function(matrix,...) {
 # -------------------------------------------------------------------------
 # Standard plot -----------------------------------------------------------
 # -------------------------------------------------------------------------
-
+# ---- Export S3 methods ----
+#' @export
+#' @method viviPlot standardMat
 viviPlot.standardMat <-function(matrix,
                                 intPal = NULL,
                                 impPal = NULL,
@@ -140,7 +144,8 @@ viviPlot.standardMat <-function(matrix,
 # -------------------------------------------------------------------------
 # VSUP plot ---------------------------------------------------------------
 # -------------------------------------------------------------------------
-
+#' @export
+#' @method viviPlot vsup
 viviPlot.vsup <- function(matrix,
                           intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n =  2^4/2)),
                           impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  2^4/2)),
@@ -366,7 +371,8 @@ viviPlot.vsup <- function(matrix,
 # -------------------------------------------------------------------------
 # Quantile plot -----------------------------------------------------------
 # -------------------------------------------------------------------------
-
+#' @export
+#' @method viviPlot quantiles
 viviPlot.quantiles <- function(matrix,
                                intPal = rev(colorspace::sequential_hcl(palette = "Purples 3", n = 100)),
                                impPal = rev(colorspace::sequential_hcl(palette = "Greens 3", n =  100)),
@@ -540,7 +546,9 @@ viviPlot.quantiles <- function(matrix,
   return(allPlots)
 }
 
-
+# ---- Export S3 method for data.frame coercion ----
+#' @export
+#' @method as.data.frame bartMan
 as.data.frame.bartMan <- function(x, row.names = NULL, optional = FALSE, ...) {
 
   matrix <- x

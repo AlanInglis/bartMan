@@ -70,7 +70,8 @@ extractTreeData <- function(model, data){
 # END
 
 # Main Method Function -----------------------------------------------------------
-
+#' @noRd
+#' @keywords internal
 extractTrees <- function(model, data) {
   UseMethod("extractTrees")
 }
@@ -83,15 +84,20 @@ extractTrees <- function(model, data) {
 
 
 # BART package method -----------------------------------------------------
-
+#' @export
+#' @method extractTrees pbart
 extractTrees.pbart <- function(model, data){
   extractTrees.wbart(model, data)
 }
 
+#' @export
+#' @method extractTrees lbart
 extractTrees.lbart <- function(model, data){
   extractTrees.wbart(model, data)
 }
 
+#' @export
+#' @method extractTrees wbart
 extractTrees.wbart <- function(model, data){
   # variable names:
   varNames <- names(model$varcount.mean)
@@ -265,7 +271,8 @@ extractTrees.wbart <- function(model, data){
 
 # dbarts package method -----------------------------------------------------
 
-
+#' @export
+#' @method extractTrees bart
 extractTrees.bart <- function(model, data){
   # get all trees
   treesTotal <- model$call$ntree
@@ -382,7 +389,8 @@ extractTrees.bart <- function(model, data){
 # END
 
 # bartMachine package method -----------------------------------------------------
-
+#' @export
+#' @method extractTrees bartMachine
 extractTrees.bartMachine <- function(model, data){
 
   # Get variable names

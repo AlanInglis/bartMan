@@ -66,13 +66,16 @@ localProcedure <- function(model,
 # -------------------------------------------------------------------------
 
 # Main function:
+#' @noRd
+#' @keywords internal
 lProd <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE) {
   UseMethod("lProd")
 }
 
 
 # BART --------------------------------------------------------------------
-
+#' @export
+#' @method lProd wbart
 lProd.wbart <- function(model, data, response,  numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
   if (!requireNamespace("BART", quietly = TRUE)) {
@@ -114,14 +117,14 @@ lProd.wbart <- function(model, data, response,  numRep = 10, numTreesRep = NULL,
 
     # capture.output is used to suppress output of building model
     capture.output(
-    bmodelPerm <-  BART::wbart(x.train = x,
-                         y.train = yPerm,
-                         nskip = burnIn,
-                         ndpost = nMCMC, # MCMC iters
-                         nkeeptreedraws = nMCMC,
-                         ntree = numTreesRep
-    ),
-    file = nullfile()
+      bmodelPerm <-  BART::wbart(x.train = x,
+                                 y.train = yPerm,
+                                 nskip = burnIn,
+                                 ndpost = nMCMC, # MCMC iters
+                                 nkeeptreedraws = nMCMC,
+                                 ntree = numTreesRep
+      ),
+      file = nullfile()
     )
 
     varPropsPerm <- bmodelPerm$varcount
@@ -143,7 +146,7 @@ lProd.wbart <- function(model, data, response,  numRep = 10, numTreesRep = NULL,
 
   vimpColNum <- sapply(1:length(vimpName), function(x){
     which(vimpName[x] == colnames(model$varprob))
-    })
+  })
 
   # get metrics
   permSE = apply(permuteMat, 2, sd)/sqrt(nrow(permuteMat))
@@ -188,10 +191,10 @@ lProd.wbart <- function(model, data, response,  numRep = 10, numTreesRep = NULL,
       geom_point(size = 3) +
       theme_bw() + ylab('proportion included') + coord_flip()
   }else{
-     p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
-        geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
-        geom_point(aes(x = Variable, y = imp), shape = incProp$shape, size = 3) +
-        theme_bw() + ylab('proportion included') + coord_flip()
+    p <-  ggplot(incProp, aes(x = Variable, y = threshold)) +
+      geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
+      geom_point(aes(x = Variable, y = imp), shape = incProp$shape, size = 3) +
+      theme_bw() + ylab('proportion included') + coord_flip()
   }
 
 
@@ -200,7 +203,8 @@ lProd.wbart <- function(model, data, response,  numRep = 10, numTreesRep = NULL,
 
 
 # dbarts ------------------------------------------------------------------
-
+#' @export
+#' @method lProd bart
 lProd.bart <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
   if (!requireNamespace("dbarts", quietly = TRUE)) {
@@ -235,14 +239,14 @@ lProd.bart <- function(model, data, response, numRep = 10, numTreesRep = NULL, a
     x <- data[, -responseIdx]
 
     bmodelPerm <- dbarts::bart(x.train = x,
-                       y.train = yPerm,
-                       ntree = numTreesRep,
-                       keeptrees = TRUE,
-                       nskip = burnIn,
-                       ndpost = nMCMC,
-                       combinechains = F,
-                       nchain = 1,
-                       verbose = FALSE
+                               y.train = yPerm,
+                               ntree = numTreesRep,
+                               keeptrees = TRUE,
+                               nskip = burnIn,
+                               ndpost = nMCMC,
+                               combinechains = F,
+                               nchain = 1,
+                               verbose = FALSE
     )
 
 
@@ -313,7 +317,8 @@ lProd.bart <- function(model, data, response, numRep = 10, numTreesRep = NULL, a
 
 # bartMachine -------------------------------------------------------------
 
-
+#' @export
+#' @method lProd bartMachine
 lProd.bartMachine <- function(model, data, response, numRep = 10, numTreesRep = NULL, alpha = 0.5, shift = FALSE){
 
   if (!requireNamespace("bartMachine", quietly = TRUE)) {
@@ -347,11 +352,11 @@ lProd.bartMachine <- function(model, data, response, numRep = 10, numTreesRep = 
     x <- data[, -responseIdx]
 
     bmodelPerm <- bartMachine::bartMachine(X = x,
-                              y = yPerm,
-                              num_trees = numTreesRep,
-                              flush_indices_to_save_RAM = FALSE,
-                              num_burn_in = burnIn,
-                              num_iterations_after_burn_in = nMCMC, verbose = FALSE)
+                                           y = yPerm,
+                                           num_trees = numTreesRep,
+                                           flush_indices_to_save_RAM = FALSE,
+                                           num_burn_in = burnIn,
+                                           num_iterations_after_burn_in = nMCMC, verbose = FALSE)
 
 
 
@@ -414,12 +419,8 @@ lProd.bartMachine <- function(model, data, response, numRep = 10, numTreesRep = 
       geom_segment(aes(x=Variable, xend=Variable, y=0, yend=threshold), col = 'steelblue') +
       geom_point(aes(x = Variable, y = imp), shape = incProp$shape, size = 3) +
       theme_bw() + ylab('proportion included') + coord_flip()# +
-     # geom_hline(yintercept = maxCut, col = 'red')
+    # geom_hline(yintercept = maxCut, col = 'red')
   }
 
   return(p)
 }
-
-
-
-

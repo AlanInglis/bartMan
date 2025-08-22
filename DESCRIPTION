@@ -51,7 +51,8 @@ Imports:
     bartMachine,
     dbarts,
     rJava,
-    cli
+    cli,
+    vctrs
 Suggests:
     ROCR,
     ggridges,

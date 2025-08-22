@@ -37,7 +37,7 @@
 #' @import ggplot2
 #' @import ggraph
 #' @import patchwork
-#' @importFrom cowplot plot_grid get_legend
+#' @importFrom cowplot plot_grid get_legend get_plot_component
 #' @importFrom tidygraph activate bind_nodes bind_edges
 #' @export
 

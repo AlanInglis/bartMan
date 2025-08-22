@@ -23,9 +23,6 @@
 #' @importFrom dplyr arrange
 #' @import ggplot2
 #' @export
-#'
-
-
 permVint <- function(model,
                      data,
                      trees,
@@ -38,10 +35,10 @@ permVint <- function(model,
 
   # get null permutation vints
   permVint <- permBartVint(
-  model = model,
-  data = data,
-  response = response,
-  numTreesPerm = numTreesPerm
+    model = model,
+    data = data,
+    response = response,
+    numTreesPerm = numTreesPerm
   )
 
   # final vints
@@ -57,30 +54,23 @@ permVint <- function(model,
     finalDf <- finalDf |> arrange(-propMean) |> filter(row_number() %in% 1:top)
   }
 
-
   finalDf$propMean[finalDf$propMean<0] <- 0
 
-
-    p <- finalDf %>%
-      arrange(propMean) %>%
-      mutate(Variable = factor(var, unique(var))) %>%
-      ggplot() +
-      aes(x = Variable, y = propMean) +
-      geom_bar(aes(x = Variable, y = propMean), stat = "identity", fill = "steelblue", col = "black") +
-      theme_light() +
-      coord_flip() +
-      theme_bw() +
-      xlab("Variable") +
-      ylab("Importance") +
-      theme(
-        axis.title.y = element_text(angle = 90, vjust = 0.5),
-        legend.key.size = unit(0.5, "cm")
-      )
-
-
-
-
-
+  p <- finalDf %>%
+    arrange(propMean) %>%
+    mutate(Variable = factor(var, unique(var))) %>%
+    ggplot() +
+    aes(x = Variable, y = propMean) +
+    geom_bar(aes(x = Variable, y = propMean), stat = "identity", fill = "steelblue", col = "black") +
+    theme_light() +
+    coord_flip() +
+    theme_bw() +
+    xlab("Variable") +
+    ylab("Importance") +
+    theme(
+      axis.title.y = element_text(angle = 90, vjust = 0.5),
+      legend.key.size = unit(0.5, "cm")
+    )
 
   return(p)
 }
@@ -88,24 +78,24 @@ permVint <- function(model,
 # -------------------------------------------------------------------------
 
 # Main function:
+#' @noRd
+#' @keywords internal
 permBartVint <- function(model, data, response, numTreesPerm = NULL) {
   UseMethod("permBartVint")
 }
-
-
-
 
 # -------------------------------------------------------------------------
 # -------------------------------------------------------------------------
 
 # BART --------------------------------------------------------------------
+#' @export
+#' @method permBartVint bart
 permBartVint.bart <- function(model, data,  response, numTreesPerm = NULL){
 
   if (!requireNamespace("dbarts", quietly = TRUE)) {
     stop("Package \"dbarts\" needed for this function to work. Please install it.",
          call. = FALSE)
   }
-
 
   # get some information
   nTree <- model$call$ntree
@@ -147,12 +137,13 @@ permBartVint.bart <- function(model, data,  response, numTreesPerm = NULL){
   perMats <- permuteBARTFn(data)
 
   return(perMats)
-
 }
 
+#' @export
+#' @method permBartVint bartMachine
 permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL) {
 
-   if (!requireNamespace("bartMachine", quietly = TRUE)) {
+  if (!requireNamespace("bartMachine", quietly = TRUE)) {
     stop("Package \"bartMachine\" needed for this function to work. Please install it.",
          call. = FALSE)
   }
@@ -177,15 +168,12 @@ permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL
     x <- data[, -responseIdx]
 
     bmodelPerm <- bartMachine::bartMachine(X = x,
-                              y = yPerm,
-                              num_trees = numTreesPerm,
-                              flush_indices_to_save_RAM = FALSE,
-                              num_burn_in = burnIn,
-                              num_iterations_after_burn_in = nMCMC,
-                              verbose = FALSE)
-
-
-
+                                           y = yPerm,
+                                           num_trees = numTreesPerm,
+                                           flush_indices_to_save_RAM = FALSE,
+                                           num_burn_in = burnIn,
+                                           num_iterations_after_burn_in = nMCMC,
+                                           verbose = FALSE)
 
     permDF <- extractTreeData(bmodelPerm, data)
     permVints <- viviBart(trees = permDF,out = 'vint')
@@ -195,9 +183,10 @@ permBartVint.bartMachine <- function(model, data,  response, numTreesPerm = NULL
   perMats <- permuteBARTFn(data)
 
   return(perMats)
-
 }
 
+#' @export
+#' @method permBartVint wbart
 permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
   if (!requireNamespace("BART", quietly = TRUE)) {
@@ -206,7 +195,6 @@ permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
   }
 
   # get model info
-
   modelTrees <- model$treedraws$trees
   modelInfo <- unlist(strsplit(modelTrees, " "))[1:3]
   modelInfo <- gsub("(^\\d+)([\a-zA-Z0-9]*)", "\\1", modelInfo)
@@ -229,15 +217,15 @@ permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
     # capture.output is used to suppress output of building model
     capture.output(
-    bmodelPerm <- BART::wbart(
-      x.train = x,
-      y.train = yPerm,
-      nskip = burnIn,
-      ndpost = nMCMC,
-      nkeeptreedraws = nMCMC,
-      ntree = numTreesPerm
-    ),
-    file = nullfile()
+      bmodelPerm <- BART::wbart(
+        x.train = x,
+        y.train = yPerm,
+        nskip = burnIn,
+        ndpost = nMCMC,
+        nkeeptreedraws = nMCMC,
+        ntree = numTreesPerm
+      ),
+      file = nullfile()
     )
 
     permDF <- extractTreeData(bmodelPerm, data)
@@ -249,8 +237,3 @@ permBartVint.wbart <- function(model, data,  response, numTreesPerm = NULL) {
 
   return(perMats)
 }
-
-
-
-
-

@@ -1,7 +1,7 @@
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note
+0 errors | 0 warnings | 0 notes
 
 * This is an update release.
-* Fixed tree barplot function which developed an issue stemming from the cowplot package
+* Updated functions to be in-line with new `ggplot2` update.
 
