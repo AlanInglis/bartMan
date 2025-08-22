@@ -22,6 +22,8 @@ Authors@R:
 Maintainer: Alan Inglis <alan.inglis@mu.ie>
 Description: Investigating and visualising Bayesian Additive Regression Tree (BART) (Chipman, H. A., George, E. I., & McCulloch, R. E. 2010) <doi:10.1214/09-AOAS285> model fits.  We construct conventional plots to analyze a model’s performance and stability  as well as create new tree-based plots to analyze variable importance, interaction, and tree structure.  We employ Value Suppressing Uncertainty Palettes (VSUP) to construct heatmaps that display variable importance  and interactions jointly using colour scale to represent posterior uncertainty.  Our visualisations are designed to work with the most popular BART R packages available, namely 'BART' Rodney Sparapani and Charles Spanbauer and Robert McCulloch 2021 <doi:10.18637/jss.v097.i01>,  'dbarts'  (Vincent Dorie 2023) <https://CRAN.R-project.org/package=dbarts>,  and 'bartMachine' (Adam Kapelner and Justin Bleich 2016) <doi:10.18637/jss.v070.i04>.
 License: GPL (>=2)
+Depends:
+    R (>= 4.1.0)
 Imports: 
     colorspace,
     cowplot,
