@@ -74,6 +74,8 @@ viviBartMatrix <- function(trees,
                             metric = metric,
                             reorder = reorder
     )
+
+  viviMat <- bartReorder(viviMat)
   }else if(type == 'vsup'){
     viviMat <- viviBartVSUP(trees = trees,
                             data = viviDf,
@@ -85,6 +87,7 @@ viviBartMatrix <- function(trees,
                                 data = viviDf,
                                 reorder = reorder)
   }
+
 
   return(viviMat)
 
@@ -607,6 +610,15 @@ viviBartQuantile <-  function(trees, data, reorder = FALSE){
 
 }
 
+
+#' @description Reorders a square matrix so that values of high importance and
+#' interaction strength are pushed to the top left of the matrix.
+#' @param d A matrix
+#' @name bartReorder
+#' @return A reordered version of d.
+#' @importFrom DendSer dser
+#' @importFrom DendSer costLS
+#' @export
 
 bartReorder <- function(d) {
   vImp <- diag(d)
