@@ -15,17 +15,15 @@
 #'
 #' @return A selection of diagnostic plots.
 #'
-#' @import tidytreatment
 #' @importFrom patchwork area
 #' @importFrom patchwork plot_layout
-#' @importFrom tidybayes residual_draws
-#' @importFrom tidybayes point_interval
-#' @importFrom tidybayes geom_pointinterval
 #' @importFrom dplyr %>%
 #' @importFrom dplyr select
 #' @importFrom dplyr filter
 #' @importFrom dplyr summarise
 #' @importFrom dplyr tibble
+#' @importFrom bartMachine bart_machine_get_posterior
+#' @importFrom bartMachine get_sigsqs
 #' @import ggplot2
 #'
 #' @examples
@@ -135,17 +133,15 @@ bartDiag <- function(model,
 #'
 
 #' @import ggplot2
-#' @import tidytreatment
 #' @importFrom patchwork area
 #' @importFrom patchwork plot_layout
-#' @importFrom tidybayes residual_draws
-#' @importFrom tidybayes point_interval
-#' @importFrom tidybayes geom_pointinterval
 #' @importFrom dplyr %>%
 #' @importFrom dplyr select
 #' @importFrom dplyr filter
 #' @importFrom dplyr summarise
 #' @importFrom dplyr tibble
+#' @importFrom bartMachine bart_machine_get_posterior
+#' @importFrom bartMachine get_sigsqs
 #' @export
 
 
@@ -181,15 +177,40 @@ bartRegrDiag <- function(model,
 # QQ plot -----------------------------------------------------------------
 
 bartQQ <- function(model, response) {
-  if (inherits(model, "wbart") || inherits(model, "bartMachine")){
-    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
-    res <- res %>% summarise(.residual = mean(.residual))
+
+  # This branch handles models from the bartMachine package
+  if (inherits(model, "bartMachine")) {
+
+    # 1. Get posterior draws for fitted values: matrix of [observations, draws]
+    yhat_draws <- bartMachine::bart_machine_get_posterior(model, model$X)$y_hat_posterior_samples
+
+    # 2. Calculate the mean fitted value for each observation (across rows)
+    mean_fitted <- apply(yhat_draws, 1, mean)
+
+    # 3. Calculate mean residuals
+    mean_residuals <- response - mean_fitted
+
+    # 4. Create the data frame for plotting
+    res <- data.frame(.residual = mean_residuals)
+
   } else {
-    res <- data.frame(.residual = residuals(model))
+    # This branch handles all 'bart' style models (from dbarts, BART, etc.)
+
+    # 1. Get posterior draws for fitted values: matrix of [draws, observations]
+    yhat_draws <- model$yhat.train
+
+    # 2. Calculate the mean fitted value for each observation (down columns)
+    mean_fitted <- apply(yhat_draws, 2, mean)
+
+    # 3. Calculate mean residuals
+    mean_residuals <- response - mean_fitted
+
+    # 4. Create the data frame for plotting
+    res <- data.frame(.residual = mean_residuals)
   }
 
-  p <- res %>%
-    ggplot(aes(sample = .residual)) +
+  # The plotting code is identical for all model types and uses the vector of mean residuals
+  p <- ggplot(res, aes(sample = .residual)) +
     geom_qq(color = "blue", alpha = 0.2) +
     geom_qq_line() +
     xlab("Theoretical") +
@@ -208,21 +229,43 @@ bartQQ <- function(model, response) {
 
 
 bartTrace <- function(model, burnIn = 0) {
-  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
-    # get values
-    varDraws <- tidytreatment::variance_draws(model, value = "siqsq")
-    varDraws$sigma <- sqrt(varDraws$siqsq)
-  } else {
+
+  # This branch handles models from the bartMachine package
+  if (inherits(model, "bartMachine")) {
+
+    #  set 'after_burn_in = FALSE' to get ALL draws for the complete trace plot.
+    sigma_sq_draws <- bartMachine::get_sigsqs(model, after_burn_in = FALSE)
+
+    # Add a check in case it returns NULL
+    if (is.null(sigma_sq_draws)) {
+      stop("get_sigsqs() returned NULL. Unable to retrieve sigma^2 draws.")
+    }
+
+    # 1. Calculate sigma from the sigma^2 draws
+    sigma_draws <- sqrt(sigma_sq_draws)
+
+    # 2. Create the data frame for plotting
     varDraws <- data.frame(
-      sigma = model$sigma,
-      .draw = c(1:model$call$ndpost)
+      sigma = sigma_draws,
+      .draw = 1:length(sigma_draws)
+    )
+
+  } else {
+    # This branch handles all 'bart' style models (from dbarts, BART, wbart)
+
+    # 1. The sigma draws are stored directly in model$sigma
+    sigma_draws <- model$sigma
+
+    # 2. Create the data frame for plotting
+    varDraws <- data.frame(
+      sigma = sigma_draws,
+      .draw = 1:length(sigma_draws)
     )
   }
 
-
+  # The plotting logic remains the same and is correct
   maxIter <- max(varDraws$.draw)
   if (burnIn > 0 && burnIn < maxIter) {
-    # Plot includes all parts because there's data after burnIn
     p <- ggplot(varDraws[1:burnIn, ], aes(x = .draw, y = sigma)) +
       geom_vline(xintercept = burnIn, linetype = 5, alpha = 0.5) +
       geom_line(alpha = 0.5) +
@@ -232,7 +275,6 @@ bartTrace <- function(model, burnIn = 0) {
       ylab("Sigma") +
       ggtitle("Trace plot")
   } else {
-    # Plot only the initial segment because burnIn is 0 or equals maxIter
     p <- ggplot(varDraws, aes(x = .draw, y = sigma)) +
       geom_line(alpha = 0.5) +
       theme_bw() +
@@ -246,44 +288,68 @@ bartTrace <- function(model, burnIn = 0) {
 
 
 
-
-
 # Residuals vs Fitted --------------------------------------------------------------
 
+bartResiduals <- function(model, response) {
 
-bartResiduals <- function(model,
-                          response) {
-  if (inherits(model, "wbart") || inherits(model, "bartMachine")){
-    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
-  } else {
+  # This branch handles models from the bartMachine package
+  if (inherits(model, "bartMachine")) {
+
+    # 1. Get posterior draws for fitted values: matrix of [observations, draws]
+    yhat_draws <- bartMachine::bart_machine_get_posterior(model, model$X)$y_hat_posterior_samples
+
+    # 2. Calculate median fitted values (across rows)
+    fitted_medians <- apply(yhat_draws, 1, median)
+
+    # 3. Calculate residual draws: Actuals - Fitted_draws
+    # Transpose yhat_draws to [draws, obs] to subtract the response vector correctly
+    residual_draws <- -(t(yhat_draws) - response)
+
+    # 4. Calculate quantiles for the residuals (down columns of residual_draws)
+    residual_quantiles <- apply(residual_draws, 2, quantile, probs = c(0.025, 0.5, 0.975))
+
+    # 5. Combine into a data frame for plotting
     res <- data.frame(
-      .residual = residuals(model),
-      .fitted = fitted(model)
+      .fitted = fitted_medians,
+      .residual = residual_quantiles[2, ],       # Median (50%)
+      .residual.lower = residual_quantiles[1, ], # 2.5%
+      .residual.upper = residual_quantiles[3, ]  # 97.5%
+    )
+
+  } else {
+    # This branch handles all 'bart' style models (from dbarts, BART, etc.)
+
+    # 1. Get posterior draws for fitted values: matrix of [draws, observations]
+    yhat_draws <- model$yhat.train
+
+    # 2. Calculate median fitted values (down columns)
+    fitted_medians <- apply(yhat_draws, 2, median)
+
+    # 3. Calculate residual draws: Actuals - Fitted_draws
+    # `sweep` subtracts the response vector from each column of yhat_draws (fitted - actual)
+    # Multiply by -1 to get (actual - fitted)
+    residual_draws <- -sweep(yhat_draws, 2, response, "-")
+
+    # 4. Calculate quantiles for the residuals for each observation (down columns)
+    residual_quantiles <- apply(residual_draws, 2, quantile, probs = c(0.025, 0.5, 0.975))
+
+    # 5. Combine into a data frame for plotting
+    res <- data.frame(
+      .fitted = fitted_medians,
+      .residual = residual_quantiles[2, ],       # Median (50%)
+      .residual.lower = residual_quantiles[1, ], # 2.5%
+      .residual.upper = residual_quantiles[3, ]  # 97.5%
     )
   }
 
-
-  if (inherits(model, "wbart") || inherits(model, "bartMachine")){
-    p <- res %>%
-      tidybayes::point_interval(.fitted, .residual, .width = c(0.95)) %>%
-      select(-.fitted.lower, -.fitted.upper) %>%
-      ggplot() +
-      tidybayes::geom_pointinterval(aes(x = .fitted, y = .residual, ymin = .residual.lower, ymax = .residual.upper),
-                                    alpha = 0.1,
-                                    color = "blue"
-      ) +
-      theme_bw() +
-      xlab("Fitted") +
-      ylab("Residual") +
-      ggtitle("Fitted vs Residuals")
-  } else {
-    p <- ggplot(res, aes(.fitted, .residual)) +
-      geom_point(color = "blue", alpha = 0.1) +
-      theme_bw() +
-      xlab("Fitted") +
-      ylab("Residual") +
-      ggtitle("Fitted vs Residuals")
-  }
+  # The plotting code is now identical for both branches
+  p <- ggplot(res, aes(x = .fitted, y = .residual)) +
+    geom_point(color = "blue", alpha = 0.1) +
+    geom_linerange(aes(ymin = .residual.lower, ymax = .residual.upper), color = "blue", alpha = 0.1) +
+    theme_bw() +
+    xlab("Fitted") +
+    ylab("Residual") +
+    ggtitle("Fitted vs Residuals")
 
   return(p)
 }
@@ -294,18 +360,37 @@ bartResiduals <- function(model,
 # Histogram Residuals -----------------------------------------------------
 
 bartHist <- function(model, response) {
-  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
-    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
+
+  # This branch handles models from the bartMachine package
+  if (inherits(model, "bartMachine")) {
+
+    # 1. Get posterior draws for fitted values: matrix of [observations, draws]
+    yhat_draws <- bartMachine::bart_machine_get_posterior(model, model$X)$y_hat_posterior_samples
+
+    # 2. Calculate residual draws: Actuals - Fitted_draws
+    # Transpose yhat_draws to [draws, obs] to subtract the response vector correctly
+    residual_draws_matrix <- -(t(yhat_draws) - response)
+
   } else {
-    res <- data.frame(.residual = residuals(model))
+    # This branch handles all 'bart' style models (from dbarts, BART, etc.)
+
+    # 1. Get posterior draws for fitted values: matrix of [draws, observations]
+    yhat_draws <- model$yhat.train
+
+    # 2. Calculate residual draws using sweep: Actuals - Fitted_draws
+    residual_draws_matrix <- -sweep(yhat_draws, 2, response, "-")
   }
 
+  # 3. Coerce the matrix of all residual draws into a single vector and create a data frame
+  res <- data.frame(.residual = as.vector(residual_draws_matrix))
+
+  # 4. The plotting code is now identical and plots the full distribution
   p <- ggplot(data = res, aes(.residual)) +
     geom_histogram(bins = 50, color = "blue", fill = "white") +
     theme_bw() +
     xlab("Residual") +
     ylab("Frequency") +
-    ggtitle("Histogram")
+    ggtitle("Histogram of Posterior Residuals")
 
   return(p)
 }
@@ -317,52 +402,52 @@ bartHist <- function(model, response) {
 
 bartFitted <- function(model, response) {
 
-  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
-    res <- tidybayes::residual_draws(model, response = response, include_newdata = FALSE)
+  # This branch handles models from the bartMachine package
+  if (inherits(model, "bartMachine")) {
+
+    # 1. Extract posterior draws. This returns a matrix of [observations, draws].
+    yhat_draws_matrix <- bartMachine::bart_machine_get_posterior(model, model$X)$y_hat_posterior_samples
+
+    # 2. Calculate quantiles across the rows (MARGIN = 1) for each observation.
+    qLow <- apply(yhat_draws_matrix, 1, quantile, probs = 0.05)
+    qMid <- apply(yhat_draws_matrix, 1, quantile, probs = 0.5)
+    qUpp <- apply(yhat_draws_matrix, 1, quantile, probs = 0.95)
+
+    # Create a data frame for plotting.
+    # We use the 'response' argument, which holds the actual response vector.
+    res <- data.frame(y_actual = response,
+                      qMid = qMid,
+                      qLow = qLow,
+                      qUpp = qUpp)
+
   } else {
-    plquants = c(.05,.95)
-    cols = c('blue', 'black')
+    # This branch handles all models inheriting from 'bart' (from dbarts or BART packages)
 
-    qLow <- apply(model$yhat.train, length(dim(model$yhat.train)), quantile, probs = plquants[1])
-    qMid <- apply(model$yhat.train, length(dim(model$yhat.train)), quantile, probs = 0.5)
-    qUpp <- apply(model$yhat.train, length(dim(model$yhat.train)), quantile, probs=plquants[2])
+    # model$yhat.train is a matrix of [draws, observations].
+    plquants <- c(0.05, 0.95)
 
-    res <- data.frame(y = response,
+    # Calculate quantiles down the columns (MARGIN = 2) for each observation.
+    qLow <- apply(model$yhat.train, 2, quantile, probs = plquants[1])
+    qMid <- apply(model$yhat.train, 2, quantile, probs = 0.5)
+    qUpp <- apply(model$yhat.train, 2, quantile, probs = plquants[2])
+
+    # Create a data frame for plotting.
+    # Use the 'response' argument instead of model$y.
+    res <- data.frame(y_actual = response,
                       qMid = qMid,
                       qLow = qLow,
                       qUpp = qUpp)
   }
 
-
-  if (inherits(model, "wbart") || inherits(model, "bartMachine")) {
-    p <- res %>%
-      tidybayes::point_interval(.fitted, y, .width = c(0.95)) %>%
-      select(-y.lower, -y.upper) %>%
-      ggplot() +
-      tidybayes::geom_pointinterval(aes(x = y, y = .fitted, ymin = .fitted.lower, ymax = .fitted.upper),
-                                    alpha = 0.1,
-                                    color = "blue"
-      ) +
-      geom_smooth(aes(x = y, y = .fitted), method = "lm", color = "black", formula = y ~ x) +
-      xlab("Actual") +
-      ylab("Fitted") +
-      theme_bw() +
-      ggtitle("Actual vs Fitted")
-
-  }else{
-    p <-  ggplot(data = res, aes(y, qMid)) +
-      geom_point(color = "blue", alpha = 0.1) +
-      theme_bw() +
-      xlab("Actual") +
-      ylab("Fitted") +
-      ggtitle("Actual vs Fitted") +
-      geom_smooth(aes(x = y, y = qMid), method = "lm", color = "black", formula = y ~ x) +
-      tidybayes::geom_pointinterval(aes(x = y, y = qMid, ymin = qLow, ymax = qUpp),
-                                    alpha = 0.1,
-                                    color = "blue"
-      )
-  }
-
+  # The plotting code is now identical for both branches.
+  p <- ggplot(data = res, aes(x = y_actual, y = qMid)) +
+    geom_point(color = "blue", alpha = 0.1) +
+    geom_linerange(aes(ymin = qLow, ymax = qUpp), color = "blue", alpha = 0.1) +
+    geom_smooth(method = "lm", color = "black", formula = y ~ x) +
+    theme_bw() +
+    xlab("Actual") +
+    ylab("Fitted") +
+    ggtitle("Actual vs Fitted")
 
   return(p)
 }
@@ -703,13 +788,13 @@ bartVimpClass <- function(model, data, combineFactors = FALSE){
       x = Variable, xend = Variable, yend = upperQ,
       colour = "gray50", alpha = rev(after_stat(index))
     ),
-    size = 2, n = 1000
+    linewidth = 2, n = 1000
     ) +
     ggforce::geom_link(aes(
       x = Variable, xend = Variable, yend = lowerQ,
       colour = "gray50", alpha = rev(after_stat(index))
     ),
-    size = 2, n = 1000
+    linewidth = 2, n = 1000
     ) +
     geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
     scale_colour_identity() +
