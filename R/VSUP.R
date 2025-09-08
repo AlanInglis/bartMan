@@ -162,7 +162,7 @@ ScaleBivariate <- ggproto("ScaleBivariate",
                             }
 
                             breaks <- scales::censor(self$trans[[i]]$transform(breaks), self$trans[[i]]$transform(limits),
-                                             only.finite = FALSE)
+                                                     only.finite = FALSE)
                             breaks
                           },
 
@@ -341,8 +341,8 @@ pal_vsup <- function(values, unc_levels = 4, max_light = 0.9, max_desat = 0, pow
     u <- x$u # need maximum lightening for 0 certainty
 
     range01 <- function(x,a,b){
-       ((b-a)*((x-min(x)))/(max(x)-min(x)))+a
-     }
+      ((b-a)*((x-min(x)))/(max(x)-min(x)))+a
+    }
 
     # limit maximal desaturation and lightening
     des_amt <- max_desat*u^pow_desat
@@ -545,8 +545,10 @@ guide_gengrob.colourfan <- function(guide, theme) {
   title.x.position <- guide$title.x.position %||% "top"
   title.y.position <- guide$title.y.position %||% "right"
 
-  fanwidth <- width_cm(theme$legend.key.width * 5)
-  fanheight <- height_cm(theme$legend.key.height * 5)
+  # Use legend.key.size as a fallback, then a default unit if NULL
+  key_size <- theme$legend.key.size %||% unit(1, "lines")
+  fanwidth <- width_cm((theme$legend.key.width %||% key_size) * 5)
+  fanheight <- height_cm((theme$legend.key.height %||% key_size) * 5)
   nbreak <- nrow(guide$key)
 
   # make the fan grob (`grob.fan`)
@@ -577,7 +579,7 @@ guide_gengrob.colourfan <- function(guide, theme) {
 
   label.x.pos <- transform_radial(dplyr::tibble(x = tick.x.pos, y = 1), yoff = 0.04)
   label.y.pos <- transform_radial(dplyr::tibble(x = 1, y = tick.y.pos),
-                                 # yoff = 0,
+                                  # yoff = 0,
                                   xoff = 0.04)
 
   # get the label theme
@@ -1260,7 +1262,7 @@ as_cli_bartman <- function (..., env = rlang::caller_env())
 #' @noRd
 #' @keywords internal
 justify_grobs <- function (grobs, x = NULL, y = NULL, hjust = 0.5, vjust = 0.5,
-                                 int_angle = 0, debug = FALSE)
+                           int_angle = 0, debug = FALSE)
 {
   if (!inherits(grobs, "grob")) {
     if (is.list(grobs)) {
@@ -1286,10 +1288,10 @@ justify_grobs <- function (grobs, x = NULL, y = NULL, hjust = 0.5, vjust = 0.5,
     children = grid::gList(grobs)
   }
   result_grob <-  grid::gTree(children = children, vp = grid::viewport(x = x,
-                                                                 y = y,
-                                                                 width = grid::grobWidth(grobs),
-                                                                 height = grid::grobHeight(grobs),
-                                                                 just = unlist(just)))
+                                                                       y = y,
+                                                                       width = grid::grobWidth(grobs),
+                                                                       height = grid::grobHeight(grobs),
+                                                                       just = unlist(just)))
   if (isTRUE(debug)) {
     grid::grobTree(result_grob, grid::pointsGrob(x, y, pch = 20, gp = grid::gpar(col = "mediumturquoise")))
   }
@@ -1308,5 +1310,3 @@ justify_grobs <- function (grobs, x = NULL, y = NULL, hjust = 0.5, vjust = 0.5,
 is.waive <- function(x) {
   inherits(x, "waiver")
 }
-
-
