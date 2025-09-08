@@ -40,8 +40,8 @@ vintPlot <- function(trees,
                       plotType = 'barplot',
                       top = NULL){
 
-  if (!(plotType %in% c("barplot", "point"))) {
-    stop("type must be \"barplot\" or \"point\"")
+  if (!(plotType %in% c("barplot", "point", 'lvp'))) {
+    stop("type must be \"barplot\" or \"point\" or \"lvp\"")
   }
 
   df <- trees$structure
@@ -291,13 +291,13 @@ vintPlot <- function(trees,
         x = Variable, xend = Variable, yend = Q75,
         colour = "gray50", alpha = rev(after_stat(index))
       ),
-      size = 5, n = 1000
+      linewidth = 5, n = 1000
       ) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = Q25,
         colour = 'gray50', alpha = rev(after_stat(index))
       ),
-      size = 5, n = 1000
+      linewidth = 5, n = 1000
       ) +
       geom_point(aes(x = Variable, y = propMean), shape = 18, size = 2, color = "black") +
       coord_flip() +
@@ -312,10 +312,12 @@ vintPlot <- function(trees,
            call. = FALSE)
     }
 
-    dfVint <- as.data.frame(dfVint)
-    # suppressMessages(
-    #   lvpVint <- reshape::melt(dfVint)
-    # )
+    # PATCH: ensure ggplot2 is attached for lvplot compatibility
+    if (!"package:ggplot2" %in% search()) {
+      suppressMessages(library(ggplot2))
+    }
+
+    dfVint <- as.data.frame(propMatVint)
 
     uniNames <- unique(colnames(dfVint))
     dfVint <- dfVint[,uniNames]

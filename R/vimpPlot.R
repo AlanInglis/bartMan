@@ -115,13 +115,13 @@ vimpPlot <- function(trees,
         x = Variable, xend = Variable, yend = upperQ,
         colour = "gray50", alpha = rev(after_stat(index))
       ),
-      size = 5, n = 1000
+      linewidth = 5, n = 1000
       ) +
       ggforce::geom_link(aes(
         x = Variable, xend = Variable, yend = lowerQ,
         colour = 'gray50', alpha = rev(after_stat(index))
       ),
-      size = 5, n = 1000
+      linewidth = 5, n = 1000
       ) +
       geom_point(aes(x = Variable, y = imp), shape = 18, size = 2, color = "black") +
       scale_colour_identity() +
@@ -136,28 +136,27 @@ vimpPlot <- function(trees,
            call. = FALSE)
     }
 
+    # PATCH: ensure ggplot2 is attached for lvplot compatibility
+    if (!"package:ggplot2" %in% search()) {
+      suppressMessages(library(ggplot2))
+    }
 
     dfvimp <- utils::stack(as.data.frame(vimp))
     colnames(dfvimp) <- c('value', 'variable')
 
-   # pal <- rev(colorRampPalette(RColorBrewer::brewer.pal(9,name = 'Blues'))(10))
-   pal <- c("#08306B", "#084D96", "#1B69AF", "#3787C0", "#58A1CE",
-            "#81BADA", "#ABCFE5", "#CBDEF0","#E0ECF7", "#F7FBFF")
+    pal <- c("#08306B", "#084D96", "#1B69AF", "#3787C0", "#58A1CE",
+             "#81BADA", "#ABCFE5", "#CBDEF0","#E0ECF7", "#F7FBFF")
 
-     p <- ggplot(dfvimp, aes(stats::reorder(variable, value), value)) +
-               # aes(x = variable, y = value)) +
-    #  lvplot::geom_lv(aes(fill = ..LV..),
-       lvplot::geom_lv(aes(fill = after_stat(LV)),
-        conf = 0.5,
-        outlier.colour = "blue",
-        outlier.shape = 5,
-        varwidth = TRUE,
-        col = 'black'
+    p <- ggplot(dfvimp, aes(stats::reorder(variable, value), value)) +
+      lvplot::geom_lv(aes(fill = after_stat(LV)),
+                      conf = 0.5,
+                      outlier.colour = "blue",
+                      outlier.shape = 5,
+                      varwidth = TRUE,
+                      col = 'black'
       ) +
-      # geom_jitter(width = 0.2, alpha = 0.08) +
-       scale_fill_manual(values = pal) +
-      #scale_fill_brewer(palette = "Blues", direction = -1) +
-       labs(x = "", y = "Importance") +
+      scale_fill_manual(values = pal) +
+      labs(x = "", y = "Importance") +
       theme_bw() +
       theme(legend.position = "none") + coord_flip()
   }
