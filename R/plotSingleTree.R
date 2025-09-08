@@ -47,18 +47,22 @@ plotSingleTree <- function(trees,
   p <- treeList(trees, iter = iter, treeNo = treeNo)
 
   if (plotType == "dendrogram") {
-    gp <- ggraph(p[[1]], "dendrogram") +
+    gp <- suppressWarnings(
+      ggraph(p[[1]], "dendrogram") +
       geom_edge_elbow() +
       geom_node_label(aes(label = label, color = label)) +
       theme_graph() +
       theme(legend.position = "none")
+    )
   } else if (plotType == "icicle") {
-    gp <- ggraph(p[[1]], "partition") +
+    gp <- suppressWarnings(
+      ggraph(p[[1]], "partition") +
       geom_node_tile(aes(fill = var), linewidth = 0.25) +
       geom_node_label(aes(label = label, color = var)) +
       scale_y_reverse() +
       theme_void() +
       theme(legend.position = "none")
+    )
   }
 
   return(gp)
