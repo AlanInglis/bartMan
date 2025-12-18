@@ -276,7 +276,14 @@ extractTrees.wbart <- function(model, data){
 extractTrees.bart <- function(model, data){
   # get all trees
   treesTotal <- model$call$ntree
+  if (is.null(treesTotal)) {
+    treesTotal <- slot(model$fit$control, "n.trees")
+  }
   iteration  <- model$call$ndpost
+  # infer ndpost from stored posterior draws
+  if (is.null(iteration)) {
+    iteration <- length(model$sigma)
+  }
 
 
   trees <- list()
